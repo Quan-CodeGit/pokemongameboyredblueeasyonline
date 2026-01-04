@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+/* Pixelated rendering for Pokemon sprites */
+.pixelated,
+img[style*="pixelated"] {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* Game Boy Console */
+.gameboy-console {
+  background: linear-gradient(145deg, #ffd700 0%, #f5c400 100%);
+  border-radius: 20px 20px 60px 20px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 -5px 20px rgba(0, 0, 0, 0.1),
+    inset 0 5px 20px rgba(255, 255, 255, 0.3);
+  padding: 40px;
+  position: relative;
+}
+
+.gameboy-console::before {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle, #4a5568 40%, transparent 41%);
+  border-radius: 50%;
+}
+
+.gameboy-console::after {
+  content: '◉';
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 40px;
+  color: #2d3748;
+  opacity: 0.3;
+}
+
+/* Game Boy Screen */
+.gameboy-screen {
+  background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+  border: 12px solid #1a1a1a;
+  border-radius: 8px;
+  box-shadow:
+    inset 0 4px 20px rgba(0, 0, 0, 0.15),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+  padding: 20px;
+  position: relative;
+  min-height: 500px;
+}
+
+.gameboy-screen::before {
+  content: 'GAME BOY';
+  position: absolute;
+  bottom: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Arial Black', sans-serif;
+  font-size: 12px;
+  font-weight: bold;
+  color: #2d3748;
+  letter-spacing: 4px;
+  opacity: 0.4;
+}
+
+/* Game Boy D-Pad */
+.gameboy-controls {
+  margin-top: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+.dpad {
+  width: 120px;
+  height: 120px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+  gap: 2px;
+}
+
+.dpad-button {
+  background: #1e40af;
+  border: 2px solid #1e3a8a;
+  position: relative;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dpad-up { grid-area: 1 / 2 / 2 / 3; border-radius: 8px 8px 0 0; }
+.dpad-down { grid-area: 3 / 2 / 4 / 3; border-radius: 0 0 8px 8px; }
+.dpad-left { grid-area: 2 / 1 / 3 / 2; border-radius: 8px 0 0 8px; }
+.dpad-right { grid-area: 2 / 3 / 3 / 4; border-radius: 0 8px 8px 0; }
+.dpad-center { grid-area: 2 / 2 / 3 / 3; background: #3b82f6; }
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.action-button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #dc2626;
+  border: 4px solid #991b1b;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  transform: rotate(-20deg);
+}
+
+.action-button:last-child {
+  background: #0ea5e9;
+  border-color: #0284c7;
+  transform: rotate(-20deg) translateY(-10px);
+}
+
+.action-button::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4), transparent);
+  border-radius: 50%;
+}
+
+/* Retro text effect */
+.retro-text {
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  text-rendering: optimizeSpeed;
+  image-rendering: pixelated;
+}
+
+/* Game Boy color palette overrides */
+.gb-dark {
+  color: #0f380f;
+}
+
+.gb-medium {
+  color: #306230;
+}
+
+.gb-light {
+  color: #8bac0f;
+}
+
+.gb-lightest {
+  color: #9bbc0f;
+}
