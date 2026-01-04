@@ -317,7 +317,19 @@ const PokemonGame = () => {
         'haunter': { name: 'Gengar', type2: 'Poison' },
         'onix': { name: 'Steelix', type2: 'Ground' },
         'dratini': { name: 'Dragonair', type2: null },
-        'dragonair': { name: 'Dragonite', type2: 'Flying' }
+        'dragonair': { name: 'Dragonite', type2: 'Flying' },
+        'growlithe': { name: 'Arcanine', type2: null },
+        'vulpix': { name: 'Ninetales', type2: null },
+        'ponyta': { name: 'Rapidash', type2: null },
+        'sandshrew': { name: 'Sandslash', type2: null },
+        'diglett': { name: 'Dugtrio', type2: null },
+        'meowth': { name: 'Persian', type2: null },
+        'psyduck': { name: 'Golduck', type2: null },
+        'poliwag': { name: 'Poliwhirl', type2: null },
+        'poliwhirl': { name: 'Poliwrath', type2: 'Fighting' },
+        'tentacool': { name: 'Tentacruel', type2: 'Poison' },
+        'magnemite': { name: 'Magneton', type2: 'Steel' },
+        'spearow': { name: 'Fearow', type2: 'Flying' }
       };
       
       const lowerName = pokemon.name.toLowerCase();
@@ -568,12 +580,26 @@ const PokemonGame = () => {
 
   const nextBattle = () => {
     const healedPokemon = { ...playerPokemon, hp: playerPokemon.maxHp };
+
+    // Check for Mewtwo BEFORE updating state
+    const currentPokemonExp = healedPokemon.exp || 0;
+    const teamHasHighExp = availableTeam.some(p => (p.exp || 0) >= 20) || currentPokemonExp >= 20;
+    const hasDefeatedMewtwo = availableTeam.some(p => p.defeatedMewtwo) || healedPokemon.defeatedMewtwo;
+
     setPlayerPokemon(healedPokemon);
-    
-    setAvailableTeam(prev => prev.map(p => 
+
+    setAvailableTeam(prev => prev.map(p =>
       p.name === healedPokemon.name ? healedPokemon : p
     ));
-    
+
+    // Trigger Mewtwo intro if conditions are met
+    if (teamHasHighExp && !hasDefeatedMewtwo) {
+      setGameState('mewtwo-intro');
+      setPotionUsed(false);
+      setBattleLog([]);
+      return;
+    }
+
     encounterWildPokemon();
     setGameState('battle');
     setIsPlayerTurn(true);
