@@ -147,7 +147,8 @@ const PokemonGame = () => {
       'spearow': 21, 'fearow': 22,
       'snorlax': 143,
       'mewtwo': 150,
-      'gyarados': 130
+      'gyarados': 130,
+      'dratini': 147, 'dragonair': 148, 'dragonite': 149
     };
     return pokemonIds[name] || 1;
   };
@@ -194,10 +195,10 @@ const PokemonGame = () => {
 
   const typeChart = {
     Normal: { Rock: 0.5, Steel: 0.5 },
-    Fire: { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 2, Bug: 2, Rock: 0.5, Steel: 2 },
-    Water: { Fire: 2, Water: 0.5, Grass: 0.5, Ground: 2, Rock: 2 },
-    Electric: { Water: 2, Electric: 0.5, Grass: 0.5, Ground: 0, Flying: 2 },
-    Grass: { Fire: 0.5, Water: 2, Grass: 0.5, Poison: 0.5, Ground: 2, Flying: 0.5, Bug: 0.5, Rock: 2, Steel: 0.5 },
+    Fire: { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 2, Bug: 2, Rock: 0.5, Dragon: 0.5, Steel: 2 },
+    Water: { Fire: 2, Water: 0.5, Grass: 0.5, Ground: 2, Rock: 2, Dragon: 0.5 },
+    Electric: { Water: 2, Electric: 0.5, Grass: 0.5, Ground: 0, Flying: 2, Dragon: 0.5 },
+    Grass: { Fire: 0.5, Water: 2, Grass: 0.5, Poison: 0.5, Ground: 2, Flying: 0.5, Bug: 0.5, Rock: 2, Dragon: 0.5, Steel: 0.5 },
     Flying: { Electric: 0.5, Grass: 2, Fighting: 2, Bug: 2, Rock: 0.5, Steel: 0.5 },
     Rock: { Fire: 2, Ice: 2, Fighting: 0.5, Ground: 0.5, Flying: 2, Bug: 2, Steel: 0.5 },
     Ground: { Fire: 2, Electric: 2, Grass: 0.5, Poison: 2, Flying: 0, Rock: 2, Steel: 2 },
@@ -207,8 +208,9 @@ const PokemonGame = () => {
     Bug: { Fire: 0.5, Grass: 2, Fighting: 0.5, Poison: 0.5, Flying: 0.5, Psychic: 2, Dark: 2, Steel: 0.5 },
     Ghost: { Normal: 0, Psychic: 2, Ghost: 2, Dark: 0.5 },
     Dark: { Fighting: 0.5, Psychic: 2, Ghost: 2, Dark: 0.5 },
+    Dragon: { Dragon: 2, Steel: 0.5 },
     Steel: { Fire: 0.5, Water: 0.5, Electric: 0.5, Ice: 2, Rock: 2, Steel: 0.5 },
-    Ice: { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 0.5, Ground: 2, Flying: 2, Steel: 0.5 }
+    Ice: { Fire: 0.5, Water: 0.5, Grass: 2, Ice: 0.5, Ground: 2, Flying: 2, Dragon: 2, Steel: 0.5 }
   };
 
   const getTypeEffectiveness = (attackType, defenseType, defenseType2) => {
@@ -236,30 +238,33 @@ const PokemonGame = () => {
   };
 
   const encounterWildPokemon = () => {
-    // Check if ANY pokemon in team has 20+ EXP and hasn't defeated Mewtwo yet
-    const hasHighExpPokemon = availableTeam.some(p => (p.exp || 0) >= 20);
-    const hasDefeatedMewtwo = availableTeam.some(p => p.defeatedMewtwo);
-    
-    if (hasHighExpPokemon && !hasDefeatedMewtwo) {
+    // Check using current playerPokemon and team state
+    // Player pokemon EXP is more reliable since it's just been updated
+    const currentPokemonExp = playerPokemon?.exp || 0;
+    const teamHasHighExp = availableTeam.some(p => (p.exp || 0) >= 20) || currentPokemonExp >= 20;
+    const hasDefeatedMewtwo = availableTeam.some(p => p.defeatedMewtwo) || playerPokemon?.defeatedMewtwo;
+
+    if (teamHasHighExp && !hasDefeatedMewtwo) {
       setGameState('mewtwo-intro');
       return;
     }
     
-    // After beating Mewtwo, spawn evolved Pokemon
+    // After beating Mewtwo, spawn final evolution Pokemon
     if (hasDefeatedMewtwo) {
-      const evolvedPokemon = [
-        { name: 'Charmeleon', type: 'Fire', type2: null, hp: 70, maxHp: 70, attack: 80, color: '🔥', moves: ['Flame Burst', 'Slash', 'Fire Fang', 'Flamethrower'], moveTypes: ['Fire', 'Normal', 'Fire', 'Fire'] },
-        { name: 'Wartortle', type: 'Water', type2: null, hp: 70, maxHp: 70, attack: 75, color: '💧', moves: ['Water Gun', 'Bite', 'Aqua Tail', 'Hydro Pump'], moveTypes: ['Water', 'Dark', 'Water', 'Water'] },
-        { name: 'Ivysaur', type: 'Grass', type2: 'Poison', hp: 70, maxHp: 70, attack: 75, color: '🌿', moves: ['Razor Leaf', 'Poison Powder', 'Vine Whip', 'Solar Beam'], moveTypes: ['Grass', 'Poison', 'Grass', 'Grass'] },
-        { name: 'Pidgeotto', type: 'Normal', type2: 'Flying', hp: 65, maxHp: 65, attack: 70, color: '🐦', moves: ['Wing Attack', 'Gust', 'Aerial Ace', 'Air Slash'], moveTypes: ['Flying', 'Flying', 'Flying', 'Flying'] },
-        { name: 'Haunter', type: 'Ghost', type2: 'Poison', hp: 55, maxHp: 55, attack: 65, color: '👻', moves: ['Shadow Ball', 'Lick', 'Night Shade', 'Shadow Claw'], moveTypes: ['Ghost', 'Ghost', 'Ghost', 'Ghost'] },
-        { name: 'Machoke', type: 'Fighting', type2: null, hp: 90, maxHp: 90, attack: 110, color: '💪', moves: ['Karate Chop', 'Cross Chop', 'Seismic Toss', 'Dynamic Punch'], moveTypes: ['Fighting', 'Fighting', 'Fighting', 'Fighting'] },
-        { name: 'Graveler', type: 'Rock', type2: 'Ground', hp: 65, maxHp: 65, attack: 95, color: '🪨', moves: ['Rock Throw', 'Earthquake', 'Rock Slide', 'Stone Edge'], moveTypes: ['Rock', 'Ground', 'Rock', 'Rock'] },
-        { name: 'Golbat', type: 'Poison', type2: 'Flying', hp: 70, maxHp: 70, attack: 75, color: '🦇', moves: ['Wing Attack', 'Poison Fang', 'Air Slash', 'Bite'], moveTypes: ['Flying', 'Poison', 'Flying', 'Dark'] },
-        { name: 'Gloom', type: 'Grass', type2: 'Poison', hp: 65, maxHp: 65, attack: 70, color: '🌺', moves: ['Mega Drain', 'Acid', 'Poison Powder', 'Petal Dance'], moveTypes: ['Grass', 'Poison', 'Poison', 'Grass'] }
+      const finalEvolutionPokemon = [
+        { name: 'Charizard', type: 'Fire', type2: 'Flying', hp: 90, maxHp: 90, attack: 100, color: '🔥', moves: ['Flamethrower', 'Wing Attack', 'Fire Blast', 'Dragon Claw'], moveTypes: ['Fire', 'Flying', 'Fire', 'Dragon'] },
+        { name: 'Blastoise', type: 'Water', type2: null, hp: 95, maxHp: 95, attack: 95, color: '💧', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Skull Bash'], moveTypes: ['Water', 'Dark', 'Ice', 'Normal'] },
+        { name: 'Venusaur', type: 'Grass', type2: 'Poison', hp: 95, maxHp: 95, attack: 95, color: '🌿', moves: ['Solar Beam', 'Sludge Bomb', 'Earthquake', 'Petal Dance'], moveTypes: ['Grass', 'Poison', 'Ground', 'Grass'] },
+        { name: 'Pidgeot', type: 'Normal', type2: 'Flying', hp: 85, maxHp: 85, attack: 85, color: '🐦', moves: ['Hurricane', 'Wing Attack', 'Aerial Ace', 'Quick Attack'], moveTypes: ['Flying', 'Flying', 'Flying', 'Normal'] },
+        { name: 'Gengar', type: 'Ghost', type2: 'Poison', hp: 70, maxHp: 70, attack: 75, color: '👻', moves: ['Shadow Ball', 'Sludge Bomb', 'Dark Pulse', 'Hypnosis'], moveTypes: ['Ghost', 'Poison', 'Dark', 'Psychic'] },
+        { name: 'Machamp', type: 'Fighting', type2: null, hp: 110, maxHp: 110, attack: 130, color: '💪', moves: ['Dynamic Punch', 'Cross Chop', 'Stone Edge', 'Earthquake'], moveTypes: ['Fighting', 'Fighting', 'Rock', 'Ground'] },
+        { name: 'Golem', type: 'Rock', type2: 'Ground', hp: 90, maxHp: 90, attack: 115, color: '🪨', moves: ['Earthquake', 'Rock Slide', 'Stone Edge', 'Explosion'], moveTypes: ['Ground', 'Rock', 'Rock', 'Normal'] },
+        { name: 'Victreebel', type: 'Grass', type2: 'Poison', hp: 85, maxHp: 85, attack: 105, color: '🌿', moves: ['Razor Leaf', 'Sludge Bomb', 'Solar Beam', 'Leaf Blade'], moveTypes: ['Grass', 'Poison', 'Grass', 'Grass'] },
+        { name: 'Dragonite', type: 'Dragon', type2: 'Flying', hp: 110, maxHp: 110, attack: 134, color: '🐉', moves: ['Dragon Claw', 'Wing Attack', 'Thunder', 'Outrage'], moveTypes: ['Dragon', 'Flying', 'Electric', 'Dragon'] },
+        { name: 'Gyarados', type: 'Water', type2: 'Flying', hp: 105, maxHp: 105, attack: 125, color: '🐉', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Dragon Dance'], moveTypes: ['Water', 'Dark', 'Ice', 'Dragon'] }
       ];
-      
-      const wild = { ...evolvedPokemon[Math.floor(Math.random() * evolvedPokemon.length)] };
+
+      const wild = { ...finalEvolutionPokemon[Math.floor(Math.random() * finalEvolutionPokemon.length)] };
       setWildPokemon(wild);
       setBattleLog([`A wild ${wild.name} appeared!`]);
       return;
@@ -303,11 +308,16 @@ const PokemonGame = () => {
         'golbat': { name: 'Crobat', type2: 'Flying' },
         'oddish': { name: 'Gloom', type2: 'Poison' },
         'gloom': { name: 'Vileplume', type2: 'Poison' },
+        'bellsprout': { name: 'Weepinbell', type2: 'Poison' },
+        'weepinbell': { name: 'Victreebel', type2: 'Poison' },
         'machop': { name: 'Machoke', type2: null },
         'machoke': { name: 'Machamp', type2: null },
+        'mankey': { name: 'Primeape', type2: null },
         'gastly': { name: 'Haunter', type2: 'Poison' },
         'haunter': { name: 'Gengar', type2: 'Poison' },
-        'onix': { name: 'Steelix', type2: 'Ground' }
+        'onix': { name: 'Steelix', type2: 'Ground' },
+        'dratini': { name: 'Dragonair', type2: null },
+        'dragonair': { name: 'Dragonite', type2: 'Flying' }
       };
       
       const lowerName = pokemon.name.toLowerCase();
