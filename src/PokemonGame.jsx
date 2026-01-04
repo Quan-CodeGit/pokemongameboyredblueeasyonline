@@ -433,13 +433,21 @@ const PokemonGame = () => {
         }
         
         addLog(`${playerPokemon.name} gained 1 EXP!`);
-        
+
         // Check for evolution
         const updatedPokemon = await checkEvolution(playerPokemon);
         if (updatedPokemon) {
-          setPlayerPokemon(updatedPokemon);
+          // Only update if NOT evolving (evolution updates happen in setTimeout inside checkEvolution)
+          const newExp = (playerPokemon.exp || 0) + 1;
+          if (newExp % 3 !== 0) {
+            // Not evolving, just gaining EXP - update state
+            setPlayerPokemon(updatedPokemon);
+            setAvailableTeam(prev => prev.map(p =>
+              p.name === updatedPokemon.name ? updatedPokemon : p
+            ));
+          }
         }
-        
+
         playSound('victory');
         setBattlesWon(prev => prev + 1);
         setTimeout(() => setGameState('victory'), 2500);
@@ -579,32 +587,48 @@ const PokemonGame = () => {
   };
 
   const nextBattle = () => {
-    const healedPokemon = { ...playerPokemon, hp: playerPokemon.maxHp };
+    // Use functional state updates to ensure we have the latest state
+    setAvailableTeam(prevTeam => {
+      setPlayerPokemon(prevPlayer => {
+        const healedPokemon = { ...prevPlayer, hp: prevPlayer.maxHp };
 
-    // Check for Mewtwo BEFORE updating state
-    const currentPokemonExp = healedPokemon.exp || 0;
-    const teamHasHighExp = availableTeam.some(p => (p.exp || 0) >= 20) || currentPokemonExp >= 20;
-    const hasDefeatedMewtwo = availableTeam.some(p => p.defeatedMewtwo) || healedPokemon.defeatedMewtwo;
+        // Check for Mewtwo using the ACTUAL current state
+        const currentPokemonExp = healedPokemon.exp || 0;
+        const teamHasHighExp = prevTeam.some(p => (p.exp || 0) >= 20) || currentPokemonExp >= 20;
+        const hasDefeatedMewtwo = prevTeam.some(p => p.defeatedMewtwo) || healedPokemon.defeatedMewtwo;
 
-    setPlayerPokemon(healedPokemon);
+        // Update team with healed Pokemon
+        const updatedTeam = prevTeam.map(p =>
+          p.name === healedPokemon.name ? healedPokemon : p
+        );
 
-    setAvailableTeam(prev => prev.map(p =>
-      p.name === healedPokemon.name ? healedPokemon : p
-    ));
+        // Trigger Mewtwo intro if conditions are met
+        if (teamHasHighExp && !hasDefeatedMewtwo) {
+          // Use setTimeout to ensure state updates complete first
+          setTimeout(() => {
+            setGameState('mewtwo-intro');
+            setPotionUsed(false);
+            setBattleLog([]);
+          }, 0);
+          return healedPokemon;
+        }
 
-    // Trigger Mewtwo intro if conditions are met
-    if (teamHasHighExp && !hasDefeatedMewtwo) {
-      setGameState('mewtwo-intro');
-      setPotionUsed(false);
-      setBattleLog([]);
-      return;
-    }
+        // Continue to next battle
+        setTimeout(() => {
+          encounterWildPokemon();
+          setGameState('battle');
+          setIsPlayerTurn(true);
+          setPotionUsed(false);
+          setBattleLog([]);
+        }, 0);
 
-    encounterWildPokemon();
-    setGameState('battle');
-    setIsPlayerTurn(true);
-    setPotionUsed(false);
-    setBattleLog([]);
+        return healedPokemon;
+      });
+
+      return prevTeam.map(p =>
+        p.name === playerPokemon.name ? { ...p, hp: p.maxHp } : p
+      );
+    });
   };
 
   const resetGame = () => {
