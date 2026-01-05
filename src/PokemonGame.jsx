@@ -238,38 +238,7 @@ const PokemonGame = () => {
   };
 
   const encounterWildPokemon = () => {
-    // Check using current playerPokemon and team state
-    // Player pokemon EXP is more reliable since it's just been updated
-    const currentPokemonExp = playerPokemon?.exp || 0;
-    const teamHasHighExp = availableTeam.some(p => (p.exp || 0) >= 20) || currentPokemonExp >= 20;
-    const hasDefeatedMewtwo = availableTeam.some(p => p.defeatedMewtwo) || playerPokemon?.defeatedMewtwo;
-
-    if (teamHasHighExp && !hasDefeatedMewtwo) {
-      setGameState('mewtwo-intro');
-      return;
-    }
-    
-    // After beating Mewtwo, spawn final evolution Pokemon
-    if (hasDefeatedMewtwo) {
-      const finalEvolutionPokemon = [
-        { name: 'Charizard', type: 'Fire', type2: 'Flying', hp: 90, maxHp: 90, attack: 100, color: '🔥', moves: ['Flamethrower', 'Wing Attack', 'Fire Blast', 'Dragon Claw'], moveTypes: ['Fire', 'Flying', 'Fire', 'Dragon'] },
-        { name: 'Blastoise', type: 'Water', type2: null, hp: 95, maxHp: 95, attack: 95, color: '💧', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Skull Bash'], moveTypes: ['Water', 'Dark', 'Ice', 'Normal'] },
-        { name: 'Venusaur', type: 'Grass', type2: 'Poison', hp: 95, maxHp: 95, attack: 95, color: '🌿', moves: ['Solar Beam', 'Sludge Bomb', 'Earthquake', 'Petal Dance'], moveTypes: ['Grass', 'Poison', 'Ground', 'Grass'] },
-        { name: 'Pidgeot', type: 'Normal', type2: 'Flying', hp: 85, maxHp: 85, attack: 85, color: '🐦', moves: ['Hurricane', 'Wing Attack', 'Aerial Ace', 'Quick Attack'], moveTypes: ['Flying', 'Flying', 'Flying', 'Normal'] },
-        { name: 'Gengar', type: 'Ghost', type2: 'Poison', hp: 70, maxHp: 70, attack: 75, color: '👻', moves: ['Shadow Ball', 'Sludge Bomb', 'Dark Pulse', 'Hypnosis'], moveTypes: ['Ghost', 'Poison', 'Dark', 'Psychic'] },
-        { name: 'Machamp', type: 'Fighting', type2: null, hp: 110, maxHp: 110, attack: 130, color: '💪', moves: ['Dynamic Punch', 'Cross Chop', 'Stone Edge', 'Earthquake'], moveTypes: ['Fighting', 'Fighting', 'Rock', 'Ground'] },
-        { name: 'Golem', type: 'Rock', type2: 'Ground', hp: 90, maxHp: 90, attack: 115, color: '🪨', moves: ['Earthquake', 'Rock Slide', 'Stone Edge', 'Explosion'], moveTypes: ['Ground', 'Rock', 'Rock', 'Normal'] },
-        { name: 'Victreebel', type: 'Grass', type2: 'Poison', hp: 85, maxHp: 85, attack: 105, color: '🌿', moves: ['Razor Leaf', 'Sludge Bomb', 'Solar Beam', 'Leaf Blade'], moveTypes: ['Grass', 'Poison', 'Grass', 'Grass'] },
-        { name: 'Dragonite', type: 'Dragon', type2: 'Flying', hp: 110, maxHp: 110, attack: 134, color: '🐉', moves: ['Dragon Claw', 'Wing Attack', 'Thunder', 'Outrage'], moveTypes: ['Dragon', 'Flying', 'Electric', 'Dragon'] },
-        { name: 'Gyarados', type: 'Water', type2: 'Flying', hp: 105, maxHp: 105, attack: 125, color: '🐉', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Dragon Dance'], moveTypes: ['Water', 'Dark', 'Ice', 'Dragon'] }
-      ];
-
-      const wild = { ...finalEvolutionPokemon[Math.floor(Math.random() * finalEvolutionPokemon.length)] };
-      setWildPokemon(wild);
-      setBattleLog([`A wild ${wild.name} appeared!`]);
-      return;
-    }
-    
+    // STAGE 1: Normal wild Pokemon encounters (used only on game start)
     const wild = { ...wildPokemons[Math.floor(Math.random() * wildPokemons.length)] };
     setWildPokemon(wild);
     setBattleLog([`A wild ${wild.name} appeared!`]);
@@ -587,48 +556,59 @@ const PokemonGame = () => {
   };
 
   const nextBattle = () => {
-    // Use functional state updates to ensure we have the latest state
-    setAvailableTeam(prevTeam => {
-      setPlayerPokemon(prevPlayer => {
-        const healedPokemon = { ...prevPlayer, hp: prevPlayer.maxHp };
+    // Heal the Pokemon first
+    const healedPokemon = { ...playerPokemon, hp: playerPokemon.maxHp };
 
-        // Check for Mewtwo using the ACTUAL current state
-        const currentPokemonExp = healedPokemon.exp || 0;
-        const teamHasHighExp = prevTeam.some(p => (p.exp || 0) >= 20) || currentPokemonExp >= 20;
-        const hasDefeatedMewtwo = prevTeam.some(p => p.defeatedMewtwo) || healedPokemon.defeatedMewtwo;
+    // Check game stage - Stage 2 (Mewtwo) or Stage 3 (Post-Mewtwo)
+    const currentPokemonExp = healedPokemon.exp || 0;
+    const teamHasHighExp = availableTeam.some(p => (p.exp || 0) >= 20) || currentPokemonExp >= 20;
+    const hasDefeatedMewtwo = availableTeam.some(p => p.defeatedMewtwo) || healedPokemon.defeatedMewtwo;
 
-        // Update team with healed Pokemon
-        const updatedTeam = prevTeam.map(p =>
-          p.name === healedPokemon.name ? healedPokemon : p
-        );
+    // Update states
+    setPlayerPokemon(healedPokemon);
+    setAvailableTeam(prev => prev.map(p =>
+      p.name === healedPokemon.name ? healedPokemon : p
+    ));
 
-        // Trigger Mewtwo intro if conditions are met
-        if (teamHasHighExp && !hasDefeatedMewtwo) {
-          // Use setTimeout to ensure state updates complete first
-          setTimeout(() => {
-            setGameState('mewtwo-intro');
-            setPotionUsed(false);
-            setBattleLog([]);
-          }, 0);
-          return healedPokemon;
-        }
+    // STAGE 2: Time for Mewtwo battle (at 20+ EXP, before defeating Mewtwo)
+    if (teamHasHighExp && !hasDefeatedMewtwo) {
+      setGameState('mewtwo-intro');
+      setPotionUsed(false);
+      setBattleLog([]);
+      return;
+    }
 
-        // Continue to next battle
-        setTimeout(() => {
-          encounterWildPokemon();
-          setGameState('battle');
-          setIsPlayerTurn(true);
-          setPotionUsed(false);
-          setBattleLog([]);
-        }, 0);
+    // STAGE 3: Post-Mewtwo - spawn final evolutions
+    if (hasDefeatedMewtwo) {
+      const finalEvolutionPokemon = [
+        { name: 'Charizard', type: 'Fire', type2: 'Flying', hp: 90, maxHp: 90, attack: 100, color: '🔥', moves: ['Flamethrower', 'Wing Attack', 'Fire Blast', 'Dragon Claw'], moveTypes: ['Fire', 'Flying', 'Fire', 'Dragon'] },
+        { name: 'Blastoise', type: 'Water', type2: null, hp: 95, maxHp: 95, attack: 95, color: '💧', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Skull Bash'], moveTypes: ['Water', 'Dark', 'Ice', 'Normal'] },
+        { name: 'Venusaur', type: 'Grass', type2: 'Poison', hp: 95, maxHp: 95, attack: 95, color: '🌿', moves: ['Solar Beam', 'Sludge Bomb', 'Earthquake', 'Petal Dance'], moveTypes: ['Grass', 'Poison', 'Ground', 'Grass'] },
+        { name: 'Pidgeot', type: 'Normal', type2: 'Flying', hp: 85, maxHp: 85, attack: 85, color: '🐦', moves: ['Hurricane', 'Wing Attack', 'Aerial Ace', 'Quick Attack'], moveTypes: ['Flying', 'Flying', 'Flying', 'Normal'] },
+        { name: 'Gengar', type: 'Ghost', type2: 'Poison', hp: 70, maxHp: 70, attack: 75, color: '👻', moves: ['Shadow Ball', 'Sludge Bomb', 'Dark Pulse', 'Hypnosis'], moveTypes: ['Ghost', 'Poison', 'Dark', 'Psychic'] },
+        { name: 'Machamp', type: 'Fighting', type2: null, hp: 110, maxHp: 110, attack: 130, color: '💪', moves: ['Dynamic Punch', 'Cross Chop', 'Stone Edge', 'Earthquake'], moveTypes: ['Fighting', 'Fighting', 'Rock', 'Ground'] },
+        { name: 'Golem', type: 'Rock', type2: 'Ground', hp: 90, maxHp: 90, attack: 115, color: '🪨', moves: ['Earthquake', 'Rock Slide', 'Stone Edge', 'Explosion'], moveTypes: ['Ground', 'Rock', 'Rock', 'Normal'] },
+        { name: 'Victreebel', type: 'Grass', type2: 'Poison', hp: 85, maxHp: 85, attack: 105, color: '🌿', moves: ['Razor Leaf', 'Sludge Bomb', 'Solar Beam', 'Leaf Blade'], moveTypes: ['Grass', 'Poison', 'Grass', 'Grass'] },
+        { name: 'Dragonite', type: 'Dragon', type2: 'Flying', hp: 110, maxHp: 110, attack: 134, color: '🐉', moves: ['Dragon Claw', 'Wing Attack', 'Thunder', 'Outrage'], moveTypes: ['Dragon', 'Flying', 'Electric', 'Dragon'] },
+        { name: 'Gyarados', type: 'Water', type2: 'Flying', hp: 105, maxHp: 105, attack: 125, color: '🐉', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Dragon Dance'], moveTypes: ['Water', 'Dark', 'Ice', 'Dragon'] }
+      ];
 
-        return healedPokemon;
-      });
+      const wild = { ...finalEvolutionPokemon[Math.floor(Math.random() * finalEvolutionPokemon.length)] };
+      setWildPokemon(wild);
+      setBattleLog([`A wild ${wild.name} appeared!`]);
+      setGameState('battle');
+      setIsPlayerTurn(true);
+      setPotionUsed(false);
+      return;
+    }
 
-      return prevTeam.map(p =>
-        p.name === playerPokemon.name ? { ...p, hp: p.maxHp } : p
-      );
-    });
+    // STAGE 1: Normal battles (before 20 EXP)
+    const wild = { ...wildPokemons[Math.floor(Math.random() * wildPokemons.length)] };
+    setWildPokemon(wild);
+    setBattleLog([`A wild ${wild.name} appeared!`]);
+    setGameState('battle');
+    setIsPlayerTurn(true);
+    setPotionUsed(false);
   };
 
   const resetGame = () => {
