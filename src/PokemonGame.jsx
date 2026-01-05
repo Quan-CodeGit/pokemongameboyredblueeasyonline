@@ -16,6 +16,7 @@ const PokemonGame = () => {
     // Load from localStorage or default to 'pc'
     return localStorage.getItem('pokemonGameDisplayMode') || 'pc';
   });
+  const [gameStage, setGameStage] = useState(1); // 1: Normal, 2: Mewtwo ready, 3: Post-Mewtwo
 
   // Save display mode to localStorage whenever it changes
   useEffect(() => {
@@ -398,16 +399,23 @@ const PokemonGame = () => {
           setAvailableTeam(updatedTeam);
           const updatedPlayer = { ...playerPokemon, defeatedMewtwo: true };
           setPlayerPokemon(updatedPlayer);
+          setGameStage(3); // Move to Stage 3 - post-Mewtwo endgame
           addLog(`You defeated the legendary Mewtwo!`);
         }
         
         addLog(`${playerPokemon.name} gained 1 EXP!`);
 
+        // Check if we reached 20 EXP - trigger Stage 2 (Mewtwo)
+        const newExp = (playerPokemon.exp || 0) + 1;
+        if (newExp >= 20 && gameStage === 1) {
+          setGameStage(2); // Unlock Mewtwo stage
+          addLog(`A powerful presence stirs...`);
+        }
+
         // Check for evolution
         const updatedPokemon = await checkEvolution(playerPokemon);
         if (updatedPokemon) {
           // Only update if NOT evolving (evolution updates happen in setTimeout inside checkEvolution)
-          const newExp = (playerPokemon.exp || 0) + 1;
           if (newExp % 3 !== 0) {
             // Not evolving, just gaining EXP - update state
             setPlayerPokemon(updatedPokemon);
@@ -500,6 +508,7 @@ const PokemonGame = () => {
         setAvailableTeam(updatedTeam);
         const updatedPlayer = { ...playerPokemon, defeatedMewtwo: true };
         setPlayerPokemon(updatedPlayer);
+        setGameStage(3); // Move to Stage 3 - post-Mewtwo endgame
       }
       
       setPokedex(prev => {
@@ -559,27 +568,22 @@ const PokemonGame = () => {
     // Heal the Pokemon first
     const healedPokemon = { ...playerPokemon, hp: playerPokemon.maxHp };
 
-    // Check game stage - Stage 2 (Mewtwo) or Stage 3 (Post-Mewtwo)
-    const currentPokemonExp = healedPokemon.exp || 0;
-    const teamHasHighExp = availableTeam.some(p => (p.exp || 0) >= 20) || currentPokemonExp >= 20;
-    const hasDefeatedMewtwo = availableTeam.some(p => p.defeatedMewtwo) || healedPokemon.defeatedMewtwo;
-
     // Update states
     setPlayerPokemon(healedPokemon);
     setAvailableTeam(prev => prev.map(p =>
       p.name === healedPokemon.name ? healedPokemon : p
     ));
 
-    // STAGE 2: Time for Mewtwo battle (at 20+ EXP, before defeating Mewtwo)
-    if (teamHasHighExp && !hasDefeatedMewtwo) {
+    // STAGE 2: Time for Mewtwo battle
+    if (gameStage === 2) {
       setGameState('mewtwo-intro');
       setPotionUsed(false);
       setBattleLog([]);
       return;
     }
 
-    // STAGE 3: Post-Mewtwo - spawn final evolutions
-    if (hasDefeatedMewtwo) {
+    // STAGE 3: Post-Mewtwo - spawn final evolutions ONLY
+    if (gameStage === 3) {
       const finalEvolutionPokemon = [
         { name: 'Charizard', type: 'Fire', type2: 'Flying', hp: 90, maxHp: 90, attack: 100, color: '🔥', moves: ['Flamethrower', 'Wing Attack', 'Fire Blast', 'Dragon Claw'], moveTypes: ['Fire', 'Flying', 'Fire', 'Dragon'] },
         { name: 'Blastoise', type: 'Water', type2: null, hp: 95, maxHp: 95, attack: 95, color: '💧', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Skull Bash'], moveTypes: ['Water', 'Dark', 'Ice', 'Normal'] },
@@ -602,7 +606,7 @@ const PokemonGame = () => {
       return;
     }
 
-    // STAGE 1: Normal battles (before 20 EXP)
+    // STAGE 1: Normal battles (before reaching 20 EXP)
     const wild = { ...wildPokemons[Math.floor(Math.random() * wildPokemons.length)] };
     setWildPokemon(wild);
     setBattleLog([`A wild ${wild.name} appeared!`]);
@@ -621,6 +625,7 @@ const PokemonGame = () => {
     setBattlesWon(0);
     setAvailableTeam([]);
     setPokedex([]);
+    setGameStage(1); // Reset to Stage 1
   };
 
   if (gameState === 'start') {
