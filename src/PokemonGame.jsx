@@ -390,9 +390,16 @@ const PokemonGame = () => {
 
     if (newWildHp <= 0) {
       setIsPlayerTurn(false);
+
+      // Check if we reached 20 EXP IMMEDIATELY - trigger Stage 2 (Mewtwo)
+      const newExp = (playerPokemon.exp || 0) + 1;
+      if (newExp >= 20 && gameStage === 1) {
+        setGameStage(2); // Unlock Mewtwo stage IMMEDIATELY
+      }
+
       setTimeout(async () => {
         addLog(`${wildPokemon.name} fainted!`);
-        
+
         // Mark Mewtwo as defeated for entire team
         if (wildPokemon.name === 'Mewtwo') {
           const updatedTeam = availableTeam.map(p => ({ ...p, defeatedMewtwo: true }));
@@ -402,13 +409,11 @@ const PokemonGame = () => {
           setGameStage(3); // Move to Stage 3 - post-Mewtwo endgame
           addLog(`You defeated the legendary Mewtwo!`);
         }
-        
+
         addLog(`${playerPokemon.name} gained 1 EXP!`);
 
-        // Check if we reached 20 EXP - trigger Stage 2 (Mewtwo)
-        const newExp = (playerPokemon.exp || 0) + 1;
+        // Show message if we reached 20 EXP
         if (newExp >= 20 && gameStage === 1) {
-          setGameStage(2); // Unlock Mewtwo stage
           addLog(`A powerful presence stirs...`);
         }
 
