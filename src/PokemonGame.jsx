@@ -562,57 +562,65 @@ const PokemonGame = () => {
   };
 
   const nextBattle = () => {
-    // Heal the Pokemon first
-    const healedPokemon = { ...playerPokemon, hp: playerPokemon.maxHp };
+    // Use functional state update to get the LATEST availableTeam state
+    setAvailableTeam(prevTeam => {
+      // Find the current Pokemon in the team to get its ACTUAL latest EXP
+      const currentPokemonInTeam = prevTeam.find(p => p.name === playerPokemon.name);
+      const currentExp = currentPokemonInTeam ? (currentPokemonInTeam.exp || 0) : (playerPokemon.exp || 0);
+      const hasDefeatedMewtwo = currentPokemonInTeam ? (currentPokemonInTeam.defeatedMewtwo || false) : (playerPokemon.defeatedMewtwo || false);
 
-    // Update states
-    setPlayerPokemon(healedPokemon);
-    setAvailableTeam(prev => prev.map(p =>
-      p.name === healedPokemon.name ? healedPokemon : p
-    ));
+      // Heal the Pokemon first
+      const healedPokemon = {
+        ...playerPokemon,
+        hp: playerPokemon.maxHp,
+        exp: currentExp,
+        defeatedMewtwo: hasDefeatedMewtwo
+      };
 
-    // STAGE 2: Check if Pokemon has 20+ EXP and hasn't defeated Mewtwo yet
-    const currentExp = healedPokemon.exp || 0;
-    const hasDefeatedMewtwo = healedPokemon.defeatedMewtwo || false;
+      // Update player Pokemon
+      setPlayerPokemon(healedPokemon);
 
-    if (currentExp >= 20 && !hasDefeatedMewtwo) {
-      setGameState('mewtwo-intro');
-      setPotionUsed(false);
-      setBattleLog([]);
-      return;
-    }
+      // STAGE 2: Check if Pokemon has 20+ EXP and hasn't defeated Mewtwo yet
+      if (currentExp >= 20 && !hasDefeatedMewtwo) {
+        setGameState('mewtwo-intro');
+        setPotionUsed(false);
+        setBattleLog([]);
+        return prevTeam.map(p => p.name === healedPokemon.name ? healedPokemon : p);
+      }
 
-    // STAGE 3: Post-Mewtwo - spawn final evolutions ONLY
-    if (hasDefeatedMewtwo) {
-      const finalEvolutionPokemon = [
-        { name: 'Charizard', type: 'Fire', type2: 'Flying', hp: 90, maxHp: 90, attack: 100, color: '🔥', moves: ['Flamethrower', 'Wing Attack', 'Fire Blast', 'Dragon Claw'], moveTypes: ['Fire', 'Flying', 'Fire', 'Dragon'] },
-        { name: 'Blastoise', type: 'Water', type2: null, hp: 95, maxHp: 95, attack: 95, color: '💧', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Skull Bash'], moveTypes: ['Water', 'Dark', 'Ice', 'Normal'] },
-        { name: 'Venusaur', type: 'Grass', type2: 'Poison', hp: 95, maxHp: 95, attack: 95, color: '🌿', moves: ['Solar Beam', 'Sludge Bomb', 'Earthquake', 'Petal Dance'], moveTypes: ['Grass', 'Poison', 'Ground', 'Grass'] },
-        { name: 'Pidgeot', type: 'Normal', type2: 'Flying', hp: 85, maxHp: 85, attack: 85, color: '🐦', moves: ['Hurricane', 'Wing Attack', 'Aerial Ace', 'Quick Attack'], moveTypes: ['Flying', 'Flying', 'Flying', 'Normal'] },
-        { name: 'Gengar', type: 'Ghost', type2: 'Poison', hp: 70, maxHp: 70, attack: 75, color: '👻', moves: ['Shadow Ball', 'Sludge Bomb', 'Dark Pulse', 'Hypnosis'], moveTypes: ['Ghost', 'Poison', 'Dark', 'Psychic'] },
-        { name: 'Machamp', type: 'Fighting', type2: null, hp: 110, maxHp: 110, attack: 130, color: '💪', moves: ['Dynamic Punch', 'Cross Chop', 'Stone Edge', 'Earthquake'], moveTypes: ['Fighting', 'Fighting', 'Rock', 'Ground'] },
-        { name: 'Golem', type: 'Rock', type2: 'Ground', hp: 90, maxHp: 90, attack: 115, color: '🪨', moves: ['Earthquake', 'Rock Slide', 'Stone Edge', 'Explosion'], moveTypes: ['Ground', 'Rock', 'Rock', 'Normal'] },
-        { name: 'Victreebel', type: 'Grass', type2: 'Poison', hp: 85, maxHp: 85, attack: 105, color: '🌿', moves: ['Razor Leaf', 'Sludge Bomb', 'Solar Beam', 'Leaf Blade'], moveTypes: ['Grass', 'Poison', 'Grass', 'Grass'] },
-        { name: 'Dragonite', type: 'Dragon', type2: 'Flying', hp: 110, maxHp: 110, attack: 134, color: '🐉', moves: ['Dragon Claw', 'Wing Attack', 'Thunder', 'Outrage'], moveTypes: ['Dragon', 'Flying', 'Electric', 'Dragon'] },
-        { name: 'Gyarados', type: 'Water', type2: 'Flying', hp: 105, maxHp: 105, attack: 125, color: '🐉', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Dragon Dance'], moveTypes: ['Water', 'Dark', 'Ice', 'Dragon'] }
-      ];
+      // STAGE 3: Post-Mewtwo - spawn final evolutions ONLY
+      if (hasDefeatedMewtwo) {
+        const finalEvolutionPokemon = [
+          { name: 'Charizard', type: 'Fire', type2: 'Flying', hp: 90, maxHp: 90, attack: 100, color: '🔥', moves: ['Flamethrower', 'Wing Attack', 'Fire Blast', 'Dragon Claw'], moveTypes: ['Fire', 'Flying', 'Fire', 'Dragon'] },
+          { name: 'Blastoise', type: 'Water', type2: null, hp: 95, maxHp: 95, attack: 95, color: '💧', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Skull Bash'], moveTypes: ['Water', 'Dark', 'Ice', 'Normal'] },
+          { name: 'Venusaur', type: 'Grass', type2: 'Poison', hp: 95, maxHp: 95, attack: 95, color: '🌿', moves: ['Solar Beam', 'Sludge Bomb', 'Earthquake', 'Petal Dance'], moveTypes: ['Grass', 'Poison', 'Ground', 'Grass'] },
+          { name: 'Pidgeot', type: 'Normal', type2: 'Flying', hp: 85, maxHp: 85, attack: 85, color: '🐦', moves: ['Hurricane', 'Wing Attack', 'Aerial Ace', 'Quick Attack'], moveTypes: ['Flying', 'Flying', 'Flying', 'Normal'] },
+          { name: 'Gengar', type: 'Ghost', type2: 'Poison', hp: 70, maxHp: 70, attack: 75, color: '👻', moves: ['Shadow Ball', 'Sludge Bomb', 'Dark Pulse', 'Hypnosis'], moveTypes: ['Ghost', 'Poison', 'Dark', 'Psychic'] },
+          { name: 'Machamp', type: 'Fighting', type2: null, hp: 110, maxHp: 110, attack: 130, color: '💪', moves: ['Dynamic Punch', 'Cross Chop', 'Stone Edge', 'Earthquake'], moveTypes: ['Fighting', 'Fighting', 'Rock', 'Ground'] },
+          { name: 'Golem', type: 'Rock', type2: 'Ground', hp: 90, maxHp: 90, attack: 115, color: '🪨', moves: ['Earthquake', 'Rock Slide', 'Stone Edge', 'Explosion'], moveTypes: ['Ground', 'Rock', 'Rock', 'Normal'] },
+          { name: 'Victreebel', type: 'Grass', type2: 'Poison', hp: 85, maxHp: 85, attack: 105, color: '🌿', moves: ['Razor Leaf', 'Sludge Bomb', 'Solar Beam', 'Leaf Blade'], moveTypes: ['Grass', 'Poison', 'Grass', 'Grass'] },
+          { name: 'Dragonite', type: 'Dragon', type2: 'Flying', hp: 110, maxHp: 110, attack: 134, color: '🐉', moves: ['Dragon Claw', 'Wing Attack', 'Thunder', 'Outrage'], moveTypes: ['Dragon', 'Flying', 'Electric', 'Dragon'] },
+          { name: 'Gyarados', type: 'Water', type2: 'Flying', hp: 105, maxHp: 105, attack: 125, color: '🐉', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Dragon Dance'], moveTypes: ['Water', 'Dark', 'Ice', 'Dragon'] }
+        ];
 
-      const wild = { ...finalEvolutionPokemon[Math.floor(Math.random() * finalEvolutionPokemon.length)] };
+        const wild = { ...finalEvolutionPokemon[Math.floor(Math.random() * finalEvolutionPokemon.length)] };
+        setWildPokemon(wild);
+        setBattleLog([`A wild ${wild.name} appeared!`]);
+        setGameState('battle');
+        setIsPlayerTurn(true);
+        setPotionUsed(false);
+        return prevTeam.map(p => p.name === healedPokemon.name ? healedPokemon : p);
+      }
+
+      // STAGE 1: Normal battles (before reaching 20 EXP)
+      const wild = { ...wildPokemons[Math.floor(Math.random() * wildPokemons.length)] };
       setWildPokemon(wild);
       setBattleLog([`A wild ${wild.name} appeared!`]);
       setGameState('battle');
       setIsPlayerTurn(true);
       setPotionUsed(false);
-      return;
-    }
-
-    // STAGE 1: Normal battles (before reaching 20 EXP)
-    const wild = { ...wildPokemons[Math.floor(Math.random() * wildPokemons.length)] };
-    setWildPokemon(wild);
-    setBattleLog([`A wild ${wild.name} appeared!`]);
-    setGameState('battle');
-    setIsPlayerTurn(true);
-    setPotionUsed(false);
+      return prevTeam.map(p => p.name === healedPokemon.name ? healedPokemon : p);
+    });
   };
 
   const resetGame = () => {
