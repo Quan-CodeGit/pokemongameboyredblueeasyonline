@@ -86,16 +86,33 @@ const PokemonGame = () => {
     </div>
   );
 
-  // Simple sound effects using Web Audio API
+  // Pokemon sound effects using real audio files
   const playSound = (type) => {
     try {
+      const soundUrls = {
+        'mewtwo-warning': 'https://www.myinstants.com/media/sounds/mewtwo-pokemon-go-sound.mp3',
+        'evolve': 'https://www.myinstants.com/media/sounds/pokemon-evolve.mp3',
+        'sendout': 'https://www.myinstants.com/media/sounds/ichooseyou.mp3',
+        'catch': 'https://www.myinstants.com/media/sounds/06-caught-a-pokemon.mp3',
+        'levelup': 'https://www.myinstants.com/media/sounds/12_3.mp3'
+      };
+
+      // If it's a real Pokemon sound, use Audio API
+      if (soundUrls[type]) {
+        const audio = new Audio(soundUrls[type]);
+        audio.volume = 0.5;
+        audio.play().catch(err => console.log('Sound play failed:', err));
+        return;
+      }
+
+      // Fallback to Web Audio API for other sounds
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       switch(type) {
         case 'attack':
           oscillator.frequency.value = 400;
@@ -118,14 +135,6 @@ const PokemonGame = () => {
           gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
           oscillator.start(audioContext.currentTime);
           oscillator.stop(audioContext.currentTime + 0.4);
-          break;
-        case 'catch':
-          oscillator.frequency.value = 800;
-          oscillator.type = 'square';
-          gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-          oscillator.start(audioContext.currentTime);
-          oscillator.stop(audioContext.currentTime + 0.5);
           break;
         case 'victory':
           // Victory jingle
@@ -266,6 +275,7 @@ const PokemonGame = () => {
   };
 
   const chooseStarter = (starter) => {
+    playSound('sendout');
     const newPokemon = { ...starter };
     setPlayerPokemon(newPokemon);
     setAvailableTeam([newPokemon]);
@@ -290,6 +300,7 @@ const PokemonGame = () => {
     
     // Check if should evolve (every 3 exp)
     if (newExp % 3 === 0) {
+      playSound('evolve');
       addLog(`${pokemon.name} is evolving!`);
       setIsEvolving(true);
       
@@ -447,6 +458,7 @@ const PokemonGame = () => {
           addLog(`You defeated the legendary Mewtwo!`);
         }
 
+        playSound('levelup');
         addLog(`${playerPokemon.name} gained 1 EXP!`);
 
         // Show message if we reached 20 EXP
@@ -601,6 +613,7 @@ const PokemonGame = () => {
     }));
     
     setPlayerPokemon(switchedPokemon);
+    playSound('sendout');
     addLog(`Come back, ${oldPokemonName}!`);
     addLog(`Go, ${switchedPokemon.name}!`);
     setIsPlayerTurn(false);
@@ -619,6 +632,7 @@ const PokemonGame = () => {
 
     // STAGE 2: Check ref to see if we should spawn Mewtwo
     if (shouldSpawnMewtwo.current) {
+      playSound('mewtwo-warning');
       setGameState('mewtwo-intro');
       setPotionUsed(false);
       setBattleLog([]);
