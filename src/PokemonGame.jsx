@@ -36,25 +36,9 @@ const PokemonGame = () => {
     return displayMode === 'pc' ? Math.floor(baseSize * 0.6) : baseSize;
   };
 
-  // Debug function to test Mewtwo spawn
-  const debugSetExpTo19 = () => {
-    if (availableTeam.length > 0) {
-      setAvailableTeam(prevTeam => {
-        const updatedTeam = prevTeam.map((pokemon, index) => {
-          if (index === 0) {
-            return { ...pokemon, exp: 19 };
-          }
-          return pokemon;
-        });
-        addLog('DEBUG: Set first Pokemon EXP to 19. Win one more battle to spawn Mewtwo!');
-        return updatedTeam;
-      });
-    }
-  };
-
   // Mode toggle component
   const ModeToggle = () => (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
+    <div className="fixed top-4 right-4 z-50">
       <button
         onClick={() => setDisplayMode(prev => prev === 'pc' ? 'mobile' : 'pc')}
         className="border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text"
@@ -66,8 +50,27 @@ const PokemonGame = () => {
       >
         {displayMode === 'pc' ? 'PC MODE' : 'MOBILE MODE'}
       </button>
+    </div>
+  );
+
+  // Debug button component
+  const DebugButton = () => (
+    <div className="fixed top-20 right-4 z-50">
       <button
-        onClick={debugSetExpTo19}
+        onClick={() => {
+          if (availableTeam.length > 0) {
+            setAvailableTeam(prevTeam => {
+              const updatedTeam = prevTeam.map((pokemon, index) => {
+                if (index === 0) {
+                  return { ...pokemon, exp: 19 };
+                }
+                return pokemon;
+              });
+              return updatedTeam;
+            });
+            setBattleLog(prev => [...prev, 'DEBUG: Set first Pokemon EXP to 19. Win one more battle to spawn Mewtwo!']);
+          }
+        }}
         className="border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text"
         style={{
           backgroundColor: '#ef4444',
@@ -670,6 +673,7 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
+        <DebugButton />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
@@ -738,6 +742,7 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen bg-black p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
+        <DebugButton />
         <div className={`border-8 border-purple-500 bg-black p-8 ${getContainerClass()} w-full text-center`} style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)'}}>
           <div className="mb-6 flex justify-center animate-pulse">
             <img
@@ -804,6 +809,7 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
+        <DebugButton />
         <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen">
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -1020,6 +1026,7 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
+        <DebugButton />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
@@ -1073,6 +1080,7 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
+        <DebugButton />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#22c55e'}}>
@@ -1129,6 +1137,7 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
+        <DebugButton />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-6 mb-6" style={{backgroundColor: '#dc2626'}}>
