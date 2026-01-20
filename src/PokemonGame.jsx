@@ -36,9 +36,25 @@ const PokemonGame = () => {
     return displayMode === 'pc' ? Math.floor(baseSize * 0.6) : baseSize;
   };
 
+  // Debug function to test Mewtwo spawn
+  const debugSetExpTo19 = () => {
+    if (availableTeam.length > 0) {
+      setAvailableTeam(prevTeam => {
+        const updatedTeam = prevTeam.map((pokemon, index) => {
+          if (index === 0) {
+            return { ...pokemon, exp: 19 };
+          }
+          return pokemon;
+        });
+        addLog('DEBUG: Set first Pokemon EXP to 19. Win one more battle to spawn Mewtwo!');
+        return updatedTeam;
+      });
+    }
+  };
+
   // Mode toggle component
   const ModeToggle = () => (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
       <button
         onClick={() => setDisplayMode(prev => prev === 'pc' ? 'mobile' : 'pc')}
         className="border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text"
@@ -49,6 +65,17 @@ const PokemonGame = () => {
         }}
       >
         {displayMode === 'pc' ? 'PC MODE' : 'MOBILE MODE'}
+      </button>
+      <button
+        onClick={debugSetExpTo19}
+        className="border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text"
+        style={{
+          backgroundColor: '#ef4444',
+          color: '#fff',
+          boxShadow: '4px 4px 0px #000'
+        }}
+      >
+        DEBUG: EXP→19
       </button>
     </div>
   );
