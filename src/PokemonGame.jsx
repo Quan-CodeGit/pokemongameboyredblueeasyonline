@@ -86,6 +86,15 @@ const PokemonGame = () => {
     </div>
   );
 
+  // Footer component
+  const Footer = () => (
+    <div className="fixed bottom-4 left-0 right-0 z-40 text-center">
+      <p className="text-sm font-bold retro-text" style={{color: '#666', textShadow: '1px 1px 0px #fff'}}>
+        By Quan
+      </p>
+    </div>
+  );
+
   // Pokemon sound effects using real audio files
   const playSound = (type) => {
     try {
@@ -691,6 +700,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
         <DebugButton />
+        <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
@@ -760,6 +770,7 @@ const PokemonGame = () => {
       <div className="min-h-screen bg-black p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
         <DebugButton />
+        <Footer />
         <div className={`border-8 border-purple-500 bg-black p-8 ${getContainerClass()} w-full text-center`} style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)'}}>
           <div className="mb-6 flex justify-center animate-pulse">
             <img
@@ -828,6 +839,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-4" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
         <DebugButton />
+        <Footer />
         <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen">
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -1045,6 +1057,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
         <DebugButton />
+        <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
@@ -1099,6 +1112,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
         <DebugButton />
+        <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#22c55e'}}>
@@ -1156,6 +1170,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <ModeToggle />
         <DebugButton />
+        <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-6 mb-6" style={{backgroundColor: '#dc2626'}}>
