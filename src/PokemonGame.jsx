@@ -212,7 +212,7 @@ const PokemonGame = () => {
   // Footer component - placed inside gameboy console
   const Footer = () => (
     <div className="text-center mt-4 py-2">
-      <p className="text-sm font-bold retro-text" style={{color: '#3b82f6'}}>
+      <p className="text-sm font-bold retro-text" style={{color: '#9ca3af'}}>
         By Quan 2026
       </p>
     </div>
