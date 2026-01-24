@@ -16,15 +16,32 @@ const PokemonGame = () => {
     // Load from localStorage or default to 'pc'
     return localStorage.getItem('pokemonGameDisplayMode') || 'pc';
   });
+  const [audioVolume, setAudioVolume] = useState(() => {
+    // Load from localStorage or default to 'high'
+    return localStorage.getItem('pokemonGameAudioVolume') || 'high';
+  });
+  const [debugMode, setDebugMode] = useState(() => {
+    // Load from localStorage or default to false
+    return localStorage.getItem('pokemonGameDebugMode') === 'true';
+  });
+  const [showSettings, setShowSettings] = useState(false);
 
   // Use ref to track Mewtwo spawn - bypasses React state timing issues
   const shouldSpawnMewtwo = useRef(false);
   const hasDefeatedMewtwo = useRef(false);
 
-  // Save display mode to localStorage whenever it changes
+  // Save settings to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('pokemonGameDisplayMode', displayMode);
   }, [displayMode]);
+
+  useEffect(() => {
+    localStorage.setItem('pokemonGameAudioVolume', audioVolume);
+  }, [audioVolume]);
+
+  useEffect(() => {
+    localStorage.setItem('pokemonGameDebugMode', debugMode.toString());
+  }, [debugMode]);
 
   // Get container size based on display mode
   const getContainerClass = () => {
@@ -36,11 +53,11 @@ const PokemonGame = () => {
     return displayMode === 'pc' ? Math.floor(baseSize * 0.6) : baseSize;
   };
 
-  // Mode toggle component
-  const ModeToggle = () => (
+  // Settings button component
+  const SettingsButton = () => (
     <div className="fixed top-4 right-4 z-50">
       <button
-        onClick={() => setDisplayMode(prev => prev === 'pc' ? 'mobile' : 'pc')}
+        onClick={() => setShowSettings(true)}
         className="border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text"
         style={{
           backgroundColor: '#3b82f6',
@@ -48,43 +65,148 @@ const PokemonGame = () => {
           boxShadow: '4px 4px 0px #000'
         }}
       >
-        {displayMode === 'pc' ? 'PC MODE' : 'MOBILE MODE'}
+        ⚙️ SETTINGS
       </button>
     </div>
   );
 
-  // Debug button component
-  const DebugButton = () => (
-    <div className="fixed top-20 right-4 z-50">
-      <button
-        onClick={() => {
-          if (availableTeam.length > 0 && playerPokemon) {
-            // Update team
-            setAvailableTeam(prevTeam => {
-              const updatedTeam = prevTeam.map((pokemon, index) => {
-                if (index === 0) {
-                  return { ...pokemon, exp: 19 };
-                }
-                return pokemon;
+  // Settings modal component
+  const SettingsModal = () => {
+    if (!showSettings) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{backgroundColor: 'rgba(0,0,0,0.8)'}}>
+        <div className="border-8 border-black bg-yellow-100 p-6 max-w-md w-full mx-4" style={{boxShadow: '12px 12px 0px #000'}}>
+          <div className="border-4 border-black bg-red-600 p-3 mb-4">
+            <h2 className="text-2xl font-bold text-center retro-text text-white">⚙️ SETTINGS</h2>
+          </div>
+
+          {/* Display Mode */}
+          <div className="border-4 border-black bg-white p-4 mb-3">
+            <h3 className="font-bold text-sm mb-2 retro-text">DISPLAY MODE:</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDisplayMode('pc')}
+                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
+                  displayMode === 'pc' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                }`}
+              >
+                PC MODE
+              </button>
+              <button
+                onClick={() => setDisplayMode('mobile')}
+                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
+                  displayMode === 'mobile' ? 'bg-blue-500 text-white' : 'bg-gray-200'
+                }`}
+              >
+                MOBILE MODE
+              </button>
+            </div>
+          </div>
+
+          {/* Audio Volume */}
+          <div className="border-4 border-black bg-white p-4 mb-3">
+            <h3 className="font-bold text-sm mb-2 retro-text">AUDIO VOLUME:</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setAudioVolume('none')}
+                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
+                  audioVolume === 'none' ? 'bg-red-500 text-white' : 'bg-gray-200'
+                }`}
+              >
+                NONE
+              </button>
+              <button
+                onClick={() => setAudioVolume('low')}
+                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
+                  audioVolume === 'low' ? 'bg-green-500 text-white' : 'bg-gray-200'
+                }`}
+              >
+                LOW
+              </button>
+              <button
+                onClick={() => setAudioVolume('high')}
+                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
+                  audioVolume === 'high' ? 'bg-green-500 text-white' : 'bg-gray-200'
+                }`}
+              >
+                HIGH
+              </button>
+            </div>
+          </div>
+
+          {/* Debug Mode */}
+          <div className="border-4 border-black bg-white p-4 mb-4">
+            <h3 className="font-bold text-sm mb-2 retro-text">DEBUG MODE:</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDebugMode(false)}
+                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
+                  !debugMode ? 'bg-gray-500 text-white' : 'bg-gray-200'
+                }`}
+              >
+                OFF
+              </button>
+              <button
+                onClick={() => setDebugMode(true)}
+                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
+                  debugMode ? 'bg-purple-500 text-white' : 'bg-gray-200'
+                }`}
+              >
+                ON
+              </button>
+            </div>
+          </div>
+
+          {/* Close Button */}
+          <button
+            onClick={() => setShowSettings(false)}
+            className="w-full border-4 border-black bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 retro-text transition-all"
+            style={{boxShadow: '4px 4px 0px #000'}}
+          >
+            CLOSE
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Debug button component (only shown when debug mode is enabled)
+  const DebugButton = () => {
+    if (!debugMode) return null;
+
+    return (
+      <div className="fixed top-20 right-4 z-50">
+        <button
+          onClick={() => {
+            if (availableTeam.length > 0 && playerPokemon) {
+              // Update team
+              setAvailableTeam(prevTeam => {
+                const updatedTeam = prevTeam.map((pokemon, index) => {
+                  if (index === 0) {
+                    return { ...pokemon, exp: 19 };
+                  }
+                  return pokemon;
+                });
+                return updatedTeam;
               });
-              return updatedTeam;
-            });
-            // Update current player Pokemon
-            setPlayerPokemon(prev => ({ ...prev, exp: 19 }));
-            setBattleLog(prev => [...prev, 'DEBUG: Set first Pokemon EXP to 19. Win one more battle to spawn Mewtwo!']);
-          }
-        }}
-        className="border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text"
-        style={{
-          backgroundColor: '#ef4444',
-          color: '#fff',
-          boxShadow: '4px 4px 0px #000'
-        }}
-      >
-        DEBUG: EXP→19
-      </button>
-    </div>
-  );
+              // Update current player Pokemon
+              setPlayerPokemon(prev => ({ ...prev, exp: 19 }));
+              setBattleLog(prev => [...prev, 'DEBUG: Set first Pokemon EXP to 19. Win one more battle to spawn Mewtwo!']);
+            }
+          }}
+          className="border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text"
+          style={{
+            backgroundColor: '#ef4444',
+            color: '#fff',
+            boxShadow: '4px 4px 0px #000'
+          }}
+        >
+          DEBUG: EXP→19
+        </button>
+      </div>
+    );
+  };
 
   // Footer component
   const Footer = () => (
@@ -98,6 +220,9 @@ const PokemonGame = () => {
   // Pokemon sound effects using real audio files
   const playSound = (type) => {
     try {
+      // Check audio volume setting
+      if (audioVolume === 'none') return;
+
       const soundUrls = {
         'mewtwo-warning': 'https://www.myinstants.com/media/sounds/mewtwo-pokemon-go-sound.mp3',
         'evolve': 'https://www.myinstants.com/media/sounds/pokemon-evolve.mp3',
@@ -106,10 +231,15 @@ const PokemonGame = () => {
         'levelup': 'https://www.myinstants.com/media/sounds/12_3.mp3'
       };
 
+      const volumeLevels = {
+        'low': 0.3,
+        'high': 0.7
+      };
+
       // If it's a real Pokemon sound, use Audio API
       if (soundUrls[type]) {
         const audio = new Audio(soundUrls[type]);
-        audio.volume = 0.5;
+        audio.volume = volumeLevels[audioVolume] || 0.5;
         audio.play().catch(err => console.log('Sound play failed:', err));
         return;
       }
@@ -698,8 +828,9 @@ const PokemonGame = () => {
   if (gameState === 'start') {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
-        <ModeToggle />
+        <SettingsButton />
         <DebugButton />
+        <SettingsModal />
         <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen">
@@ -768,8 +899,9 @@ const PokemonGame = () => {
   if (gameState === 'mewtwo-intro') {
     return (
       <div className="min-h-screen bg-black p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
-        <ModeToggle />
+        <SettingsButton />
         <DebugButton />
+        <SettingsModal />
         <Footer />
         <div className={`border-8 border-purple-500 bg-black p-8 ${getContainerClass()} w-full text-center`} style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)'}}>
           <div className="mb-6 flex justify-center animate-pulse">
@@ -837,8 +969,9 @@ const PokemonGame = () => {
   if (gameState === 'battle') {
     return (
       <div className="min-h-screen p-4" style={{fontFamily: 'monospace'}}>
-        <ModeToggle />
+        <SettingsButton />
         <DebugButton />
+        <SettingsModal />
         <Footer />
         <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen">
@@ -1055,8 +1188,9 @@ const PokemonGame = () => {
   if (gameState === 'catch') {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
-        <ModeToggle />
+        <SettingsButton />
         <DebugButton />
+        <SettingsModal />
         <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
@@ -1110,8 +1244,9 @@ const PokemonGame = () => {
   if (gameState === 'victory') {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
-        <ModeToggle />
+        <SettingsButton />
         <DebugButton />
+        <SettingsModal />
         <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
@@ -1168,8 +1303,9 @@ const PokemonGame = () => {
   if (gameState === 'defeat') {
     return (
       <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
-        <ModeToggle />
+        <SettingsButton />
         <DebugButton />
+        <SettingsModal />
         <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
