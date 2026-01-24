@@ -44,13 +44,14 @@ const PokemonGame = () => {
   }, [debugMode]);
 
   // Get container size based on display mode
+  // PC mode = bigger landscape, Mobile mode = smaller portrait
   const getContainerClass = () => {
-    return displayMode === 'pc' ? 'max-w-2xl' : 'max-w-4xl';
+    return displayMode === 'pc' ? 'max-w-4xl' : 'max-w-2xl';
   };
 
   // Get sprite size based on display mode
   const getSpriteSize = (baseSize) => {
-    return displayMode === 'pc' ? Math.floor(baseSize * 0.6) : baseSize;
+    return displayMode === 'pc' ? baseSize : Math.floor(baseSize * 0.6);
   };
 
   // Settings button component
@@ -208,11 +209,11 @@ const PokemonGame = () => {
     );
   };
 
-  // Footer component
+  // Footer component - placed inside gameboy console
   const Footer = () => (
-    <div className="fixed bottom-4 left-0 right-0 z-40 text-center">
-      <p className="text-sm font-bold retro-text" style={{color: '#666', textShadow: '1px 1px 0px #fff'}}>
-        By Quan
+    <div className="text-center mt-4 py-2">
+      <p className="text-sm font-bold retro-text" style={{color: '#3b82f6'}}>
+        By Quan 2026
       </p>
     </div>
   );
@@ -831,7 +832,6 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
@@ -891,6 +891,7 @@ const PokemonGame = () => {
               <div className="action-button"></div>
             </div>
           </div>
+          <Footer />
         </div>
       </div>
     );
@@ -1180,6 +1181,7 @@ const PokemonGame = () => {
               <div className="action-button"></div>
             </div>
           </div>
+          <Footer />
         </div>
       </div>
     );
@@ -1191,7 +1193,6 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
@@ -1236,6 +1237,7 @@ const PokemonGame = () => {
               <div className="action-button"></div>
             </div>
           </div>
+          <Footer />
         </div>
       </div>
     );
@@ -1247,7 +1249,6 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#22c55e'}}>
@@ -1295,6 +1296,7 @@ const PokemonGame = () => {
               <div className="action-button"></div>
             </div>
           </div>
+          <Footer />
         </div>
       </div>
     );
@@ -1306,7 +1308,6 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <Footer />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-6 mb-6" style={{backgroundColor: '#dc2626'}}>
@@ -1335,6 +1336,7 @@ const PokemonGame = () => {
               <div className="action-button"></div>
             </div>
           </div>
+          <Footer />
         </div>
       </div>
     );
