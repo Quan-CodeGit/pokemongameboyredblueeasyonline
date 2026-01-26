@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 const PokemonGame = () => {
-  const [gameState, setGameState] = useState('start');
+  const [gameState, setGameState] = useState('intro');
   const [playerPokemon, setPlayerPokemon] = useState(null);
   const [wildPokemon, setWildPokemon] = useState(null);
   const [battleLog, setBattleLog] = useState([]);
@@ -29,6 +29,7 @@ const PokemonGame = () => {
   // Use ref to track Mewtwo spawn - bypasses React state timing issues
   const shouldSpawnMewtwo = useRef(false);
   const hasDefeatedMewtwo = useRef(false);
+  const introMusicRef = useRef(null);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
@@ -42,6 +43,25 @@ const PokemonGame = () => {
   useEffect(() => {
     localStorage.setItem('pokemonGameDebugMode', debugMode.toString());
   }, [debugMode]);
+
+  // Play intro music on intro screen
+  useEffect(() => {
+    if (gameState === 'intro' && audioVolume !== 'none') {
+      // Pokemon Red/Blue intro theme
+      const introMusic = new Audio('https://www.myinstants.com/media/sounds/pokemon-red-blue-intro.mp3');
+      introMusic.loop = true;
+      introMusic.volume = audioVolume === 'low' ? 0.3 : 0.7;
+      introMusic.play().catch(err => console.log('Intro music play failed:', err));
+      introMusicRef.current = introMusic;
+
+      return () => {
+        if (introMusicRef.current) {
+          introMusicRef.current.pause();
+          introMusicRef.current = null;
+        }
+      };
+    }
+  }, [gameState, audioVolume]);
 
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
@@ -813,7 +833,7 @@ const PokemonGame = () => {
   };
 
   const resetGame = () => {
-    setGameState('start');
+    setGameState('intro');
     setPlayerPokemon(null);
     setWildPokemon(null);
     setBattleLog([]);
@@ -825,6 +845,93 @@ const PokemonGame = () => {
     shouldSpawnMewtwo.current = false;
     hasDefeatedMewtwo.current = false;
   };
+
+  // Pokemon Red/Blue Intro Screen
+  if (gameState === 'intro') {
+    return (
+      <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace', background: 'linear-gradient(135deg, #e8b4f9 0%, #f4c7ff 100%)'}}>
+        <SettingsButton />
+        <DebugButton />
+        <SettingsModal />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen flex flex-col items-center justify-center" style={{background: 'linear-gradient(135deg, #e8b4f9 0%, #f4c7ff 100%)'}}>
+            {/* Pokemon Logo */}
+            <div className="mb-8 text-center">
+              <h1 className="retro-text" style={{
+                fontSize: '72px',
+                fontWeight: 'bold',
+                color: '#ffde00',
+                textShadow: '4px 4px 0px #3a5dae, -2px -2px 0px #3a5dae, 2px -2px 0px #3a5dae, -2px 2px 0px #3a5dae',
+                letterSpacing: '4px',
+                lineHeight: '1'
+              }}>
+                POKéMON
+              </h1>
+            </div>
+
+            {/* Red Version */}
+            <div className="mb-6">
+              <h2 className="retro-text text-center" style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#dc2626',
+                textShadow: '2px 2px 0px #000',
+                letterSpacing: '2px'
+              }}>
+                Red Version
+              </h2>
+            </div>
+
+            {/* Trainer Sprite */}
+            <div className="mb-8">
+              <div className="border-4 border-black bg-white p-4" style={{boxShadow: '4px 4px 0px #000'}}>
+                <div style={{width: '128px', height: '128px', background: 'url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png) center/contain no-repeat'}}></div>
+              </div>
+            </div>
+
+            {/* Copyright */}
+            <div className="mb-6 text-center">
+              <p className="retro-text text-xs" style={{color: '#000'}}>
+                ©'95,'96,'98 GAME FREAK inc.
+              </p>
+            </div>
+
+            {/* START Button */}
+            <button
+              onClick={() => {
+                playSound('sendout');
+                setGameState('start');
+              }}
+              className="border-4 border-black px-8 py-4 font-bold text-xl transition-all hover:scale-105 retro-text"
+              style={{
+                backgroundColor: '#dc2626',
+                color: '#fff',
+                boxShadow: '6px 6px 0px #000'
+              }}
+            >
+              START GAME
+            </button>
+          </div>
+
+          {/* Game Boy Controls */}
+          <div className="gameboy-controls">
+            <div className="dpad">
+              <div className="dpad-button dpad-up"></div>
+              <div className="dpad-button dpad-left"></div>
+              <div className="dpad-button dpad-center"></div>
+              <div className="dpad-button dpad-right"></div>
+              <div className="dpad-button dpad-down"></div>
+            </div>
+            <div className="action-buttons">
+              <div className="action-button"></div>
+              <div className="action-button"></div>
+            </div>
+          </div>
+          <Footer />
+        </div>
+      </div>
+    );
+  }
 
   if (gameState === 'start') {
     return (
