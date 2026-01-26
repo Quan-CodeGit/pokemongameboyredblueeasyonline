@@ -832,7 +832,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
               <h1 className="text-2xl font-bold text-center retro-text" style={{color: '#ffffff'}}>
@@ -903,7 +903,8 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <div className={`border-8 border-purple-500 bg-black p-8 ${getContainerClass()} mx-auto text-center`} style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)', minHeight: '500px', borderRadius: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+        <Footer />
+        <div className={`border-8 border-purple-500 bg-black p-8 ${getContainerClass()} w-full text-center`} style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)'}}>
           <div className="mb-6 flex justify-center animate-pulse">
             <img
               src={getPokemonSprite('Mewtwo')}
@@ -917,7 +918,7 @@ const PokemonGame = () => {
             />
           </div>
           <div className="border-4 border-red-600 bg-red-600 p-4 mb-6 animate-pulse">
-            <h1 className="text-4xl font-bold text-white" style={{textShadow: '3px 3px 0px #000'}}>
+            <h1 className="text-5xl font-bold text-white" style={{textShadow: '3px 3px 0px #000'}}>
               ⚠ WARNING ⚠
             </h1>
           </div>
@@ -968,10 +969,11 @@ const PokemonGame = () => {
 
   if (gameState === 'battle') {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+      <div className="min-h-screen p-4" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
+        <Footer />
         <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen">
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -1191,7 +1193,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
               <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>GOTCHA!</h2>
@@ -1247,7 +1249,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#22c55e'}}>
               <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>VICTORY!</h2>
@@ -1306,7 +1308,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-6 mb-6" style={{backgroundColor: '#dc2626'}}>
               <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>GAME OVER</h2>
