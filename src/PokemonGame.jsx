@@ -832,7 +832,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+        <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
               <h1 className="text-2xl font-bold text-center retro-text" style={{color: '#ffffff'}}>
@@ -903,60 +903,62 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <div className={`border-8 border-purple-500 bg-black p-8 ${getContainerClass()} mx-auto text-center`} style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)', minHeight: '500px', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
-          <div className="mb-4 flex justify-center animate-pulse">
-            <img
-              src={getPokemonSprite('Mewtwo')}
-              alt="Mewtwo"
-              style={{
-                imageRendering: 'pixelated',
-                filter: 'drop-shadow(0 0 20px rgba(168, 85, 247, 0.8))',
-                width: `${getSpriteSize(160)}px`,
-                height: `${getSpriteSize(160)}px`
+        <div className={`${getContainerClass()} mx-auto`} style={{padding: '40px'}}>
+          <div className="border-8 border-purple-500 bg-black p-8 text-center" style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)', minHeight: '500px', borderRadius: '8px', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+            <div className="mb-6 flex justify-center animate-pulse">
+              <img
+                src={getPokemonSprite('Mewtwo')}
+                alt="Mewtwo"
+                style={{
+                  imageRendering: 'pixelated',
+                  filter: 'drop-shadow(0 0 20px rgba(168, 85, 247, 0.8))',
+                  width: `${getSpriteSize(192)}px`,
+                  height: `${getSpriteSize(192)}px`
+                }}
+              />
+            </div>
+            <div className="border-4 border-red-600 bg-red-600 p-4 mb-6 animate-pulse">
+              <h1 className="text-4xl font-bold text-white" style={{textShadow: '3px 3px 0px #000'}}>
+                ⚠ WARNING ⚠
+              </h1>
+            </div>
+            <div className="border-4 border-purple-500 bg-purple-900 text-white p-6 mb-6">
+              <h2 className="text-2xl font-bold mb-4 text-yellow-300">
+                YOU ENCOUNTER
+              </h2>
+              <h1 className="text-6xl font-bold mb-4 text-purple-300 animate-pulse">MEWTWO</h1>
+              <p className="text-xl font-bold text-purple-200">
+                THE STRONGEST POKéMON IN THE WORLD!
+              </p>
+            </div>
+            <div className="border-4 border-purple-500 bg-purple-800 text-white p-4 mb-8">
+              <p className="text-2xl font-bold mb-2">HP: 150 | ATTACK: 150</p>
+              <p className="text-lg font-bold text-purple-300">TYPE: PSYCHIC</p>
+            </div>
+            <button
+              onClick={() => {
+                const mewtwo = {
+                  name: 'Mewtwo',
+                  type: 'Psychic',
+                  type2: null,
+                  hp: 150,
+                  maxHp: 150,
+                  attack: 150,
+                  color: '🧬',
+                  moves: ['Psychic', 'Shadow Ball', 'Ice Beam', 'Aura Sphere'],
+                  moveTypes: ['Psychic', 'Ghost', 'Ice', 'Fighting']
+                };
+                setWildPokemon(mewtwo);
+                setIsPlayerTurn(true);
+                setGameState('battle');
+                setBattleLog([`A legendary Mewtwo appeared!`, `This is the ultimate challenge!`]);
               }}
-            />
+              className="w-full border-4 border-purple-500 bg-purple-700 hover:bg-purple-600 text-white font-bold py-4 px-8 text-2xl transition-all"
+              style={{boxShadow: '8px 8px 0px rgba(168, 85, 247, 0.5)'}}
+            >
+              ▸ ACCEPT THE CHALLENGE!
+            </button>
           </div>
-          <div className="border-4 border-red-600 bg-red-600 p-3 mb-4 animate-pulse">
-            <h1 className="text-3xl font-bold text-white" style={{textShadow: '3px 3px 0px #000'}}>
-              ⚠ WARNING ⚠
-            </h1>
-          </div>
-          <div className="border-4 border-purple-500 bg-purple-900 text-white p-4 mb-4">
-            <h2 className="text-xl font-bold mb-3 text-yellow-300">
-              YOU ENCOUNTER
-            </h2>
-            <h1 className="text-5xl font-bold mb-3 text-purple-300 animate-pulse">MEWTWO</h1>
-            <p className="text-base font-bold text-purple-200">
-              THE STRONGEST POKéMON IN THE WORLD!
-            </p>
-          </div>
-          <div className="border-4 border-purple-500 bg-purple-800 text-white p-3 mb-6">
-            <p className="text-xl font-bold mb-1">HP: 150 | ATTACK: 150</p>
-            <p className="text-base font-bold text-purple-300">TYPE: PSYCHIC</p>
-          </div>
-          <button
-            onClick={() => {
-              const mewtwo = {
-                name: 'Mewtwo',
-                type: 'Psychic',
-                type2: null,
-                hp: 150,
-                maxHp: 150,
-                attack: 150,
-                color: '🧬',
-                moves: ['Psychic', 'Shadow Ball', 'Ice Beam', 'Aura Sphere'],
-                moveTypes: ['Psychic', 'Ghost', 'Ice', 'Fighting']
-              };
-              setWildPokemon(mewtwo);
-              setIsPlayerTurn(true);
-              setGameState('battle');
-              setBattleLog([`A legendary Mewtwo appeared!`, `This is the ultimate challenge!`]);
-            }}
-            className="w-full border-4 border-purple-500 bg-purple-700 hover:bg-purple-600 text-white font-bold py-4 px-8 text-xl transition-all"
-            style={{boxShadow: '8px 8px 0px rgba(168, 85, 247, 0.5)'}}
-          >
-            ▸ ACCEPT THE CHALLENGE!
-          </button>
         </div>
       </div>
     );
@@ -1191,7 +1193,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+        <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
               <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>GOTCHA!</h2>
@@ -1247,7 +1249,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+        <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#22c55e'}}>
               <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>VICTORY!</h2>
@@ -1306,7 +1308,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+        <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-6 mb-6" style={{backgroundColor: '#dc2626'}}>
               <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>GAME OVER</h2>
