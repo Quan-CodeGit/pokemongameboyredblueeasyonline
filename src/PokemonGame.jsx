@@ -863,17 +863,19 @@ const PokemonGame = () => {
         <SettingsModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor: '#ffffff'}}>
-            {/* Pokemon Logo Image */}
-            <div className="mb-6">
-              <img
-                src="https://fontmeme.com/permalink/250126/8de72b0e0ce2b0b2b8d64c16b14bf4c2.png"
-                alt="Pokemon Logo"
-                style={{
-                  width: '300px',
-                  height: 'auto',
-                  imageRendering: 'pixelated'
-                }}
-              />
+            {/* Pokemon Logo using SVG-style text */}
+            <div className="mb-6 text-center">
+              <h1 className="retro-text" style={{
+                fontSize: '64px',
+                fontWeight: 'bold',
+                color: '#ffde00',
+                textShadow: '4px 4px 0px #3b5dae, -2px -2px 0px #3b5dae, 2px -2px 0px #3b5dae, -2px 2px 0px #3b5dae, 2px 2px 0px #3b5dae',
+                letterSpacing: '2px',
+                lineHeight: '1',
+                WebkitTextStroke: '2px #3b5dae'
+              }}>
+                POKéMON
+              </h1>
             </div>
 
             {/* Red Version */}
@@ -889,18 +891,15 @@ const PokemonGame = () => {
               </h2>
             </div>
 
-            {/* Red Trainer Sprite */}
+            {/* Red Trainer Sprite - pixel art style */}
             <div className="mb-8 flex justify-center">
-              <img
-                src="https://i.etsystatic.com/35169377/r/il/dc4710/6884727028/il_fullxfull.6884727028_eol6.jpg"
-                alt="Red Trainer"
-                style={{
-                  width: '160px',
-                  height: '160px',
-                  imageRendering: 'pixelated',
-                  objectFit: 'contain'
-                }}
-              />
+              <div style={{
+                width: '96px',
+                height: '96px',
+                background: 'url(https://archives.bulbagarden.net/media/upload/d/d7/Spr_FRLG_Red.png) center/contain no-repeat',
+                imageRendering: 'pixelated',
+                transform: 'scale(1.5)'
+              }}></div>
             </div>
 
             {/* Copyright */}
@@ -913,6 +912,14 @@ const PokemonGame = () => {
             {/* START Button */}
             <button
               onClick={() => {
+                // Ensure intro music starts playing on user interaction
+                if (!introMusicRef.current && audioVolume !== 'none') {
+                  const introMusic = new Audio('https://www.myinstants.com/media/sounds/pokemon-red-blue-intro.mp3');
+                  introMusic.loop = true;
+                  introMusic.volume = audioVolume === 'low' ? 0.3 : 0.7;
+                  introMusic.play().catch(err => console.log('Intro music play failed:', err));
+                  introMusicRef.current = introMusic;
+                }
                 playSound('sendout');
                 setGameState('start');
               }}
