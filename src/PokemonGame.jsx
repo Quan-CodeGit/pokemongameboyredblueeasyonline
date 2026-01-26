@@ -44,23 +44,31 @@ const PokemonGame = () => {
     localStorage.setItem('pokemonGameDebugMode', debugMode.toString());
   }, [debugMode]);
 
-  // Play intro music on intro screen
+  // Play intro music on intro and start screen, stop on battle
   useEffect(() => {
-    if (gameState === 'intro' && audioVolume !== 'none') {
+    if ((gameState === 'intro' || gameState === 'start') && audioVolume !== 'none') {
       // Pokemon Red/Blue intro theme
-      const introMusic = new Audio('https://www.myinstants.com/media/sounds/pokemon-red-blue-intro.mp3');
-      introMusic.loop = true;
-      introMusic.volume = audioVolume === 'low' ? 0.3 : 0.7;
-      introMusic.play().catch(err => console.log('Intro music play failed:', err));
-      introMusicRef.current = introMusic;
-
-      return () => {
-        if (introMusicRef.current) {
-          introMusicRef.current.pause();
-          introMusicRef.current = null;
-        }
-      };
+      if (!introMusicRef.current) {
+        const introMusic = new Audio('https://www.myinstants.com/media/sounds/pokemon-red-blue-intro.mp3');
+        introMusic.loop = true;
+        introMusic.volume = audioVolume === 'low' ? 0.3 : 0.7;
+        introMusic.play().catch(err => console.log('Intro music play failed:', err));
+        introMusicRef.current = introMusic;
+      }
+    } else {
+      // Stop music when leaving intro/start screens
+      if (introMusicRef.current) {
+        introMusicRef.current.pause();
+        introMusicRef.current = null;
+      }
     }
+
+    return () => {
+      if (introMusicRef.current && gameState !== 'intro' && gameState !== 'start') {
+        introMusicRef.current.pause();
+        introMusicRef.current = null;
+      }
+    };
   }, [gameState, audioVolume]);
 
   // Get container size based on display mode
@@ -849,48 +857,54 @@ const PokemonGame = () => {
   // Pokemon Red/Blue Intro Screen
   if (gameState === 'intro') {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace', background: 'linear-gradient(135deg, #e8b4f9 0%, #f4c7ff 100%)'}}>
+      <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
-          <div className="gameboy-screen flex flex-col items-center justify-center" style={{background: 'linear-gradient(135deg, #e8b4f9 0%, #f4c7ff 100%)'}}>
-            {/* Pokemon Logo */}
-            <div className="mb-8 text-center">
-              <h1 className="retro-text" style={{
-                fontSize: '72px',
-                fontWeight: 'bold',
-                color: '#ffde00',
-                textShadow: '4px 4px 0px #3a5dae, -2px -2px 0px #3a5dae, 2px -2px 0px #3a5dae, -2px 2px 0px #3a5dae',
-                letterSpacing: '4px',
-                lineHeight: '1'
-              }}>
-                POKéMON
-              </h1>
+          <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor: '#ffffff'}}>
+            {/* Pokemon Logo Image */}
+            <div className="mb-6">
+              <img
+                src="https://fontmeme.com/permalink/250126/8de72b0e0ce2b0b2b8d64c16b14bf4c2.png"
+                alt="Pokemon Logo"
+                style={{
+                  width: '300px',
+                  height: 'auto',
+                  imageRendering: 'pixelated'
+                }}
+              />
             </div>
 
             {/* Red Version */}
-            <div className="mb-6">
+            <div className="mb-8">
               <h2 className="retro-text text-center" style={{
-                fontSize: '24px',
+                fontSize: '20px',
                 fontWeight: 'bold',
                 color: '#dc2626',
                 textShadow: '2px 2px 0px #000',
-                letterSpacing: '2px'
+                letterSpacing: '3px'
               }}>
                 Red Version
               </h2>
             </div>
 
-            {/* Trainer Sprite */}
-            <div className="mb-8">
-              <div className="border-4 border-black bg-white p-4" style={{boxShadow: '4px 4px 0px #000'}}>
-                <div style={{width: '128px', height: '128px', background: 'url(https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/6.png) center/contain no-repeat'}}></div>
-              </div>
+            {/* Red Trainer Sprite */}
+            <div className="mb-8 flex justify-center">
+              <img
+                src="https://i.etsystatic.com/35169377/r/il/dc4710/6884727028/il_fullxfull.6884727028_eol6.jpg"
+                alt="Red Trainer"
+                style={{
+                  width: '160px',
+                  height: '160px',
+                  imageRendering: 'pixelated',
+                  objectFit: 'contain'
+                }}
+              />
             </div>
 
             {/* Copyright */}
-            <div className="mb-6 text-center">
+            <div className="mb-8 text-center">
               <p className="retro-text text-xs" style={{color: '#000'}}>
                 ©'95,'96,'98 GAME FREAK inc.
               </p>
