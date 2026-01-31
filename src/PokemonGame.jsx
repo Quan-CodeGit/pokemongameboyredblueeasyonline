@@ -12,6 +12,7 @@ const PokemonGame = () => {
   const [availableTeam, setAvailableTeam] = useState([]);
   const [isEvolving, setIsEvolving] = useState(false);
   const [spriteCache, setSpriteCache] = useState({});
+  const [introMusicPlaying, setIntroMusicPlaying] = useState(false);
   const [displayMode, setDisplayMode] = useState(() => {
     // Load from localStorage or default to 'pc'
     return localStorage.getItem('pokemonGameDisplayMode') || 'pc';
@@ -44,9 +45,9 @@ const PokemonGame = () => {
     localStorage.setItem('pokemonGameDebugMode', debugMode.toString());
   }, [debugMode]);
 
-  // Play intro music on intro and start screen, stop on battle
+  // Play intro music on start screen only, stop when choosing starter
   useEffect(() => {
-    if ((gameState === 'intro' || gameState === 'start') && audioVolume !== 'none') {
+    if (gameState === 'start' && introMusicPlaying && audioVolume !== 'none') {
       // Pokemon Red/Blue intro theme
       if (!introMusicRef.current) {
         const introMusic = new Audio('https://www.myinstants.com/media/sounds/pokemon-red-blue-intro.mp3');
@@ -56,7 +57,7 @@ const PokemonGame = () => {
         introMusicRef.current = introMusic;
       }
     } else {
-      // Stop music when leaving intro/start screens
+      // Stop music when leaving start screen
       if (introMusicRef.current) {
         introMusicRef.current.pause();
         introMusicRef.current = null;
@@ -64,12 +65,12 @@ const PokemonGame = () => {
     }
 
     return () => {
-      if (introMusicRef.current && gameState !== 'intro' && gameState !== 'start') {
+      if (introMusicRef.current && gameState !== 'start') {
         introMusicRef.current.pause();
         introMusicRef.current = null;
       }
     };
-  }, [gameState, audioVolume]);
+  }, [gameState, introMusicPlaying, audioVolume]);
 
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
@@ -893,13 +894,16 @@ const PokemonGame = () => {
 
             {/* Red Trainer Sprite - pixel art style */}
             <div className="mb-8 flex justify-center">
-              <div style={{
-                width: '96px',
-                height: '96px',
-                background: 'url(https://archives.bulbagarden.net/media/upload/d/d7/Spr_FRLG_Red.png) center/contain no-repeat',
-                imageRendering: 'pixelated',
-                transform: 'scale(1.5)'
-              }}></div>
+              <img
+                src="https://archives.bulbagarden.net/media/upload/d/d7/Spr_FRLG_Red.png"
+                alt="Red Trainer"
+                style={{
+                  width: '144px',
+                  height: '144px',
+                  imageRendering: 'pixelated',
+                  objectFit: 'contain'
+                }}
+              />
             </div>
 
             {/* Copyright */}
@@ -912,16 +916,14 @@ const PokemonGame = () => {
             {/* START Button */}
             <button
               onClick={() => {
-                // Ensure intro music starts playing on user interaction
-                if (!introMusicRef.current && audioVolume !== 'none') {
-                  const introMusic = new Audio('https://www.myinstants.com/media/sounds/pokemon-red-blue-intro.mp3');
-                  introMusic.loop = true;
-                  introMusic.volume = audioVolume === 'low' ? 0.3 : 0.7;
-                  introMusic.play().catch(err => console.log('Intro music play failed:', err));
-                  introMusicRef.current = introMusic;
+                if (!introMusicPlaying) {
+                  // First click: start music
+                  setIntroMusicPlaying(true);
+                  setGameState('start');
+                } else {
+                  // Second click: go to starter selection (handled in start screen)
+                  setGameState('start');
                 }
-                playSound('sendout');
-                setGameState('start');
               }}
               className="border-4 border-black px-8 py-4 font-bold text-xl transition-all hover:scale-105 retro-text"
               style={{
@@ -1031,7 +1033,6 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <Footer />
         <div className={`border-8 border-purple-500 bg-black p-8 ${getContainerClass()} w-full text-center`} style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)'}}>
           <div className="mb-6 flex justify-center animate-pulse">
             <img
@@ -1101,7 +1102,6 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
-        <Footer />
         <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen">
             <div className="grid grid-cols-2 gap-4 mb-4">
