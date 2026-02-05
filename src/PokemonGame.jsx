@@ -13,6 +13,9 @@ const PokemonGame = () => {
   const [isEvolving, setIsEvolving] = useState(false);
   const [spriteCache, setSpriteCache] = useState({});
   const [introMusicPlaying, setIntroMusicPlaying] = useState(false);
+  const [selectedStarterIndex, setSelectedStarterIndex] = useState(0);
+  const [selectedMoveIndex, setSelectedMoveIndex] = useState(0);
+  const [selectedActionIndex, setSelectedActionIndex] = useState(0); // 0-3: moves, 4: potion, 5: catch, 6: switch
   const [displayMode, setDisplayMode] = useState(() => {
     // Load from localStorage or default to 'pc'
     return localStorage.getItem('pokemonGameDisplayMode') || 'pc';
@@ -71,6 +74,101 @@ const PokemonGame = () => {
       }
     };
   }, [gameState, introMusicPlaying, audioVolume]);
+
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Prevent default for arrow keys and enter to avoid page scrolling
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
+        e.preventDefault();
+      }
+
+      // Intro screen - Enter to start
+      if (gameState === 'intro') {
+        if (e.key === 'Enter') {
+          setIntroMusicPlaying(true);
+          setGameState('start');
+        }
+        return;
+      }
+
+      // Starter selection screen
+      if (gameState === 'start') {
+        if (e.key === 'ArrowLeft') {
+          setSelectedStarterIndex(prev => (prev - 1 + 3) % 3);
+        } else if (e.key === 'ArrowRight') {
+          setSelectedStarterIndex(prev => (prev + 1) % 3);
+        } else if (e.key === 'Enter') {
+          // Trigger starter selection - will be handled by the button click
+          const starterButtons = document.querySelectorAll('[data-starter-index]');
+          if (starterButtons[selectedStarterIndex]) {
+            starterButtons[selectedStarterIndex].click();
+          }
+        }
+        return;
+      }
+
+      // Battle screen
+      if (gameState === 'battle' && isPlayerTurn && !isEvolving) {
+        // Grid navigation: 0-3 moves (2x2), 4 potion, 5 catch, 6 switch
+        if (e.key === 'ArrowUp') {
+          setSelectedActionIndex(prev => {
+            if (prev === 2 || prev === 3) return prev - 2; // Move up in moves grid
+            if (prev === 4) return 0; // Potion to first move
+            if (prev === 5) return 1; // Catch to second move
+            if (prev === 6) return 3; // Switch to fourth move
+            return prev;
+          });
+        } else if (e.key === 'ArrowDown') {
+          setSelectedActionIndex(prev => {
+            if (prev === 0 || prev === 1) return prev + 2; // Move down in moves grid
+            if (prev === 2) return 4; // Third move to potion
+            if (prev === 3) return 6; // Fourth move to switch
+            return prev;
+          });
+        } else if (e.key === 'ArrowLeft') {
+          setSelectedActionIndex(prev => {
+            if (prev === 1) return 0;
+            if (prev === 3) return 2;
+            if (prev === 5) return 4;
+            if (prev === 6) return 5;
+            return prev;
+          });
+        } else if (e.key === 'ArrowRight') {
+          setSelectedActionIndex(prev => {
+            if (prev === 0) return 1;
+            if (prev === 2) return 3;
+            if (prev === 4) return 5;
+            if (prev === 5) return 6;
+            return prev;
+          });
+        } else if (e.key === 'Enter') {
+          // Trigger the selected action
+          const actionButtons = document.querySelectorAll('[data-action-index]');
+          actionButtons.forEach(btn => {
+            if (parseInt(btn.getAttribute('data-action-index')) === selectedActionIndex) {
+              btn.click();
+            }
+          });
+        }
+        return;
+      }
+
+      // Victory/Defeat/Catch screens - Enter to continue
+      if (['victory', 'defeat', 'catch'].includes(gameState)) {
+        if (e.key === 'Enter') {
+          const continueButton = document.querySelector('[data-continue-button]');
+          if (continueButton) {
+            continueButton.click();
+          }
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex]);
 
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
@@ -865,28 +963,28 @@ const PokemonGame = () => {
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor: '#ffffff'}}>
             {/* Pokemon Logo using SVG-style text */}
-            <div className="mb-4 text-center">
+            <div className="mb-6 text-center">
               <h1 className="retro-text" style={{
-                fontSize: '42px',
+                fontSize: '56px',
                 fontWeight: 'bold',
                 color: '#ffde00',
-                textShadow: '3px 3px 0px #3b5dae, -1px -1px 0px #3b5dae, 1px -1px 0px #3b5dae, -1px 1px 0px #3b5dae, 1px 1px 0px #3b5dae',
-                letterSpacing: '1px',
+                textShadow: '4px 4px 0px #3b5dae, -2px -2px 0px #3b5dae, 2px -2px 0px #3b5dae, -2px 2px 0px #3b5dae, 2px 2px 0px #3b5dae',
+                letterSpacing: '2px',
                 lineHeight: '1',
-                WebkitTextStroke: '1px #3b5dae'
+                WebkitTextStroke: '2px #3b5dae'
               }}>
                 POKéMON
               </h1>
             </div>
 
             {/* Red Version */}
-            <div className="mb-4">
+            <div className="mb-6">
               <h2 className="retro-text text-center" style={{
-                fontSize: '14px',
+                fontSize: '18px',
                 fontWeight: 'bold',
                 color: '#dc2626',
-                textShadow: '1px 1px 0px #000',
-                letterSpacing: '2px'
+                textShadow: '2px 2px 0px #000',
+                letterSpacing: '3px'
               }}>
                 Red Version
               </h2>
@@ -977,12 +1075,13 @@ const PokemonGame = () => {
             </div>
           
             <div className="grid grid-cols-3 gap-3">
-              {starters.map(starter => (
+              {starters.map((starter, index) => (
                 <button
                   key={starter.name}
+                  data-starter-index={index}
                   onClick={() => chooseStarter(starter)}
-                  className="border-4 border-black p-4 transition-all hover:scale-105"
-                  style={{backgroundColor: '#fbbf24', boxShadow: '4px 4px 0px #000'}}
+                  className={`border-4 p-4 transition-all hover:scale-105 ${selectedStarterIndex === index ? 'border-blue-500 ring-4 ring-blue-300' : 'border-black'}`}
+                  style={{backgroundColor: '#fbbf24', boxShadow: selectedStarterIndex === index ? '4px 4px 0px #3b82f6' : '4px 4px 0px #000'}}
                 >
                   <div className="mb-2 flex justify-center bg-white border-2 border-black p-2 rounded">
                     <img
@@ -1208,15 +1307,16 @@ const PokemonGame = () => {
                 {playerPokemon.moves.map((move, index) => (
                   <button
                     key={index}
+                    data-action-index={index}
                     onClick={() => playerAttack(index)}
                     disabled={!isPlayerTurn}
-                    className={`border-4 border-black py-2 px-3 font-bold text-xs transition-all retro-text ${
+                    className={`border-4 py-2 px-3 font-bold text-xs transition-all retro-text ${
                       isPlayerTurn ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
-                    }`}
+                    } ${selectedActionIndex === index && isPlayerTurn ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
                     style={{
                       backgroundColor: isPlayerTurn ? '#fbbf24' : '#9ca3af',
                       color: '#000',
-                      boxShadow: isPlayerTurn ? '3px 3px 0px #000' : 'none'
+                      boxShadow: selectedActionIndex === index && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none')
                     }}
                   >
                     {move.toUpperCase()}
@@ -1226,30 +1326,32 @@ const PokemonGame = () => {
 
               <div className="grid grid-cols-2 gap-2">
                 <button
+                  data-action-index={4}
                   onClick={usePotion}
                   disabled={!isPlayerTurn || potionUsed}
-                  className={`border-4 border-black py-2 px-3 font-bold text-xs transition-all retro-text ${
+                  className={`border-4 py-2 px-3 font-bold text-xs transition-all retro-text ${
                     isPlayerTurn && !potionUsed ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
-                  }`}
+                  } ${selectedActionIndex === 4 && isPlayerTurn ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
                   style={{
                     backgroundColor: isPlayerTurn && !potionUsed ? '#22c55e' : '#9ca3af',
                     color: '#000',
-                    boxShadow: isPlayerTurn && !potionUsed ? '3px 3px 0px #000' : 'none'
+                    boxShadow: selectedActionIndex === 4 && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn && !potionUsed ? '3px 3px 0px #000' : 'none')
                   }}
                 >
                   POTION {potionUsed && '(X)'}
                 </button>
 
                 <button
+                  data-action-index={5}
                   onClick={catchPokemon}
                   disabled={!isPlayerTurn}
-                  className={`border-4 border-black py-2 px-3 font-bold text-xs transition-all retro-text ${
+                  className={`border-4 py-2 px-3 font-bold text-xs transition-all retro-text ${
                     isPlayerTurn ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
-                  }`}
+                  } ${selectedActionIndex === 5 && isPlayerTurn ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
                   style={{
                     backgroundColor: isPlayerTurn ? '#dc2626' : '#9ca3af',
                     color: '#fff',
-                    boxShadow: isPlayerTurn ? '3px 3px 0px #000' : 'none'
+                    boxShadow: selectedActionIndex === 5 && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none')
                   }}
                 >
                   CATCH
@@ -1343,6 +1445,7 @@ const PokemonGame = () => {
               </p>
             </div>
             <button
+              data-continue-button
               onClick={nextBattle}
               className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
               style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
@@ -1402,6 +1505,7 @@ const PokemonGame = () => {
               </p>
             </div>
             <button
+              data-continue-button
               onClick={nextBattle}
               className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
               style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
@@ -1442,6 +1546,7 @@ const PokemonGame = () => {
               <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>GAME OVER</h2>
             </div>
             <button
+              data-continue-button
               onClick={resetGame}
               className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
               style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
