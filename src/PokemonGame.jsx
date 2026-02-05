@@ -31,6 +31,7 @@ const PokemonGame = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [quickMenuFocused, setQuickMenuFocused] = useState(false);
+  const [quickMenuIndex, setQuickMenuIndex] = useState(0); // 0: Settings, 1: How to Play, 2: Debug
 
   // Use ref to track Mewtwo spawn - bypasses React state timing issues
   const shouldSpawnMewtwo = useRef(false);
@@ -88,6 +89,33 @@ const PokemonGame = () => {
       // Space key - toggle quick menu focus (Settings/Debug buttons)
       if (e.key === ' ') {
         setQuickMenuFocused(prev => !prev);
+        setQuickMenuIndex(0); // Reset to first option when opening
+        return;
+      }
+
+      // Quick menu navigation when focused
+      if (quickMenuFocused) {
+        const maxIndex = debugMode ? 2 : 1; // 0: Settings, 1: How to Play, 2: Debug (if enabled)
+        if (e.key === 'ArrowUp') {
+          setQuickMenuIndex(prev => (prev - 1 + maxIndex + 1) % (maxIndex + 1));
+        } else if (e.key === 'ArrowDown') {
+          setQuickMenuIndex(prev => (prev + 1) % (maxIndex + 1));
+        } else if (e.key === 'Enter') {
+          if (quickMenuIndex === 0) {
+            setShowSettings(true);
+            setQuickMenuFocused(false);
+          } else if (quickMenuIndex === 1) {
+            setShowHowToPlay(true);
+            setQuickMenuFocused(false);
+          } else if (quickMenuIndex === 2 && debugMode) {
+            // Trigger debug button
+            const debugBtn = document.querySelector('[data-debug-button]');
+            if (debugBtn) debugBtn.click();
+            setQuickMenuFocused(false);
+          }
+        } else if (e.key === 'Escape') {
+          setQuickMenuFocused(false);
+        }
         return;
       }
 
@@ -95,6 +123,14 @@ const PokemonGame = () => {
       if (showHowToPlay) {
         if (e.key === 'Enter' || e.key === 'Escape') {
           setShowHowToPlay(false);
+        }
+        return;
+      }
+
+      // Close Settings modal with Escape
+      if (showSettings) {
+        if (e.key === 'Escape') {
+          setShowSettings(false);
         }
         return;
       }
@@ -184,7 +220,7 @@ const PokemonGame = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay]);
+  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay, showSettings, quickMenuFocused, quickMenuIndex, debugMode]);
 
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
@@ -199,29 +235,69 @@ const PokemonGame = () => {
 
   // Settings button component
   const SettingsButton = () => (
-    <div className={`fixed top-4 right-4 z-50 flex flex-col gap-2 ${quickMenuFocused ? 'ring-4 ring-yellow-400 rounded p-2' : ''}`}>
+    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
+      {/* Settings Button */}
       <button
         onClick={() => setShowSettings(true)}
-        className={`border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${quickMenuFocused ? 'animate-pulse' : ''}`}
+        className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
+          quickMenuFocused && quickMenuIndex === 0 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+        }`}
         style={{
           backgroundColor: '#3b82f6',
           color: '#fff',
-          boxShadow: '4px 4px 0px #000'
+          boxShadow: quickMenuFocused && quickMenuIndex === 0 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
         }}
       >
         ⚙️ SETTINGS
       </button>
+
+      {/* How to Play Button */}
       <button
         onClick={() => setShowHowToPlay(true)}
-        className={`border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${quickMenuFocused ? 'animate-pulse' : ''}`}
+        className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
+          quickMenuFocused && quickMenuIndex === 1 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+        }`}
         style={{
           backgroundColor: '#22c55e',
           color: '#fff',
-          boxShadow: '4px 4px 0px #000'
+          boxShadow: quickMenuFocused && quickMenuIndex === 1 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
         }}
       >
         ❓ HOW TO PLAY
       </button>
+
+      {/* Debug Button - only show if debug mode is enabled */}
+      {debugMode && (
+        <button
+          data-debug-button
+          onClick={() => {
+            if (playerPokemon) {
+              setPlayerPokemon(prev => ({ ...prev, exp: 19 }));
+              setAvailableTeam(prev => prev.map(p =>
+                p.name === playerPokemon.name ? { ...p, exp: 19 } : p
+              ));
+              setBattleLog(prev => [...prev, 'DEBUG: EXP set to 19. Win one more battle for Mewtwo!']);
+            }
+          }}
+          className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
+            quickMenuFocused && quickMenuIndex === 2 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+          }`}
+          style={{
+            backgroundColor: '#dc2626',
+            color: '#fff',
+            boxShadow: quickMenuFocused && quickMenuIndex === 2 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
+          }}
+        >
+          🐛 DEBUG: EXP→19
+        </button>
+      )}
+
+      {/* Quick menu indicator */}
+      {quickMenuFocused && (
+        <div className="text-xs text-center mt-2 bg-yellow-400 border-2 border-black px-2 py-1 retro-text">
+          ↑↓ Navigate | Enter Select | Space Close
+        </div>
+      )}
     </div>
   );
 
@@ -392,42 +468,6 @@ const PokemonGame = () => {
     );
   };
 
-  // Debug button component (only shown when debug mode is enabled)
-  const DebugButton = () => {
-    if (!debugMode) return null;
-
-    return (
-      <div className="fixed top-20 right-4 z-50">
-        <button
-          onClick={() => {
-            if (availableTeam.length > 0 && playerPokemon) {
-              // Update team
-              setAvailableTeam(prevTeam => {
-                const updatedTeam = prevTeam.map((pokemon, index) => {
-                  if (index === 0) {
-                    return { ...pokemon, exp: 19 };
-                  }
-                  return pokemon;
-                });
-                return updatedTeam;
-              });
-              // Update current player Pokemon
-              setPlayerPokemon(prev => ({ ...prev, exp: 19 }));
-              setBattleLog(prev => [...prev, 'DEBUG: Set first Pokemon EXP to 19. Win one more battle to spawn Mewtwo!']);
-            }
-          }}
-          className="border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text"
-          style={{
-            backgroundColor: '#ef4444',
-            color: '#fff',
-            boxShadow: '4px 4px 0px #000'
-          }}
-        >
-          DEBUG: EXP→19
-        </button>
-      </div>
-    );
-  };
 
   // Footer component - placed inside gameboy console
   const Footer = () => (
@@ -1051,7 +1091,6 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
-        <DebugButton />
         <SettingsModal />
         <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
@@ -1152,7 +1191,6 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
-        <DebugButton />
         <SettingsModal />
         <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
@@ -1225,7 +1263,6 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen bg-black p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
-        <DebugButton />
         <SettingsModal />
         <HowToPlayModal />
         <div className={`border-8 border-purple-500 bg-black p-8 ${getContainerClass()} w-full text-center`} style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)'}}>
@@ -1295,7 +1332,6 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
-        <DebugButton />
         <SettingsModal />
         <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
@@ -1518,7 +1554,6 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
-        <DebugButton />
         <SettingsModal />
         <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
@@ -1576,7 +1611,6 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
-        <DebugButton />
         <SettingsModal />
         <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
@@ -1637,7 +1671,6 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
-        <DebugButton />
         <SettingsModal />
         <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
