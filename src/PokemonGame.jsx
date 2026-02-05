@@ -75,7 +75,7 @@ const PokemonGame = () => {
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
   const getContainerClass = () => {
-    return displayMode === 'pc' ? 'max-w-4xl' : 'max-w-2xl';
+    return displayMode === 'pc' ? 'max-w-xl' : 'max-w-sm';
   };
 
   // Get sprite size based on display mode
@@ -858,48 +858,52 @@ const PokemonGame = () => {
   // Pokemon Red/Blue Intro Screen
   if (gameState === 'intro') {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor: '#ffffff'}}>
             {/* Pokemon Logo using SVG-style text */}
-            <div className="mb-6 text-center">
+            <div className="mb-4 text-center">
               <h1 className="retro-text" style={{
-                fontSize: '64px',
+                fontSize: '42px',
                 fontWeight: 'bold',
                 color: '#ffde00',
-                textShadow: '4px 4px 0px #3b5dae, -2px -2px 0px #3b5dae, 2px -2px 0px #3b5dae, -2px 2px 0px #3b5dae, 2px 2px 0px #3b5dae',
-                letterSpacing: '2px',
+                textShadow: '3px 3px 0px #3b5dae, -1px -1px 0px #3b5dae, 1px -1px 0px #3b5dae, -1px 1px 0px #3b5dae, 1px 1px 0px #3b5dae',
+                letterSpacing: '1px',
                 lineHeight: '1',
-                WebkitTextStroke: '2px #3b5dae'
+                WebkitTextStroke: '1px #3b5dae'
               }}>
                 POKéMON
               </h1>
             </div>
 
             {/* Red Version */}
-            <div className="mb-8">
+            <div className="mb-4">
               <h2 className="retro-text text-center" style={{
-                fontSize: '20px',
+                fontSize: '14px',
                 fontWeight: 'bold',
                 color: '#dc2626',
-                textShadow: '2px 2px 0px #000',
-                letterSpacing: '3px'
+                textShadow: '1px 1px 0px #000',
+                letterSpacing: '2px'
               }}>
                 Red Version
               </h2>
             </div>
 
             {/* Red Trainer Sprite - pixel art style */}
-            <div className="mb-8 flex justify-center">
+            <div className="mb-4 flex justify-center">
               <img
-                src="https://archives.bulbagarden.net/media/upload/d/d7/Spr_FRLG_Red.png"
+                src="https://img.pokemondb.net/sprites/trainers/red-lg.png"
                 alt="Red Trainer"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://archives.bulbagarden.net/media/upload/4/4c/Spr_RG_Red.png';
+                }}
                 style={{
-                  width: '144px',
-                  height: '144px',
+                  width: '80px',
+                  height: 'auto',
                   imageRendering: 'pixelated',
                   objectFit: 'contain'
                 }}
@@ -907,8 +911,8 @@ const PokemonGame = () => {
             </div>
 
             {/* Copyright */}
-            <div className="mb-8 text-center">
-              <p className="retro-text text-xs" style={{color: '#000'}}>
+            <div className="mb-4 text-center">
+              <p className="retro-text" style={{color: '#000', fontSize: '8px'}}>
                 ©'95,'96,'98 GAME FREAK inc.
               </p>
             </div>
@@ -925,11 +929,11 @@ const PokemonGame = () => {
                   setGameState('start');
                 }
               }}
-              className="border-4 border-black px-8 py-4 font-bold text-xl transition-all hover:scale-105 retro-text"
+              className="border-3 border-black px-6 py-3 font-bold text-sm transition-all hover:scale-105 retro-text"
               style={{
                 backgroundColor: '#dc2626',
                 color: '#fff',
-                boxShadow: '6px 6px 0px #000'
+                boxShadow: '4px 4px 0px #000'
               }}
             >
               START GAME
@@ -958,7 +962,7 @@ const PokemonGame = () => {
 
   if (gameState === 'start') {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
@@ -1317,7 +1321,7 @@ const PokemonGame = () => {
 
   if (gameState === 'catch') {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
@@ -1373,7 +1377,7 @@ const PokemonGame = () => {
 
   if (gameState === 'victory') {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
@@ -1432,7 +1436,7 @@ const PokemonGame = () => {
 
   if (gameState === 'defeat') {
     return (
-      <div className="min-h-screen p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
