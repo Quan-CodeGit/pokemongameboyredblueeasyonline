@@ -29,6 +29,8 @@ const PokemonGame = () => {
     return localStorage.getItem('pokemonGameDebugMode') === 'true';
   });
   const [showSettings, setShowSettings] = useState(false);
+  const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [quickMenuFocused, setQuickMenuFocused] = useState(false);
 
   // Use ref to track Mewtwo spawn - bypasses React state timing issues
   const shouldSpawnMewtwo = useRef(false);
@@ -79,8 +81,22 @@ const PokemonGame = () => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       // Prevent default for arrow keys and enter to avoid page scrolling
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(e.key)) {
         e.preventDefault();
+      }
+
+      // Space key - toggle quick menu focus (Settings/Debug buttons)
+      if (e.key === ' ') {
+        setQuickMenuFocused(prev => !prev);
+        return;
+      }
+
+      // Close How to Play modal with Enter or Escape
+      if (showHowToPlay) {
+        if (e.key === 'Enter' || e.key === 'Escape') {
+          setShowHowToPlay(false);
+        }
+        return;
       }
 
       // Intro screen - Enter to start
@@ -168,7 +184,7 @@ const PokemonGame = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex]);
+  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay]);
 
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
@@ -183,10 +199,10 @@ const PokemonGame = () => {
 
   // Settings button component
   const SettingsButton = () => (
-    <div className="fixed top-4 right-4 z-50">
+    <div className={`fixed top-4 right-4 z-50 flex flex-col gap-2 ${quickMenuFocused ? 'ring-4 ring-yellow-400 rounded p-2' : ''}`}>
       <button
         onClick={() => setShowSettings(true)}
-        className="border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text"
+        className={`border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${quickMenuFocused ? 'animate-pulse' : ''}`}
         style={{
           backgroundColor: '#3b82f6',
           color: '#fff',
@@ -195,8 +211,85 @@ const PokemonGame = () => {
       >
         ⚙️ SETTINGS
       </button>
+      <button
+        onClick={() => setShowHowToPlay(true)}
+        className={`border-4 border-black px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${quickMenuFocused ? 'animate-pulse' : ''}`}
+        style={{
+          backgroundColor: '#22c55e',
+          color: '#fff',
+          boxShadow: '4px 4px 0px #000'
+        }}
+      >
+        ❓ HOW TO PLAY
+      </button>
     </div>
   );
+
+  // How to Play modal component
+  const HowToPlayModal = () => {
+    if (!showHowToPlay) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{backgroundColor: 'rgba(0,0,0,0.8)'}}>
+        <div className="border-8 border-black bg-yellow-100 p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto" style={{boxShadow: '12px 12px 0px #000'}}>
+          <div className="border-4 border-black bg-green-600 p-3 mb-4">
+            <h2 className="text-xl font-bold text-center retro-text text-white">❓ HOW TO PLAY</h2>
+          </div>
+
+          <div className="border-4 border-black bg-white p-4 mb-4">
+            <p className="text-sm mb-4 retro-text" style={{color: '#000', lineHeight: '1.8'}}>
+              Hello trainer! Welcome to the world of Pokemon. I'm Professor Pine and I will be your guide to become the Pokemon Master. Here's how to play:
+            </p>
+
+            <div className="mb-4">
+              <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>🎮 CONTROLS:</h3>
+              <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
+                <li>• <strong>Arrow Keys</strong> - Navigate menus</li>
+                <li>• <strong>Enter</strong> - Confirm selection</li>
+                <li>• <strong>Space</strong> - Quick access Settings/Debug</li>
+              </ul>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>⚔️ BATTLE:</h3>
+              <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
+                <li>• Choose from 4 moves to attack</li>
+                <li>• Use <strong>POTION</strong> to heal (once per battle)</li>
+                <li>• Use <strong>CATCH</strong> to capture wild Pokemon</li>
+                <li>• <strong>SWITCH</strong> between your team Pokemon</li>
+              </ul>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>📈 EVOLUTION:</h3>
+              <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
+                <li>• Win battles to gain EXP</li>
+                <li>• Every 3 EXP = Evolution (+10 HP, +10 ATK)</li>
+                <li>• Max evolution = +5 HP, +5 ATK per 3 EXP</li>
+              </ul>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>🔮 MEWTWO CHALLENGE:</h3>
+              <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
+                <li>• Reach 20 EXP to unlock Mewtwo battle</li>
+                <li>• Defeat or catch Mewtwo to unlock final evolutions</li>
+                <li>• Face Gengar, Alakazam, Dragonite & more!</li>
+              </ul>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowHowToPlay(false)}
+            className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+            style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
+          >
+            GOT IT!
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   // Settings modal component
   const SettingsModal = () => {
@@ -960,6 +1053,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
+        <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor: '#ffffff'}}>
             {/* Pokemon Logo using SVG-style text */}
@@ -1060,6 +1154,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
+        <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
@@ -1132,6 +1227,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
+        <HowToPlayModal />
         <div className={`border-8 border-purple-500 bg-black p-8 ${getContainerClass()} w-full text-center`} style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)'}}>
           <div className="mb-6 flex justify-center animate-pulse">
             <img
@@ -1201,6 +1297,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
+        <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen">
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -1423,6 +1520,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
+        <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
@@ -1480,6 +1578,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
+        <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#22c55e'}}>
@@ -1540,6 +1639,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <DebugButton />
         <SettingsModal />
+        <HowToPlayModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-6 mb-6" style={{backgroundColor: '#dc2626'}}>
