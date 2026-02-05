@@ -75,7 +75,7 @@ const PokemonGame = () => {
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
   const getContainerClass = () => {
-    return displayMode === 'pc' ? 'max-w-xl' : 'max-w-sm';
+    return displayMode === 'pc' ? 'max-w-md' : 'max-w-xs';
   };
 
   // Get sprite size based on display mode
@@ -895,14 +895,10 @@ const PokemonGame = () => {
             {/* Red Trainer Sprite - pixel art style */}
             <div className="mb-4 flex justify-center">
               <img
-                src="https://img.pokemondb.net/sprites/trainers/red-lg.png"
+                src="https://i.redd.it/r06iotajcuv41.png"
                 alt="Red Trainer"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = 'https://archives.bulbagarden.net/media/upload/4/4c/Spr_RG_Red.png';
-                }}
                 style={{
-                  width: '80px',
+                  width: '72px',
                   height: 'auto',
                   imageRendering: 'pixelated',
                   objectFit: 'contain'

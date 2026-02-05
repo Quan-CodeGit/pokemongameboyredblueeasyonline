@@ -21,23 +21,23 @@ img[style*="pixelated"] {
 /* Game Boy Console */
 .gameboy-console {
   background: linear-gradient(145deg, #ffd700 0%, #f5c400 100%);
-  border-radius: 16px 16px 48px 16px;
+  border-radius: 12px 12px 40px 12px;
   box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.5),
-    inset 0 -4px 16px rgba(0, 0, 0, 0.1),
-    inset 0 4px 16px rgba(255, 255, 255, 0.3);
-  padding: 24px;
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    inset 0 -3px 12px rgba(0, 0, 0, 0.1),
+    inset 0 3px 12px rgba(255, 255, 255, 0.3);
+  padding: 20px;
   position: relative;
 }
 
 .gameboy-console::before {
   content: '';
   position: absolute;
-  top: 10px;
+  top: 8px;
   left: 50%;
   transform: translateX(-50%);
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   background: radial-gradient(circle, #4a5568 40%, transparent 41%);
   border-radius: 50%;
 }
@@ -45,10 +45,10 @@ img[style*="pixelated"] {
 .gameboy-console::after {
   content: '◉';
   position: absolute;
-  top: 12px;
+  top: 9px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 28px;
+  font-size: 22px;
   color: #2d3748;
   opacity: 0.3;
 }
@@ -56,42 +56,42 @@ img[style*="pixelated"] {
 /* Game Boy Screen */
 .gameboy-screen {
   background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
-  border: 8px solid #1a1a1a;
-  border-radius: 6px;
+  border: 6px solid #1a1a1a;
+  border-radius: 4px;
   box-shadow:
-    inset 0 3px 16px rgba(0, 0, 0, 0.15),
-    0 3px 8px rgba(0, 0, 0, 0.3);
-  padding: 12px;
+    inset 0 2px 12px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+  padding: 10px;
   position: relative;
-  min-height: 380px;
+  min-height: 320px;
 }
 
 .gameboy-screen::before {
   content: 'GAME BOY';
   position: absolute;
-  bottom: -28px;
+  bottom: -24px;
   left: 50%;
   transform: translateX(-50%);
   font-family: 'Arial Black', sans-serif;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: bold;
   color: #2d3748;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   opacity: 0.4;
 }
 
 /* Game Boy D-Pad */
 .gameboy-controls {
-  margin-top: 30px;
+  margin-top: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 16px;
 }
 
 .dpad {
-  width: 120px;
-  height: 120px;
+  width: 90px;
+  height: 90px;
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -121,14 +121,14 @@ img[style*="pixelated"] {
 }
 
 .action-button {
-  width: 50px;
-  height: 50px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: #dc2626;
-  border: 4px solid #991b1b;
+  border: 3px solid #991b1b;
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.3),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+    0 3px 6px rgba(0, 0, 0, 0.3),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.2);
   position: relative;
   transform: rotate(-20deg);
 }
@@ -136,7 +136,7 @@ img[style*="pixelated"] {
 .action-button:last-child {
   background: #0ea5e9;
   border-color: #0284c7;
-  transform: rotate(-20deg) translateY(-10px);
+  transform: rotate(-20deg) translateY(-8px);
 }
 
 .action-button::before {
