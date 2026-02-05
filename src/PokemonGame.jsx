@@ -75,7 +75,7 @@ const PokemonGame = () => {
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
   const getContainerClass = () => {
-    return displayMode === 'pc' ? 'max-w-sm' : 'max-w-xs';
+    return displayMode === 'pc' ? 'max-w-2xl' : 'max-w-md';
   };
 
   // Get sprite size based on display mode
@@ -895,10 +895,10 @@ const PokemonGame = () => {
             {/* Red Trainer Sprite - pixel art style */}
             <div className="mb-4 flex justify-center">
               <img
-                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTqVYMyfr-wjCGNIv4pUAGitbV8zvJoCQWkuA&s"
+                src="/red-sprite.png"
                 alt="Red Trainer"
                 style={{
-                  width: '64px',
+                  width: '96px',
                   height: 'auto',
                   imageRendering: 'pixelated',
                   objectFit: 'contain'

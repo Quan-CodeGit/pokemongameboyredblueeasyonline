@@ -18,7 +18,10 @@
       "Bash(git remote rename:*)",
       "Bash(git config:*)",
       "Bash(git fetch:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(ls:*)",
+      "Bash(dir:*)",
+      "Bash(copy:*)"
     ]
   }
 }
