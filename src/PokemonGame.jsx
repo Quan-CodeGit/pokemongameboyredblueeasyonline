@@ -526,7 +526,7 @@ const PokemonGame = () => {
           ...pokemon,
           name: nextEvolution.name,
           type2: nextEvolution.type2,
-          hp: pokemon.hp + 10,
+          hp: pokemon.maxHp + 10,
           maxHp: pokemon.maxHp + 10,
           attack: pokemon.attack + 10,
           exp: newExp
@@ -551,7 +551,7 @@ const PokemonGame = () => {
         
         const strengthenedPokemon = {
           ...pokemon,
-          hp: Math.min(pokemon.hp + 5, pokemon.maxHp + 5),
+          hp: pokemon.maxHp + 5,
           maxHp: pokemon.maxHp + 5,
           attack: pokemon.attack + 5,
           exp: newExp
@@ -631,7 +631,7 @@ const PokemonGame = () => {
         addLog(`${playerPokemon.name} gained 1 EXP!`);
 
         // Show message if we reached 20 EXP
-        if (newExp >= 20 && !hasDefeatedMewtwo.current && !wildPokemon.name === 'Mewtwo') {
+        if (newExp >= 20 && !hasDefeatedMewtwo.current && wildPokemon.name !== 'Mewtwo') {
           addLog(`A powerful presence stirs...`);
         }
 
