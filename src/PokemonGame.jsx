@@ -33,6 +33,8 @@ const PokemonGame = () => {
   const [quickMenuFocused, setQuickMenuFocused] = useState(false);
   const [quickMenuIndex, setQuickMenuIndex] = useState(0); // 0: Settings, 1: How to Play, 2: Debug
   const [settingsIndex, setSettingsIndex] = useState(0); // 0-1: Display, 2-4: Audio, 5-6: Debug, 7: Close
+  const [difficulty, setDifficulty] = useState('medium'); // 'easy', 'medium', 'hard'
+  const [selectedDifficultyIndex, setSelectedDifficultyIndex] = useState(1); // 0: Easy, 1: Medium, 2: Hard
 
   // Use ref to track Mewtwo spawn - bypasses React state timing issues
   const shouldSpawnMewtwo = useRef(false);
@@ -183,6 +185,20 @@ const PokemonGame = () => {
       if (gameState === 'intro') {
         if (e.key === 'Enter') {
           setIntroMusicPlaying(true);
+          setGameState('difficulty');
+        }
+        return;
+      }
+
+      // Difficulty selection screen
+      if (gameState === 'difficulty') {
+        if (e.key === 'ArrowLeft') {
+          setSelectedDifficultyIndex(prev => (prev - 1 + 3) % 3);
+        } else if (e.key === 'ArrowRight') {
+          setSelectedDifficultyIndex(prev => (prev + 1) % 3);
+        } else if (e.key === 'Enter') {
+          const difficulties = ['easy', 'medium', 'hard'];
+          setDifficulty(difficulties[selectedDifficultyIndex]);
           setGameState('start');
         }
         return;
@@ -758,6 +774,36 @@ const PokemonGame = () => {
   ];
 
   // Function to get weighted random Pokemon based on attack power
+  // Difficulty-based encounter rates
+  const getEncounterRates = () => {
+    switch (difficulty) {
+      case 'easy':
+        return { veryCommon: 35, common: 25, uncommon: 25, rare: 10, veryRare: 5 };
+      case 'hard':
+        return { veryCommon: 15, common: 20, uncommon: 30, rare: 20, veryRare: 15 };
+      default: // medium
+        return { veryCommon: 30, common: 25, uncommon: 20, rare: 15, veryRare: 10 };
+    }
+  };
+
+  // Difficulty-based catch rate multiplier
+  const getCatchRateMultiplier = () => {
+    switch (difficulty) {
+      case 'easy': return 1.5;   // 150% of base
+      case 'hard': return 0.9;   // 90% of base
+      default: return 1.0;       // 100% (medium)
+    }
+  };
+
+  // Difficulty-based enemy attack power multiplier
+  const getEnemyAttackMultiplier = () => {
+    switch (difficulty) {
+      case 'easy': return 0.9;   // 90% of base
+      case 'hard': return 1.1;   // 110% of base
+      default: return 1.0;       // 100% (medium)
+    }
+  };
+
   const getWeightedRandomPokemon = (pokemonList) => {
     // Group Pokemon by rarity based on attack power
     const maxAttack = Math.max(...pokemonList.map(p => p.attack));
@@ -768,17 +814,18 @@ const PokemonGame = () => {
     const rare = pokemonList.filter(p => p.attack / maxAttack > 0.7 && p.attack / maxAttack <= 0.85);    // attack 71-85
     const veryRare = pokemonList.filter(p => p.attack / maxAttack > 0.85);     // attack 86+
 
-    // Roll for rarity tier first (30%, 25%, 25%, 15%, 5%)
+    // Get difficulty-based encounter rates
+    const rates = getEncounterRates();
     const roll = Math.random() * 100;
     let selectedTier;
 
-    if (roll < 30) {
+    if (roll < rates.veryCommon) {
       selectedTier = veryCommon.length > 0 ? veryCommon : common;
-    } else if (roll < 55) {
+    } else if (roll < rates.veryCommon + rates.common) {
       selectedTier = common.length > 0 ? common : veryCommon;
-    } else if (roll < 80) {
+    } else if (roll < rates.veryCommon + rates.common + rates.uncommon) {
       selectedTier = uncommon.length > 0 ? uncommon : common;
-    } else if (roll < 95) {
+    } else if (roll < rates.veryCommon + rates.common + rates.uncommon + rates.rare) {
       selectedTier = rare.length > 0 ? rare : uncommon;
     } else {
       selectedTier = veryRare.length > 0 ? veryRare : rare;
@@ -958,18 +1005,24 @@ const PokemonGame = () => {
     return { ...pokemon, exp: newExp };
   };
 
-  const calculateDamage = (attacker, defender, moveIndex) => {
-    const baseDamage = Math.floor(attacker.attack * 0.4) + Math.floor(Math.random() * 10);
+  const calculateDamage = (attacker, defender, moveIndex, isEnemyAttack = false) => {
+    let baseDamage = Math.floor(attacker.attack * 0.4) + Math.floor(Math.random() * 10);
+
+    // Apply difficulty multiplier for enemy attacks
+    if (isEnemyAttack) {
+      baseDamage = Math.floor(baseDamage * getEnemyAttackMultiplier());
+    }
+
     const moveType = attacker.moveTypes[moveIndex];
     const effectiveness = getTypeEffectiveness(moveType, defender.type, defender.type2);
     const damage = Math.floor(baseDamage * effectiveness);
-    
+
     let effectText = '';
     if (effectiveness === 0) effectText = " It doesn't affect " + defender.name + "...";
     else if (effectiveness >= 4) effectText = " EXTREMELY effective!";
     else if (effectiveness > 1) effectText = " Super effective!";
     else if (effectiveness < 1) effectText = " Not very effective...";
-    
+
     return { damage, effectText };
   };
 
@@ -1052,7 +1105,7 @@ const PokemonGame = () => {
       const moveName = wildPokemon.moves[moveIndex];
 
       // Calculate damage using the CURRENT playerPokemon from state
-      const { damage, effectText } = calculateDamage(wildPokemon, prevPlayerPokemon, moveIndex);
+      const { damage, effectText } = calculateDamage(wildPokemon, prevPlayerPokemon, moveIndex, true);
 
       const newPlayerHp = Math.max(0, prevPlayerPokemon.hp - damage);
       const currentName = prevPlayerPokemon.name;
@@ -1103,11 +1156,15 @@ const PokemonGame = () => {
 
   const catchPokemon = () => {
     if (!isPlayerTurn || gameState !== 'battle') return;
-    
+
     const catchRate = wildPokemon.hp / wildPokemon.maxHp;
     const catchChance = Math.random();
-    
-    if (catchChance > catchRate * 0.7) {
+    const catchMultiplier = getCatchRateMultiplier();
+
+    // Lower HP = easier to catch. Difficulty affects the threshold.
+    // Base: catchChance > catchRate * 0.7 means ~30% base catch at full HP
+    // With multiplier: Easy = 1.5x easier, Hard = 0.9x harder
+    if (catchChance > catchRate * (0.7 / catchMultiplier)) {
       const newPokemon = { ...wildPokemon, hp: wildPokemon.maxHp };
       
       // Mark Mewtwo as defeated for ALL team members if caught
@@ -1237,6 +1294,8 @@ const PokemonGame = () => {
     setBattlesWon(0);
     setAvailableTeam([]);
     setPokedex([]);
+    setDifficulty('medium');
+    setSelectedDifficultyIndex(1);
     shouldSpawnMewtwo.current = false;
     hasDefeatedMewtwo.current = false;
   };
@@ -1303,12 +1362,12 @@ const PokemonGame = () => {
             <button
               onClick={() => {
                 if (!introMusicPlaying) {
-                  // First click: start music
+                  // First click: start music and go to difficulty selection
                   setIntroMusicPlaying(true);
-                  setGameState('start');
+                  setGameState('difficulty');
                 } else {
-                  // Second click: go to starter selection (handled in start screen)
-                  setGameState('start');
+                  // Second click: go to difficulty selection
+                  setGameState('difficulty');
                 }
               }}
               className="border-3 border-black px-6 py-3 font-bold text-sm transition-all hover:scale-105 retro-text"
@@ -1320,6 +1379,103 @@ const PokemonGame = () => {
             >
               START GAME
             </button>
+          </div>
+
+          {/* Game Boy Controls */}
+          <div className="gameboy-controls">
+            <div className="dpad">
+              <div className="dpad-button dpad-up"></div>
+              <div className="dpad-button dpad-left"></div>
+              <div className="dpad-button dpad-center"></div>
+              <div className="dpad-button dpad-right"></div>
+              <div className="dpad-button dpad-down"></div>
+            </div>
+            <div className="action-buttons">
+              <div className="action-button"></div>
+              <div className="action-button"></div>
+            </div>
+          </div>
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  // Difficulty Selection Screen
+  if (gameState === 'difficulty') {
+    const difficulties = [
+      {
+        name: 'Easy',
+        color: '#22c55e',
+        description: 'Weaker enemies, easier catches',
+        details: ['35% Very Common', '25% Common', '25% Uncommon', '10% Rare', '5% Very Rare', 'Catch: 150%', 'Enemy ATK: 90%']
+      },
+      {
+        name: 'Medium',
+        color: '#eab308',
+        description: 'Balanced challenge',
+        details: ['30% Very Common', '25% Common', '20% Uncommon', '15% Rare', '10% Very Rare', 'Catch: 100%', 'Enemy ATK: 100%']
+      },
+      {
+        name: 'Hard',
+        color: '#dc2626',
+        description: 'Stronger enemies, harder catches',
+        details: ['15% Very Common', '20% Common', '30% Uncommon', '20% Rare', '15% Very Rare', 'Catch: 90%', 'Enemy ATK: 110%']
+      }
+    ];
+
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+        <SettingsButton />
+        <SettingsModal />
+        <HowToPlayModal />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen">
+            <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
+              <h1 className="text-2xl font-bold text-center retro-text" style={{color: '#ffffff'}}>
+                POKéMON
+              </h1>
+            </div>
+
+            <div className="border-4 border-black p-3 mb-4" style={{backgroundColor: '#3b82f6'}}>
+              <p className="text-center text-xs font-bold retro-text" style={{color: '#ffffff'}}>
+                SELECT DIFFICULTY
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {difficulties.map((diff, index) => (
+                <button
+                  key={diff.name}
+                  onClick={() => {
+                    setDifficulty(['easy', 'medium', 'hard'][index]);
+                    setGameState('start');
+                  }}
+                  className={`border-4 p-3 transition-all hover:scale-105 ${selectedDifficultyIndex === index ? 'border-blue-500 ring-4 ring-blue-300' : 'border-black'}`}
+                  style={{backgroundColor: diff.color, boxShadow: selectedDifficultyIndex === index ? '4px 4px 0px #3b82f6' : '4px 4px 0px #000'}}
+                >
+                  <h3 className="font-bold text-sm mb-1 uppercase retro-text" style={{color: '#fff', textShadow: '1px 1px 0px #000'}}>
+                    {diff.name}
+                  </h3>
+                  <p className="text-xs retro-text mb-2" style={{color: '#fff', textShadow: '1px 1px 0px #000'}}>
+                    {diff.description}
+                  </p>
+                  <div className="bg-black bg-opacity-30 p-1 rounded">
+                    {diff.details.slice(0, 3).map((detail, i) => (
+                      <p key={i} className="text-xs retro-text" style={{color: '#fff', fontSize: '8px'}}>
+                        {detail}
+                      </p>
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 text-center">
+              <p className="text-xs retro-text" style={{color: '#666'}}>
+                Use ← → to select, Enter to confirm
+              </p>
+            </div>
           </div>
 
           {/* Game Boy Controls */}
