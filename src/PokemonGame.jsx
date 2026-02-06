@@ -32,6 +32,7 @@ const PokemonGame = () => {
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [quickMenuFocused, setQuickMenuFocused] = useState(false);
   const [quickMenuIndex, setQuickMenuIndex] = useState(0); // 0: Settings, 1: How to Play, 2: Debug
+  const [settingsIndex, setSettingsIndex] = useState(0); // 0-1: Display, 2-4: Audio, 5-6: Debug, 7: Close
 
   // Use ref to track Mewtwo spawn - bypasses React state timing issues
   const shouldSpawnMewtwo = useRef(false);
@@ -127,9 +128,52 @@ const PokemonGame = () => {
         return;
       }
 
-      // Close Settings modal with Escape
+      // Settings modal navigation
       if (showSettings) {
-        if (e.key === 'Escape') {
+        // Settings layout: Row 0: PC(0), Mobile(1) | Row 1: None(2), Low(3), High(4) | Row 2: Off(5), On(6) | Row 3: Close(7)
+        if (e.key === 'ArrowUp') {
+          setSettingsIndex(prev => {
+            if (prev === 0 || prev === 1) return 7; // Display to Close
+            if (prev === 2 || prev === 3 || prev === 4) return prev - 2; // Audio to Display
+            if (prev === 5 || prev === 6) return prev - 2; // Debug to Audio
+            if (prev === 7) return 5; // Close to Debug
+            return prev;
+          });
+        } else if (e.key === 'ArrowDown') {
+          setSettingsIndex(prev => {
+            if (prev === 0 || prev === 1) return prev + 2; // Display to Audio
+            if (prev === 2 || prev === 3 || prev === 4) return prev <= 3 ? 5 : 6; // Audio to Debug
+            if (prev === 5 || prev === 6) return 7; // Debug to Close
+            if (prev === 7) return 0; // Close to Display
+            return prev;
+          });
+        } else if (e.key === 'ArrowLeft') {
+          setSettingsIndex(prev => {
+            if (prev === 1) return 0;
+            if (prev === 3) return 2;
+            if (prev === 4) return 3;
+            if (prev === 6) return 5;
+            return prev;
+          });
+        } else if (e.key === 'ArrowRight') {
+          setSettingsIndex(prev => {
+            if (prev === 0) return 1;
+            if (prev === 2) return 3;
+            if (prev === 3) return 4;
+            if (prev === 5) return 6;
+            return prev;
+          });
+        } else if (e.key === 'Enter') {
+          // Trigger the selected setting
+          if (settingsIndex === 0) setDisplayMode('pc');
+          else if (settingsIndex === 1) setDisplayMode('mobile');
+          else if (settingsIndex === 2) setAudioVolume('none');
+          else if (settingsIndex === 3) setAudioVolume('low');
+          else if (settingsIndex === 4) setAudioVolume('high');
+          else if (settingsIndex === 5) setDebugMode(false);
+          else if (settingsIndex === 6) setDebugMode(true);
+          else if (settingsIndex === 7) setShowSettings(false);
+        } else if (e.key === 'Escape') {
           setShowSettings(false);
         }
         return;
@@ -220,7 +264,7 @@ const PokemonGame = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay, showSettings, quickMenuFocused, quickMenuIndex, debugMode]);
+  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay, showSettings, quickMenuFocused, quickMenuIndex, debugMode, settingsIndex]);
 
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
@@ -371,11 +415,27 @@ const PokemonGame = () => {
   const SettingsModal = () => {
     if (!showSettings) return null;
 
+    const getButtonClass = (index, isActive) => {
+      const isSelected = settingsIndex === index;
+      let baseClass = `flex-1 border-4 px-3 py-2 font-bold text-xs retro-text transition-all `;
+      if (isSelected) {
+        baseClass += 'border-yellow-400 ring-2 ring-yellow-400 scale-105 ';
+      } else {
+        baseClass += 'border-black ';
+      }
+      return baseClass;
+    };
+
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{backgroundColor: 'rgba(0,0,0,0.8)'}}>
         <div className="border-8 border-black bg-yellow-100 p-6 max-w-md w-full mx-4" style={{boxShadow: '12px 12px 0px #000'}}>
           <div className="border-4 border-black bg-red-600 p-3 mb-4">
             <h2 className="text-2xl font-bold text-center retro-text text-white">⚙️ SETTINGS</h2>
+          </div>
+
+          {/* Navigation hint */}
+          <div className="text-xs text-center mb-3 bg-gray-200 border-2 border-black px-2 py-1 retro-text">
+            ↑↓←→ Navigate | Enter Select | Esc Close
           </div>
 
           {/* Display Mode */}
@@ -384,17 +444,13 @@ const PokemonGame = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => setDisplayMode('pc')}
-                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
-                  displayMode === 'pc' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-                }`}
+                className={getButtonClass(0, displayMode === 'pc') + (displayMode === 'pc' ? 'bg-blue-500 text-white' : 'bg-gray-200')}
               >
                 PC MODE
               </button>
               <button
                 onClick={() => setDisplayMode('mobile')}
-                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
-                  displayMode === 'mobile' ? 'bg-blue-500 text-white' : 'bg-gray-200'
-                }`}
+                className={getButtonClass(1, displayMode === 'mobile') + (displayMode === 'mobile' ? 'bg-blue-500 text-white' : 'bg-gray-200')}
               >
                 MOBILE MODE
               </button>
@@ -407,25 +463,19 @@ const PokemonGame = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => setAudioVolume('none')}
-                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
-                  audioVolume === 'none' ? 'bg-red-500 text-white' : 'bg-gray-200'
-                }`}
+                className={getButtonClass(2, audioVolume === 'none') + (audioVolume === 'none' ? 'bg-red-500 text-white' : 'bg-gray-200')}
               >
                 NONE
               </button>
               <button
                 onClick={() => setAudioVolume('low')}
-                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
-                  audioVolume === 'low' ? 'bg-green-500 text-white' : 'bg-gray-200'
-                }`}
+                className={getButtonClass(3, audioVolume === 'low') + (audioVolume === 'low' ? 'bg-green-500 text-white' : 'bg-gray-200')}
               >
                 LOW
               </button>
               <button
                 onClick={() => setAudioVolume('high')}
-                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
-                  audioVolume === 'high' ? 'bg-green-500 text-white' : 'bg-gray-200'
-                }`}
+                className={getButtonClass(4, audioVolume === 'high') + (audioVolume === 'high' ? 'bg-green-500 text-white' : 'bg-gray-200')}
               >
                 HIGH
               </button>
@@ -438,17 +488,13 @@ const PokemonGame = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => setDebugMode(false)}
-                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
-                  !debugMode ? 'bg-gray-500 text-white' : 'bg-gray-200'
-                }`}
+                className={getButtonClass(5, !debugMode) + (!debugMode ? 'bg-gray-500 text-white' : 'bg-gray-200')}
               >
                 OFF
               </button>
               <button
                 onClick={() => setDebugMode(true)}
-                className={`flex-1 border-4 border-black px-3 py-2 font-bold text-xs retro-text ${
-                  debugMode ? 'bg-purple-500 text-white' : 'bg-gray-200'
-                }`}
+                className={getButtonClass(6, debugMode) + (debugMode ? 'bg-purple-500 text-white' : 'bg-gray-200')}
               >
                 ON
               </button>
@@ -458,7 +504,9 @@ const PokemonGame = () => {
           {/* Close Button */}
           <button
             onClick={() => setShowSettings(false)}
-            className="w-full border-4 border-black bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 retro-text transition-all"
+            className={`w-full border-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 retro-text transition-all ${
+              settingsIndex === 7 ? 'border-yellow-400 ring-2 ring-yellow-400 scale-105' : 'border-black'
+            }`}
             style={{boxShadow: '4px 4px 0px #000'}}
           >
             CLOSE
@@ -606,38 +654,99 @@ const PokemonGame = () => {
   ];
 
   const wildPokemons = [
-    // Easy targets
+    // Very Common (attack 10-30) - High encounter rate
     { name: 'Magikarp', type: 'Water', type2: null, hp: 20, maxHp: 20, attack: 10, color: '🐟', moves: ['Splash', 'Tackle'], moveTypes: ['Normal', 'Normal'] },
     { name: 'Metapod', type: 'Bug', type2: null, hp: 25, maxHp: 25, attack: 15, color: '🥚', moves: ['Harden', 'Tackle'], moveTypes: ['Normal', 'Normal'] },
-    { name: 'Kakuna', type: 'Bug', type2: 'Poison', hp: 25, maxHp: 25, attack: 15, color: '🐝', moves: ['Harden', 'Poison Sting'], moveTypes: ['Normal', 'Poison'] },
-    
-    // Normal difficulty
-    { name: 'Rattata', type: 'Normal', type2: null, hp: 30, maxHp: 30, attack: 35, color: '🐀', moves: ['Tackle', 'Quick Attack', 'Bite', 'Hyper Fang'], moveTypes: ['Normal', 'Normal', 'Dark', 'Normal'] },
-    { name: 'Pidgey', type: 'Normal', type2: 'Flying', hp: 40, maxHp: 40, attack: 40, color: '🐦', moves: ['Peck', 'Gust', 'Sand Attack', 'Wing Attack'], moveTypes: ['Flying', 'Flying', 'Ground', 'Flying'] },
+    { name: 'Kakuna', type: 'Bug', type2: null, hp: 25, maxHp: 25, attack: 15, color: '🐝', moves: ['Harden', 'Poison Sting'], moveTypes: ['Normal', 'Poison'] },
     { name: 'Caterpie', type: 'Bug', type2: null, hp: 45, maxHp: 45, attack: 30, color: '🐛', moves: ['Tackle', 'String Shot', 'Bug Bite'], moveTypes: ['Normal', 'Bug', 'Bug'] },
-    { name: 'Weedle', type: 'Bug', type2: 'Poison', hp: 40, maxHp: 40, attack: 35, color: '🐝', moves: ['Poison Sting', 'String Shot', 'Bug Bite'], moveTypes: ['Poison', 'Bug', 'Bug'] },
-    { name: 'Oddish', type: 'Grass', type2: 'Poison', hp: 45, maxHp: 45, attack: 50, color: '🌱', moves: ['Absorb', 'Acid', 'Poison Powder', 'Mega Drain'], moveTypes: ['Grass', 'Poison', 'Poison', 'Grass'] },
-    { name: 'Bellsprout', type: 'Grass', type2: 'Poison', hp: 50, maxHp: 50, attack: 75, color: '🌿', moves: ['Vine Whip', 'Acid', 'Wrap', 'Razor Leaf'], moveTypes: ['Grass', 'Poison', 'Normal', 'Grass'] },
-    { name: 'Geodude', type: 'Rock', type2: 'Ground', hp: 40, maxHp: 40, attack: 55, color: '🪨', moves: ['Tackle', 'Rock Throw', 'Defense Curl', 'Rock Blast'], moveTypes: ['Normal', 'Rock', 'Normal', 'Rock'] },
-    { name: 'Onix', type: 'Rock', type2: 'Ground', hp: 35, maxHp: 35, attack: 45, color: '🐍', moves: ['Rock Throw', 'Bind', 'Rock Slide', 'Dig'], moveTypes: ['Rock', 'Normal', 'Rock', 'Ground'] },
-    { name: 'Pikachu', type: 'Electric', type2: null, hp: 35, maxHp: 35, attack: 55, color: '⚡', moves: ['Thunder Shock', 'Quick Attack', 'Thunderbolt', 'Iron Tail'], moveTypes: ['Electric', 'Normal', 'Electric', 'Steel'] },
-    { name: 'Magnemite', type: 'Electric', type2: 'Steel', hp: 25, maxHp: 25, attack: 60, color: '🧲', moves: ['Thunder Shock', 'Sonic Boom', 'Spark', 'Thunderbolt'], moveTypes: ['Electric', 'Normal', 'Electric', 'Electric'] },
-    { name: 'Meowth', type: 'Normal', type2: null, hp: 40, maxHp: 40, attack: 45, color: '🐱', moves: ['Scratch', 'Bite', 'Fury Swipes', 'Pay Day'], moveTypes: ['Normal', 'Dark', 'Normal', 'Normal'] },
-    { name: 'Psyduck', type: 'Water', type2: null, hp: 50, maxHp: 50, attack: 52, color: '🦆', moves: ['Scratch', 'Water Gun', 'Confusion', 'Aqua Tail'], moveTypes: ['Normal', 'Water', 'Psychic', 'Water'] },
-    { name: 'Poliwag', type: 'Water', type2: null, hp: 40, maxHp: 40, attack: 50, color: '💧', moves: ['Water Gun', 'Bubble', 'Hypnosis', 'Bubble Beam'], moveTypes: ['Water', 'Water', 'Psychic', 'Water'] },
+    { name: 'Weedle', type: 'Bug', type2: 'Poison', hp: 40, maxHp: 40, attack: 25, color: '🐝', moves: ['Poison Sting', 'String Shot', 'Bug Bite'], moveTypes: ['Poison', 'Bug', 'Bug'] },
+    { name: 'Pidgey', type: 'Normal', type2: 'Flying', hp: 40, maxHp: 40, attack: 30, color: '🐦', moves: ['Peck', 'Gust', 'Sand Attack', 'Wing Attack'], moveTypes: ['Flying', 'Flying', 'Ground', 'Flying'] },
+    { name: 'Rattata', type: 'Normal', type2: null, hp: 30, maxHp: 30, attack: 28, color: '🐀', moves: ['Tackle', 'Quick Attack', 'Bite', 'Hyper Fang'], moveTypes: ['Normal', 'Normal', 'Dark', 'Normal'] },
+    { name: 'Snorlax', type: 'Normal', type2: null, hp: 100, maxHp: 100, attack: 30, color: '😴', moves: ['Body Slam', 'Rest', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] },
+
+    // Common (attack 31-50) - Medium-high encounter rate
+    { name: 'Gastly', type: 'Ghost', type2: 'Poison', hp: 30, maxHp: 30, attack: 35, color: '👻', moves: ['Lick', 'Hypnosis', 'Shadow Ball', 'Night Shade'], moveTypes: ['Ghost', 'Psychic', 'Ghost', 'Ghost'] },
     { name: 'Tentacool', type: 'Water', type2: 'Poison', hp: 40, maxHp: 40, attack: 40, color: '🪼', moves: ['Acid', 'Poison Sting', 'Water Gun', 'Wrap'], moveTypes: ['Poison', 'Poison', 'Water', 'Normal'] },
+    { name: 'Vulpix', type: 'Fire', type2: null, hp: 38, maxHp: 38, attack: 41, color: '🦊', moves: ['Ember', 'Quick Attack', 'Flame Burst', 'Flamethrower'], moveTypes: ['Fire', 'Normal', 'Fire', 'Fire'] },
+    { name: 'Meowth', type: 'Normal', type2: null, hp: 40, maxHp: 40, attack: 45, color: '🐱', moves: ['Scratch', 'Bite', 'Fury Swipes', 'Pay Day'], moveTypes: ['Normal', 'Dark', 'Normal', 'Normal'] },
+    { name: 'Zubat', type: 'Poison', type2: 'Flying', hp: 40, maxHp: 40, attack: 45, color: '🦇', moves: ['Bite', 'Wing Attack', 'Air Slash', 'Poison Fang'], moveTypes: ['Dark', 'Flying', 'Flying', 'Poison'] },
+    { name: 'Onix', type: 'Rock', type2: 'Ground', hp: 35, maxHp: 35, attack: 45, color: '🐍', moves: ['Rock Throw', 'Bind', 'Rock Slide', 'Dig'], moveTypes: ['Rock', 'Normal', 'Rock', 'Ground'] },
+    { name: 'Oddish', type: 'Grass', type2: 'Poison', hp: 45, maxHp: 45, attack: 50, color: '🌱', moves: ['Absorb', 'Acid', 'Poison Powder', 'Mega Drain'], moveTypes: ['Grass', 'Poison', 'Poison', 'Grass'] },
+    { name: 'Poliwag', type: 'Water', type2: null, hp: 40, maxHp: 40, attack: 50, color: '💧', moves: ['Water Gun', 'Bubble', 'Hypnosis', 'Bubble Beam'], moveTypes: ['Water', 'Water', 'Psychic', 'Water'] },
+    { name: 'Paras', type: 'Bug', type2: 'Grass', hp: 35, maxHp: 35, attack: 45, color: '🍄', moves: ['Scratch', 'Stun Spore', 'Leech Life', 'Spore'], moveTypes: ['Normal', 'Grass', 'Bug', 'Grass'] },
+    { name: 'Venonat', type: 'Bug', type2: 'Poison', hp: 60, maxHp: 60, attack: 45, color: '🔮', moves: ['Tackle', 'Confusion', 'Poison Powder', 'Psybeam'], moveTypes: ['Normal', 'Psychic', 'Poison', 'Psychic'] },
+    { name: 'Krabby', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 50, color: '🦀', moves: ['Bubble', 'Vice Grip', 'Crabhammer', 'Stomp'], moveTypes: ['Water', 'Normal', 'Water', 'Normal'] },
+    { name: 'Horsea', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 40, color: '🐴', moves: ['Bubble', 'Water Gun', 'Twister', 'Hydro Pump'], moveTypes: ['Water', 'Water', 'Dragon', 'Water'] },
+    { name: 'Goldeen', type: 'Water', type2: null, hp: 45, maxHp: 45, attack: 48, color: '🐠', moves: ['Peck', 'Water Gun', 'Horn Attack', 'Waterfall'], moveTypes: ['Flying', 'Water', 'Normal', 'Water'] },
+    { name: 'Staryu', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 45, color: '⭐', moves: ['Tackle', 'Water Gun', 'Swift', 'Hydro Pump'], moveTypes: ['Normal', 'Water', 'Normal', 'Water'] },
+
+    // Uncommon (attack 51-70) - Medium encounter rate
+    { name: 'Psyduck', type: 'Water', type2: null, hp: 50, maxHp: 50, attack: 52, color: '🦆', moves: ['Scratch', 'Water Gun', 'Confusion', 'Aqua Tail'], moveTypes: ['Normal', 'Water', 'Psychic', 'Water'] },
+    { name: 'Pikachu', type: 'Electric', type2: null, hp: 35, maxHp: 35, attack: 55, color: '⚡', moves: ['Thunder Shock', 'Quick Attack', 'Thunderbolt', 'Iron Tail'], moveTypes: ['Electric', 'Normal', 'Electric', 'Steel'] },
+    { name: 'Diglett', type: 'Ground', type2: null, hp: 10, maxHp: 10, attack: 55, color: '🕳️', moves: ['Scratch', 'Dig', 'Mud Slap', 'Earthquake'], moveTypes: ['Normal', 'Ground', 'Ground', 'Ground'] },
+    { name: 'Geodude', type: 'Rock', type2: 'Ground', hp: 40, maxHp: 40, attack: 55, color: '🪨', moves: ['Tackle', 'Rock Throw', 'Defense Curl', 'Rock Blast'], moveTypes: ['Normal', 'Rock', 'Normal', 'Rock'] },
+    { name: 'Spearow', type: 'Normal', type2: 'Flying', hp: 40, maxHp: 40, attack: 60, color: '🐦', moves: ['Peck', 'Fury Attack', 'Aerial Ace', 'Drill Peck'], moveTypes: ['Flying', 'Normal', 'Flying', 'Flying'] },
+    { name: 'Magnemite', type: 'Electric', type2: 'Steel', hp: 25, maxHp: 25, attack: 60, color: '🧲', moves: ['Thunder Shock', 'Sonic Boom', 'Spark', 'Thunderbolt'], moveTypes: ['Electric', 'Normal', 'Electric', 'Electric'] },
+    { name: 'Cubone', type: 'Ground', type2: null, hp: 50, maxHp: 50, attack: 65, color: '💀', moves: ['Bone Club', 'Headbutt', 'Bonemerang', 'Earthquake'], moveTypes: ['Ground', 'Normal', 'Ground', 'Ground'] },
+    { name: 'Drowzee', type: 'Psychic', type2: null, hp: 60, maxHp: 60, attack: 48, color: '😴', moves: ['Pound', 'Hypnosis', 'Confusion', 'Psychic'], moveTypes: ['Normal', 'Psychic', 'Psychic', 'Psychic'] },
+    { name: 'Slowpoke', type: 'Water', type2: 'Psychic', hp: 90, maxHp: 90, attack: 65, color: '🐚', moves: ['Tackle', 'Water Gun', 'Confusion', 'Psychic'], moveTypes: ['Normal', 'Water', 'Psychic', 'Psychic'] },
+    { name: 'Shellder', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 65, color: '🐚', moves: ['Tackle', 'Water Gun', 'Clamp', 'Ice Beam'], moveTypes: ['Normal', 'Water', 'Water', 'Ice'] },
+    { name: 'Voltorb', type: 'Electric', type2: null, hp: 40, maxHp: 40, attack: 55, color: '🔴', moves: ['Tackle', 'Spark', 'Self-Destruct', 'Thunderbolt'], moveTypes: ['Normal', 'Electric', 'Normal', 'Electric'] },
+    { name: 'Exeggcute', type: 'Grass', type2: 'Psychic', hp: 60, maxHp: 60, attack: 60, color: '🥚', moves: ['Barrage', 'Confusion', 'Leech Seed', 'Psychic'], moveTypes: ['Normal', 'Psychic', 'Grass', 'Psychic'] },
+
+    // Rare (attack 71-85) - Low encounter rate
+    { name: 'Growlithe', type: 'Fire', type2: null, hp: 55, maxHp: 55, attack: 70, color: '🐕', moves: ['Ember', 'Bite', 'Flame Wheel', 'Fire Fang'], moveTypes: ['Fire', 'Dark', 'Fire', 'Fire'] },
+    { name: 'Bellsprout', type: 'Grass', type2: 'Poison', hp: 50, maxHp: 50, attack: 75, color: '🌿', moves: ['Vine Whip', 'Acid', 'Wrap', 'Razor Leaf'], moveTypes: ['Grass', 'Poison', 'Normal', 'Grass'] },
+    { name: 'Sandshrew', type: 'Ground', type2: null, hp: 50, maxHp: 50, attack: 75, color: '🦔', moves: ['Scratch', 'Sand Attack', 'Dig', 'Earthquake'], moveTypes: ['Normal', 'Ground', 'Ground', 'Ground'] },
     { name: 'Machop', type: 'Fighting', type2: null, hp: 70, maxHp: 70, attack: 80, color: '💪', moves: ['Karate Chop', 'Low Kick', 'Focus Energy', 'Seismic Toss'], moveTypes: ['Fighting', 'Fighting', 'Normal', 'Fighting'] },
     { name: 'Mankey', type: 'Fighting', type2: null, hp: 40, maxHp: 40, attack: 80, color: '🐵', moves: ['Scratch', 'Karate Chop', 'Fury Swipes', 'Cross Chop'], moveTypes: ['Normal', 'Fighting', 'Normal', 'Fighting'] },
-    { name: 'Gastly', type: 'Ghost', type2: 'Poison', hp: 30, maxHp: 30, attack: 35, color: '👻', moves: ['Lick', 'Hypnosis', 'Shadow Ball', 'Night Shade'], moveTypes: ['Ghost', 'Psychic', 'Ghost', 'Ghost'] },
-    { name: 'Sandshrew', type: 'Ground', type2: null, hp: 50, maxHp: 50, attack: 75, color: '🦔', moves: ['Scratch', 'Sand Attack', 'Dig', 'Earthquake'], moveTypes: ['Normal', 'Ground', 'Ground', 'Ground'] },
-    { name: 'Diglett', type: 'Ground', type2: null, hp: 10, maxHp: 10, attack: 55, color: '🕳️', moves: ['Scratch', 'Dig', 'Mud Slap', 'Earthquake'], moveTypes: ['Normal', 'Ground', 'Ground', 'Ground'] },
-    { name: 'Vulpix', type: 'Fire', type2: null, hp: 38, maxHp: 38, attack: 41, color: '🦊', moves: ['Ember', 'Quick Attack', 'Flame Burst', 'Flamethrower'], moveTypes: ['Fire', 'Normal', 'Fire', 'Fire'] },
-    { name: 'Growlithe', type: 'Fire', type2: null, hp: 55, maxHp: 55, attack: 70, color: '🐕', moves: ['Ember', 'Bite', 'Flame Wheel', 'Fire Fang'], moveTypes: ['Fire', 'Dark', 'Fire', 'Fire'] },
     { name: 'Ponyta', type: 'Fire', type2: null, hp: 50, maxHp: 50, attack: 85, color: '🐴', moves: ['Ember', 'Stomp', 'Flame Charge', 'Fire Blast'], moveTypes: ['Fire', 'Normal', 'Fire', 'Fire'] },
-    { name: 'Zubat', type: 'Poison', type2: 'Flying', hp: 40, maxHp: 40, attack: 45, color: '🦇', moves: ['Bite', 'Wing Attack', 'Air Slash', 'Poison Fang'], moveTypes: ['Dark', 'Flying', 'Flying', 'Poison'] },
-    { name: 'Spearow', type: 'Normal', type2: 'Flying', hp: 40, maxHp: 40, attack: 60, color: '🐦', moves: ['Peck', 'Fury Attack', 'Aerial Ace', 'Drill Peck'], moveTypes: ['Flying', 'Normal', 'Flying', 'Flying'] },
-    { name: 'Snorlax', type: 'Normal', type2: null, hp: 100, maxHp: 100, attack: 30, color: '😴', moves: ['Body Slam', 'Rest', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] }
+    { name: 'Rhyhorn', type: 'Ground', type2: 'Rock', hp: 80, maxHp: 80, attack: 85, color: '🦏', moves: ['Horn Attack', 'Stomp', 'Rock Blast', 'Earthquake'], moveTypes: ['Normal', 'Normal', 'Rock', 'Ground'] },
+    { name: 'Tangela', type: 'Grass', type2: null, hp: 65, maxHp: 65, attack: 75, color: '🌿', moves: ['Vine Whip', 'Bind', 'Mega Drain', 'Power Whip'], moveTypes: ['Grass', 'Normal', 'Grass', 'Grass'] },
+    { name: 'Lickitung', type: 'Normal', type2: null, hp: 90, maxHp: 90, attack: 75, color: '👅', moves: ['Lick', 'Stomp', 'Slam', 'Power Whip'], moveTypes: ['Ghost', 'Normal', 'Normal', 'Grass'] },
+    { name: 'Chansey', type: 'Normal', type2: null, hp: 250, maxHp: 250, attack: 15, color: '🥚', moves: ['Pound', 'Double Slap', 'Egg Bomb', 'Softboiled'], moveTypes: ['Normal', 'Normal', 'Normal', 'Normal'] },
+
+    // Very Rare (attack 86-100) - Very low encounter rate
+    { name: 'Abra', type: 'Psychic', type2: null, hp: 25, maxHp: 25, attack: 90, color: '🔮', moves: ['Teleport', 'Confusion', 'Psybeam', 'Psychic'], moveTypes: ['Psychic', 'Psychic', 'Psychic', 'Psychic'] },
+    { name: 'Electabuzz', type: 'Electric', type2: null, hp: 65, maxHp: 65, attack: 95, color: '⚡', moves: ['Thunder Punch', 'Spark', 'Thunderbolt', 'Thunder'], moveTypes: ['Electric', 'Electric', 'Electric', 'Electric'] },
+    { name: 'Magmar', type: 'Fire', type2: null, hp: 65, maxHp: 65, attack: 95, color: '🔥', moves: ['Fire Punch', 'Ember', 'Flamethrower', 'Fire Blast'], moveTypes: ['Fire', 'Fire', 'Fire', 'Fire'] },
+    { name: 'Pinsir', type: 'Bug', type2: null, hp: 65, maxHp: 65, attack: 100, color: '🪲', moves: ['Vice Grip', 'X-Scissor', 'Guillotine', 'Superpower'], moveTypes: ['Normal', 'Bug', 'Normal', 'Fighting'] },
+    { name: 'Tauros', type: 'Normal', type2: null, hp: 75, maxHp: 75, attack: 100, color: '🐂', moves: ['Tackle', 'Horn Attack', 'Thrash', 'Giga Impact'], moveTypes: ['Normal', 'Normal', 'Normal', 'Normal'] },
+    { name: 'Scyther', type: 'Bug', type2: 'Flying', hp: 70, maxHp: 70, attack: 100, color: '🦗', moves: ['Quick Attack', 'Fury Cutter', 'Slash', 'X-Scissor'], moveTypes: ['Normal', 'Bug', 'Normal', 'Bug'] },
+    { name: 'Ditto', type: 'Normal', type2: null, hp: 48, maxHp: 48, attack: 48, color: '🟣', moves: ['Transform', 'Struggle'], moveTypes: ['Normal', 'Normal'] },
+    { name: 'Eevee', type: 'Normal', type2: null, hp: 55, maxHp: 55, attack: 55, color: '🦊', moves: ['Tackle', 'Quick Attack', 'Bite', 'Take Down'], moveTypes: ['Normal', 'Normal', 'Dark', 'Normal'] },
+    { name: 'Porygon', type: 'Normal', type2: null, hp: 65, maxHp: 65, attack: 85, color: '🤖', moves: ['Tackle', 'Psybeam', 'Tri Attack', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Normal', 'Normal'] },
+    { name: 'Lapras', type: 'Water', type2: 'Ice', hp: 130, maxHp: 130, attack: 85, color: '🐋', moves: ['Water Gun', 'Ice Beam', 'Body Slam', 'Hydro Pump'], moveTypes: ['Water', 'Ice', 'Normal', 'Water'] },
+    { name: 'Aerodactyl', type: 'Rock', type2: 'Flying', hp: 80, maxHp: 80, attack: 105, color: '🦖', moves: ['Wing Attack', 'Bite', 'Rock Slide', 'Hyper Beam'], moveTypes: ['Flying', 'Dark', 'Rock', 'Normal'] }
   ];
+
+  // Function to get weighted random Pokemon based on attack power
+  const getWeightedRandomPokemon = (pokemonList) => {
+    // Calculate weights: lower attack = higher weight (more common)
+    const maxAttack = Math.max(...pokemonList.map(p => p.attack));
+    const weights = pokemonList.map(p => {
+      // Inverse weight: lower attack = higher encounter rate
+      const attackRatio = p.attack / maxAttack;
+      if (attackRatio <= 0.3) return 10;      // Very common (attack 10-30)
+      if (attackRatio <= 0.5) return 6;       // Common (attack 31-50)
+      if (attackRatio <= 0.7) return 3;       // Uncommon (attack 51-70)
+      if (attackRatio <= 0.85) return 1.5;    // Rare (attack 71-85)
+      return 0.5;                              // Very rare (attack 86+)
+    });
+
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+    let random = Math.random() * totalWeight;
+
+    for (let i = 0; i < pokemonList.length; i++) {
+      random -= weights[i];
+      if (random <= 0) {
+        return { ...pokemonList[i] };
+      }
+    }
+
+    // Fallback
+    return { ...pokemonList[Math.floor(Math.random() * pokemonList.length)] };
+  };
 
   const typeChart = {
     Normal: { Rock: 0.5, Steel: 0.5, Ghost: 0 },
@@ -686,7 +795,8 @@ const PokemonGame = () => {
 
   const encounterWildPokemon = () => {
     // STAGE 1: Normal wild Pokemon encounters (used only on game start)
-    const wild = { ...wildPokemons[Math.floor(Math.random() * wildPokemons.length)] };
+    // Uses weighted random: weaker Pokemon appear more often, stronger Pokemon are rare
+    const wild = getWeightedRandomPokemon(wildPokemons);
     setWildPokemon(wild);
     setBattleLog([`A wild ${wild.name} appeared!`]);
   };
@@ -1064,7 +1174,8 @@ const PokemonGame = () => {
     }
 
     // STAGE 1: Normal battles (before reaching 20 EXP)
-    const wild = { ...wildPokemons[Math.floor(Math.random() * wildPokemons.length)] };
+    // Uses weighted random: weaker Pokemon appear more often, stronger Pokemon are rare
+    const wild = getWeightedRandomPokemon(wildPokemons);
     setWildPokemon(wild);
     setBattleLog([`A wild ${wild.name} appeared!`]);
     setGameState('battle');
