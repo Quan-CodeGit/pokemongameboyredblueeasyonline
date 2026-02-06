@@ -759,30 +759,37 @@ const PokemonGame = () => {
 
   // Function to get weighted random Pokemon based on attack power
   const getWeightedRandomPokemon = (pokemonList) => {
-    // Calculate weights: lower attack = higher weight (more common)
+    // Group Pokemon by rarity based on attack power
     const maxAttack = Math.max(...pokemonList.map(p => p.attack));
-    const weights = pokemonList.map(p => {
-      // Inverse weight: lower attack = higher encounter rate
-      const attackRatio = p.attack / maxAttack;
-      if (attackRatio <= 0.3) return 10;      // Very common (attack 10-30)
-      if (attackRatio <= 0.5) return 6;       // Common (attack 31-50)
-      if (attackRatio <= 0.7) return 3;       // Uncommon (attack 51-70)
-      if (attackRatio <= 0.85) return 1.5;    // Rare (attack 71-85)
-      return 0.5;                              // Very rare (attack 86+)
-    });
 
-    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
-    let random = Math.random() * totalWeight;
+    const veryCommon = pokemonList.filter(p => p.attack / maxAttack <= 0.3);   // attack 10-30
+    const common = pokemonList.filter(p => p.attack / maxAttack > 0.3 && p.attack / maxAttack <= 0.5);  // attack 31-50
+    const uncommon = pokemonList.filter(p => p.attack / maxAttack > 0.5 && p.attack / maxAttack <= 0.7); // attack 51-70
+    const rare = pokemonList.filter(p => p.attack / maxAttack > 0.7 && p.attack / maxAttack <= 0.85);    // attack 71-85
+    const veryRare = pokemonList.filter(p => p.attack / maxAttack > 0.85);     // attack 86+
 
-    for (let i = 0; i < pokemonList.length; i++) {
-      random -= weights[i];
-      if (random <= 0) {
-        return { ...pokemonList[i] };
-      }
+    // Roll for rarity tier first (30%, 25%, 25%, 15%, 5%)
+    const roll = Math.random() * 100;
+    let selectedTier;
+
+    if (roll < 30) {
+      selectedTier = veryCommon.length > 0 ? veryCommon : common;
+    } else if (roll < 55) {
+      selectedTier = common.length > 0 ? common : veryCommon;
+    } else if (roll < 80) {
+      selectedTier = uncommon.length > 0 ? uncommon : common;
+    } else if (roll < 95) {
+      selectedTier = rare.length > 0 ? rare : uncommon;
+    } else {
+      selectedTier = veryRare.length > 0 ? veryRare : rare;
     }
 
-    // Fallback
-    return { ...pokemonList[Math.floor(Math.random() * pokemonList.length)] };
+    // Pick random Pokemon from the selected tier
+    if (selectedTier.length === 0) {
+      selectedTier = pokemonList; // Fallback to all Pokemon
+    }
+
+    return { ...selectedTier[Math.floor(Math.random() * selectedTier.length)] };
   };
 
   const typeChart = {
