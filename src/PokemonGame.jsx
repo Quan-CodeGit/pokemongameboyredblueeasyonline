@@ -613,35 +613,72 @@ const PokemonGame = () => {
   // Helper function to get Pokemon ID from name
   const getPokemonId = (name) => {
     const pokemonIds = {
+      // Starters and evolutions
       'charmander': 4, 'charmeleon': 5, 'charizard': 6,
       'squirtle': 7, 'wartortle': 8, 'blastoise': 9,
       'bulbasaur': 1, 'ivysaur': 2, 'venusaur': 3,
-      'magikarp': 129, 'metapod': 11, 'kakuna': 14,
-      'rattata': 19, 'raticate': 20, 'pidgey': 16, 'pidgeotto': 17, 'pidgeot': 18,
-      'caterpie': 10, 'butterfree': 12, 'weedle': 13, 'beedrill': 15,
-      'oddish': 43, 'gloom': 44, 'vileplume': 45,
-      'bellsprout': 69, 'weepinbell': 70, 'victreebel': 71,
-      'geodude': 74, 'graveler': 75, 'golem': 76,
-      'onix': 95, 'steelix': 208,
+      // Bug types
+      'caterpie': 10, 'metapod': 11, 'butterfree': 12,
+      'weedle': 13, 'kakuna': 14, 'beedrill': 15,
+      'paras': 46, 'parasect': 47,
+      'venonat': 48, 'venomoth': 49,
+      'scyther': 123, 'pinsir': 127,
+      // Birds
+      'pidgey': 16, 'pidgeotto': 17, 'pidgeot': 18,
+      'spearow': 21, 'fearow': 22,
+      // Normal types
+      'rattata': 19, 'raticate': 20,
+      'snorlax': 143, 'tauros': 128, 'ditto': 132,
+      'eevee': 133, 'porygon': 137, 'lickitung': 108, 'chansey': 113,
+      // Electric types
       'pikachu': 25, 'raichu': 26,
       'magnemite': 81, 'magneton': 82,
-      'meowth': 52, 'persian': 53,
-      'psyduck': 54, 'golduck': 55,
-      'poliwag': 60, 'poliwhirl': 61, 'poliwrath': 62,
-      'tentacool': 72, 'tentacruel': 73,
-      'machop': 66, 'machoke': 67, 'machamp': 68,
-      'mankey': 56, 'primeape': 57,
-      'gastly': 92, 'haunter': 93, 'gengar': 94,
+      'voltorb': 100, 'electrode': 101,
+      'electabuzz': 125,
+      // Ground types
       'sandshrew': 27, 'sandslash': 28,
       'diglett': 50, 'dugtrio': 51,
+      'cubone': 104, 'marowak': 105,
+      'rhyhorn': 111, 'rhydon': 112,
+      // Poison/Grass types
+      'oddish': 43, 'gloom': 44, 'vileplume': 45,
+      'bellsprout': 69, 'weepinbell': 70, 'victreebel': 71,
+      'tangela': 114, 'exeggcute': 102, 'exeggutor': 103,
+      // Fire types
       'vulpix': 37, 'ninetales': 38,
       'growlithe': 58, 'arcanine': 59,
       'ponyta': 77, 'rapidash': 78,
-      'zubat': 41, 'golbat': 42, 'crobat': 169,
-      'spearow': 21, 'fearow': 22,
-      'snorlax': 143,
+      'magmar': 126,
+      // Water types
+      'psyduck': 54, 'golduck': 55,
+      'poliwag': 60, 'poliwhirl': 61, 'poliwrath': 62,
+      'tentacool': 72, 'tentacruel': 73,
+      'slowpoke': 79, 'slowbro': 80,
+      'shellder': 90, 'cloyster': 91,
+      'krabby': 98, 'kingler': 99,
+      'horsea': 116, 'seadra': 117,
+      'goldeen': 118, 'seaking': 119,
+      'staryu': 120, 'starmie': 121,
+      'magikarp': 129, 'gyarados': 130,
+      'lapras': 131,
+      // Fighting types
+      'mankey': 56, 'primeape': 57,
+      'machop': 66, 'machoke': 67, 'machamp': 68,
+      // Psychic types
+      'abra': 63, 'kadabra': 64, 'alakazam': 65,
+      'drowzee': 96, 'hypno': 97,
       'mewtwo': 150,
-      'gyarados': 130,
+      // Ghost types
+      'gastly': 92, 'haunter': 93, 'gengar': 94,
+      // Rock types
+      'geodude': 74, 'graveler': 75, 'golem': 76,
+      'onix': 95, 'steelix': 208,
+      'aerodactyl': 142,
+      // Flying types
+      'zubat': 41, 'golbat': 42, 'crobat': 169,
+      // Cat types
+      'meowth': 52, 'persian': 53,
+      // Dragon types
       'dratini': 147, 'dragonair': 148, 'dragonite': 149
     };
     return pokemonIds[name] || 1;
