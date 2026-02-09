@@ -778,7 +778,7 @@ const PokemonGame = () => {
   const getEncounterRates = () => {
     switch (difficulty) {
       case 'easy':
-        return { veryCommon: 35, common: 25, uncommon: 25, rare: 10, veryRare: 5 };
+        return { veryCommon: 35, common: 30, uncommon: 25, rare: 5, veryRare: 5 };
       case 'hard':
         return { veryCommon: 15, common: 20, uncommon: 30, rare: 20, veryRare: 15 };
       default: // medium
@@ -1407,20 +1407,17 @@ const PokemonGame = () => {
       {
         name: 'Easy',
         color: '#22c55e',
-        description: 'Weaker enemies, easier catches',
-        details: ['35% Very Common', '25% Common', '25% Uncommon', '10% Rare', '5% Very Rare', 'Catch: 150%', 'Enemy ATK: 90%']
+        description: 'Weaker enemies, easier catches'
       },
       {
         name: 'Medium',
         color: '#eab308',
-        description: 'Balanced challenge',
-        details: ['30% Very Common', '25% Common', '20% Uncommon', '15% Rare', '10% Very Rare', 'Catch: 100%', 'Enemy ATK: 100%']
+        description: 'Balanced challenge'
       },
       {
         name: 'Hard',
         color: '#dc2626',
-        description: 'Stronger enemies, harder catches',
-        details: ['15% Very Common', '20% Common', '30% Uncommon', '20% Rare', '15% Very Rare', 'Catch: 90%', 'Enemy ATK: 110%']
+        description: 'Stronger enemies, harder catches'
       }
     ];
 
@@ -1457,16 +1454,9 @@ const PokemonGame = () => {
                   <h3 className="font-bold text-sm mb-1 uppercase retro-text" style={{color: '#fff', textShadow: '1px 1px 0px #000'}}>
                     {diff.name}
                   </h3>
-                  <p className="text-xs retro-text mb-2" style={{color: '#fff', textShadow: '1px 1px 0px #000'}}>
+                  <p className="text-xs retro-text" style={{color: '#fff', textShadow: '1px 1px 0px #000'}}>
                     {diff.description}
                   </p>
-                  <div className="bg-black bg-opacity-30 p-1 rounded">
-                    {diff.details.slice(0, 3).map((detail, i) => (
-                      <p key={i} className="text-xs retro-text" style={{color: '#fff', fontSize: '8px'}}>
-                        {detail}
-                      </p>
-                    ))}
-                  </div>
                 </button>
               ))}
             </div>
