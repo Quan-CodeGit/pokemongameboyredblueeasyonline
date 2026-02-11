@@ -789,7 +789,7 @@ const PokemonGame = () => {
   // Difficulty-based catch rate multiplier
   const getCatchRateMultiplier = () => {
     switch (difficulty) {
-      case 'easy': return 1.5;   // 150% of base
+      case 'easy': return 1.75;  // 175% of base
       case 'hard': return 0.9;   // 90% of base
       default: return 1.0;       // 100% (medium)
     }
@@ -798,7 +798,7 @@ const PokemonGame = () => {
   // Difficulty-based enemy attack power multiplier
   const getEnemyAttackMultiplier = () => {
     switch (difficulty) {
-      case 'easy': return 0.9;   // 90% of base
+      case 'easy': return 0.8;   // 80% of base
       case 'hard': return 1.1;   // 110% of base
       default: return 1.0;       // 100% (medium)
     }
@@ -1012,10 +1012,17 @@ const PokemonGame = () => {
   };
 
   const calculateDamage = (attacker, defender, moveIndex, isEnemyAttack = false) => {
-    // Use the higher of attack or special attack for offense
-    const attackStat = Math.max(attacker.attack || 0, attacker.spAtk || 0);
-    // Use the higher of defense or special defense for defense
-    const defenseStat = Math.max(defender.def || 0, defender.spDef || 0);
+    const moveType = attacker.moveTypes[moveIndex];
+
+    // Gen 1-3 Physical/Special split based on move TYPE (not Pokemon type)
+    // Special types: Fire, Water, Electric, Grass, Ice, Psychic, Dragon, Dark
+    // Physical types: Normal, Fighting, Poison, Ground, Flying, Bug, Rock, Ghost, Steel
+    const specialTypes = ['Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Psychic', 'Dragon', 'Dark'];
+    const isSpecialMove = specialTypes.includes(moveType);
+
+    // Use appropriate attack and defense stats based on move type
+    const attackStat = isSpecialMove ? (attacker.spAtk || 0) : (attacker.attack || 0);
+    const defenseStat = isSpecialMove ? (defender.spDef || 0) : (defender.def || 0);
 
     // Calculate base damage with defense reduction
     // Formula: (attack * 0.4) - (defense * 0.2) + random(0-10)
@@ -1026,8 +1033,6 @@ const PokemonGame = () => {
     if (isEnemyAttack) {
       baseDamage = Math.floor(baseDamage * getEnemyAttackMultiplier());
     }
-
-    const moveType = attacker.moveTypes[moveIndex];
 
     // STAB (Same Type Attack Bonus) - 1.5x if move type matches attacker's type
     const hasSTAB = moveType === attacker.type || moveType === attacker.type2;
