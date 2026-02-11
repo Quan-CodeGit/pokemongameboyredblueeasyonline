@@ -947,7 +947,30 @@ const PokemonGame = () => {
         'poliwhirl': { name: 'Poliwrath', type2: 'Fighting' },
         'tentacool': { name: 'Tentacruel', type2: 'Poison' },
         'magnemite': { name: 'Magneton', type2: 'Steel' },
-        'spearow': { name: 'Fearow', type2: 'Flying' }
+        'spearow': { name: 'Fearow', type2: 'Flying' },
+        'rhyhorn': { name: 'Rhydon', type2: 'Rock' },
+        'cubone': { name: 'Marowak', type2: null },
+        'paras': { name: 'Parasect', type2: 'Grass' },
+        'abra': { name: 'Kadabra', type2: null },
+        'kadabra': { name: 'Alakazam', type2: null },
+        'krabby': { name: 'Kingler', type2: null },
+        'horsea': { name: 'Seadra', type2: null },
+        'staryu': { name: 'Starmie', type2: 'Psychic' },
+        'slowpoke': { name: 'Slowbro', type2: 'Psychic' },
+        'shellder': { name: 'Cloyster', type2: 'Ice' },
+        'drowzee': { name: 'Hypno', type2: null },
+        'exeggcute': { name: 'Exeggutor', type2: 'Psychic' },
+        'nidoranf': { name: 'Nidorina', type2: null },
+        'nidorina': { name: 'Nidoqueen', type2: 'Ground' },
+        'nidoranm': { name: 'Nidorino', type2: null },
+        'nidorino': { name: 'Nidoking', type2: 'Ground' },
+        'pikachu': { name: 'Raichu', type2: null },
+        'clefairy': { name: 'Clefable', type2: null },
+        'jigglypuff': { name: 'Wigglytuff', type2: null },
+        'venonat': { name: 'Venomoth', type2: 'Poison' },
+        'seel': { name: 'Dewgong', type2: 'Ice' },
+        'voltorb': { name: 'Electrode', type2: null },
+        'eevee': { name: 'Vaporeon', type2: null }
       };
       
       const lowerName = pokemon.name.toLowerCase();
