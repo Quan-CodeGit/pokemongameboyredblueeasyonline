@@ -701,7 +701,7 @@ const PokemonGame = () => {
   };
 
   const starters = [
-    { name: 'Charmander', type: 'Fire', type2: null, hp: 43, maxHp: 43, attack: 52, spAtk: 60, def: 43, spDef: 50, color: '🔥', moves: ['Scratch', 'Ember', 'Growl', 'Flame Burst'], moveTypes: ['Normal', 'Fire', 'Normal', 'Fire'], exp: 0 },
+    { name: 'Charmander', type: 'Fire', type2: null, hp: 39, maxHp: 39, attack: 52, spAtk: 60, def: 43, spDef: 50, color: '🔥', moves: ['Scratch', 'Ember', 'Growl', 'Flame Burst'], moveTypes: ['Normal', 'Fire', 'Normal', 'Fire'], exp: 0 },
     { name: 'Squirtle', type: 'Water', type2: null, hp: 44, maxHp: 44, attack: 48, spAtk: 50, def: 65, spDef: 64, color: '💧', moves: ['Tackle', 'Water Gun', 'Withdraw', 'Bubble Beam'], moveTypes: ['Normal', 'Water', 'Water', 'Water'], exp: 0 },
     { name: 'Bulbasaur', type: 'Grass', type2: 'Poison', hp: 45, maxHp: 45, attack: 49, spAtk: 65, def: 49, spDef: 65, color: '🌿', moves: ['Tackle', 'Vine Whip', 'Growl', 'Razor Leaf'], moveTypes: ['Normal', 'Grass', 'Normal', 'Grass'], exp: 0 }
   ];
@@ -715,7 +715,7 @@ const PokemonGame = () => {
     { name: 'Weedle', type: 'Bug', type2: 'Poison', hp: 40, maxHp: 40, attack: 25, spAtk: 20, def: 30, spDef: 20, color: '🐝', moves: ['Poison Sting', 'String Shot', 'Bug Bite'], moveTypes: ['Poison', 'Bug', 'Bug'] },
     { name: 'Pidgey', type: 'Normal', type2: 'Flying', hp: 40, maxHp: 40, attack: 30, spAtk: 35, def: 40, spDef: 35, color: '🐦', moves: ['Peck', 'Gust', 'Sand Attack', 'Wing Attack'], moveTypes: ['Flying', 'Flying', 'Ground', 'Flying'] },
     { name: 'Rattata', type: 'Normal', type2: null, hp: 30, maxHp: 30, attack: 28, spAtk: 25, def: 35, spDef: 35, color: '🐀', moves: ['Tackle', 'Quick Attack', 'Bite', 'Hyper Fang'], moveTypes: ['Normal', 'Normal', 'Dark', 'Normal'] },
-    { name: 'Snorlax', type: 'Normal', type2: null, hp: 100, maxHp: 100, attack: 30, spAtk: 65, def: 65, spDef: 110, color: '😴', moves: ['Body Slam', 'Rest', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] },
+    { name: 'Snorlax', type: 'Normal', type2: null, hp: 160, maxHp: 160, attack: 110, spAtk: 65, def: 65, spDef: 110, color: '😴', moves: ['Body Slam', 'Rest', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] },
 
     // Common (attack 31-50) - Medium-high encounter rate
     { name: 'Gastly', type: 'Ghost', type2: 'Poison', hp: 30, maxHp: 30, attack: 35, spAtk: 100, def: 30, spDef: 35, color: '👻', moves: ['Lick', 'Hypnosis', 'Shadow Ball', 'Night Shade'], moveTypes: ['Ghost', 'Psychic', 'Ghost', 'Ghost'] },
