@@ -1018,8 +1018,13 @@ const PokemonGame = () => {
     }
 
     const moveType = attacker.moveTypes[moveIndex];
+
+    // STAB (Same Type Attack Bonus) - 1.5x if move type matches attacker's type
+    const hasSTAB = moveType === attacker.type || moveType === attacker.type2;
+    const stabMultiplier = hasSTAB ? 1.5 : 1.0;
+
     const effectiveness = getTypeEffectiveness(moveType, defender.type, defender.type2);
-    const damage = Math.floor(baseDamage * effectiveness);
+    const damage = Math.floor(baseDamage * effectiveness * stabMultiplier);
 
     let effectText = '';
     if (effectiveness === 0) effectText = " It doesn't affect " + defender.name + "...";
