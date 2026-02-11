@@ -1034,7 +1034,8 @@ const PokemonGame = () => {
     const stabMultiplier = hasSTAB ? 1.5 : 1.0;
 
     const effectiveness = getTypeEffectiveness(moveType, defender.type, defender.type2);
-    const damage = Math.max(1, Math.floor(baseDamage * effectiveness * stabMultiplier));
+    // If no effect (effectiveness === 0), damage is 0. Otherwise minimum 1 damage.
+    const damage = effectiveness === 0 ? 0 : Math.max(1, Math.floor(baseDamage * effectiveness * stabMultiplier));
 
     let effectText = '';
     if (effectiveness === 0) effectText = " It doesn't affect " + defender.name + "...";
