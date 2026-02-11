@@ -701,76 +701,76 @@ const PokemonGame = () => {
   };
 
   const starters = [
-    { name: 'Charmander', type: 'Fire', type2: null, hp: 43, maxHp: 43, attack: 52, spAtk: 60, color: '🔥', moves: ['Scratch', 'Ember', 'Growl', 'Flame Burst'], moveTypes: ['Normal', 'Fire', 'Normal', 'Fire'], exp: 0 },
-    { name: 'Squirtle', type: 'Water', type2: null, hp: 44, maxHp: 44, attack: 48, spAtk: 50, color: '💧', moves: ['Tackle', 'Water Gun', 'Withdraw', 'Bubble Beam'], moveTypes: ['Normal', 'Water', 'Water', 'Water'], exp: 0 },
-    { name: 'Bulbasaur', type: 'Grass', type2: 'Poison', hp: 45, maxHp: 45, attack: 49, spAtk: 65, color: '🌿', moves: ['Tackle', 'Vine Whip', 'Growl', 'Razor Leaf'], moveTypes: ['Normal', 'Grass', 'Normal', 'Grass'], exp: 0 }
+    { name: 'Charmander', type: 'Fire', type2: null, hp: 43, maxHp: 43, attack: 52, spAtk: 60, def: 43, spDef: 50, color: '🔥', moves: ['Scratch', 'Ember', 'Growl', 'Flame Burst'], moveTypes: ['Normal', 'Fire', 'Normal', 'Fire'], exp: 0 },
+    { name: 'Squirtle', type: 'Water', type2: null, hp: 44, maxHp: 44, attack: 48, spAtk: 50, def: 65, spDef: 64, color: '💧', moves: ['Tackle', 'Water Gun', 'Withdraw', 'Bubble Beam'], moveTypes: ['Normal', 'Water', 'Water', 'Water'], exp: 0 },
+    { name: 'Bulbasaur', type: 'Grass', type2: 'Poison', hp: 45, maxHp: 45, attack: 49, spAtk: 65, def: 49, spDef: 65, color: '🌿', moves: ['Tackle', 'Vine Whip', 'Growl', 'Razor Leaf'], moveTypes: ['Normal', 'Grass', 'Normal', 'Grass'], exp: 0 }
   ];
 
   const wildPokemons = [
     // Very Common (attack 10-30) - High encounter rate
-    { name: 'Magikarp', type: 'Water', type2: null, hp: 20, maxHp: 20, attack: 10, spAtk: 15, color: '🐟', moves: ['Splash', 'Tackle'], moveTypes: ['Normal', 'Normal'] },
-    { name: 'Metapod', type: 'Bug', type2: null, hp: 25, maxHp: 25, attack: 15, spAtk: 25, color: '🥚', moves: ['Harden', 'Tackle'], moveTypes: ['Normal', 'Normal'] },
-    { name: 'Kakuna', type: 'Bug', type2: null, hp: 25, maxHp: 25, attack: 15, spAtk: 25, color: '🐝', moves: ['Harden', 'Poison Sting'], moveTypes: ['Normal', 'Poison'] },
-    { name: 'Caterpie', type: 'Bug', type2: null, hp: 45, maxHp: 45, attack: 30, spAtk: 20, color: '🐛', moves: ['Tackle', 'String Shot', 'Bug Bite'], moveTypes: ['Normal', 'Bug', 'Bug'] },
-    { name: 'Weedle', type: 'Bug', type2: 'Poison', hp: 40, maxHp: 40, attack: 25, spAtk: 20, color: '🐝', moves: ['Poison Sting', 'String Shot', 'Bug Bite'], moveTypes: ['Poison', 'Bug', 'Bug'] },
-    { name: 'Pidgey', type: 'Normal', type2: 'Flying', hp: 40, maxHp: 40, attack: 30, spAtk: 35, color: '🐦', moves: ['Peck', 'Gust', 'Sand Attack', 'Wing Attack'], moveTypes: ['Flying', 'Flying', 'Ground', 'Flying'] },
-    { name: 'Rattata', type: 'Normal', type2: null, hp: 30, maxHp: 30, attack: 28, spAtk: 25, color: '🐀', moves: ['Tackle', 'Quick Attack', 'Bite', 'Hyper Fang'], moveTypes: ['Normal', 'Normal', 'Dark', 'Normal'] },
-    { name: 'Snorlax', type: 'Normal', type2: null, hp: 100, maxHp: 100, attack: 30, spAtk: 65, color: '😴', moves: ['Body Slam', 'Rest', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] },
+    { name: 'Magikarp', type: 'Water', type2: null, hp: 20, maxHp: 20, attack: 10, spAtk: 15, def: 55, spDef: 20, color: '🐟', moves: ['Splash', 'Tackle'], moveTypes: ['Normal', 'Normal'] },
+    { name: 'Metapod', type: 'Bug', type2: null, hp: 25, maxHp: 25, attack: 15, spAtk: 25, def: 55, spDef: 25, color: '🥚', moves: ['Harden', 'Tackle'], moveTypes: ['Normal', 'Normal'] },
+    { name: 'Kakuna', type: 'Bug', type2: null, hp: 25, maxHp: 25, attack: 15, spAtk: 25, def: 50, spDef: 25, color: '🐝', moves: ['Harden', 'Poison Sting'], moveTypes: ['Normal', 'Poison'] },
+    { name: 'Caterpie', type: 'Bug', type2: null, hp: 45, maxHp: 45, attack: 30, spAtk: 20, def: 35, spDef: 20, color: '🐛', moves: ['Tackle', 'String Shot', 'Bug Bite'], moveTypes: ['Normal', 'Bug', 'Bug'] },
+    { name: 'Weedle', type: 'Bug', type2: 'Poison', hp: 40, maxHp: 40, attack: 25, spAtk: 20, def: 30, spDef: 20, color: '🐝', moves: ['Poison Sting', 'String Shot', 'Bug Bite'], moveTypes: ['Poison', 'Bug', 'Bug'] },
+    { name: 'Pidgey', type: 'Normal', type2: 'Flying', hp: 40, maxHp: 40, attack: 30, spAtk: 35, def: 40, spDef: 35, color: '🐦', moves: ['Peck', 'Gust', 'Sand Attack', 'Wing Attack'], moveTypes: ['Flying', 'Flying', 'Ground', 'Flying'] },
+    { name: 'Rattata', type: 'Normal', type2: null, hp: 30, maxHp: 30, attack: 28, spAtk: 25, def: 35, spDef: 35, color: '🐀', moves: ['Tackle', 'Quick Attack', 'Bite', 'Hyper Fang'], moveTypes: ['Normal', 'Normal', 'Dark', 'Normal'] },
+    { name: 'Snorlax', type: 'Normal', type2: null, hp: 100, maxHp: 100, attack: 30, spAtk: 65, def: 65, spDef: 110, color: '😴', moves: ['Body Slam', 'Rest', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] },
 
     // Common (attack 31-50) - Medium-high encounter rate
-    { name: 'Gastly', type: 'Ghost', type2: 'Poison', hp: 30, maxHp: 30, attack: 35, spAtk: 100, color: '👻', moves: ['Lick', 'Hypnosis', 'Shadow Ball', 'Night Shade'], moveTypes: ['Ghost', 'Psychic', 'Ghost', 'Ghost'] },
-    { name: 'Tentacool', type: 'Water', type2: 'Poison', hp: 40, maxHp: 40, attack: 40, spAtk: 50, color: '🪼', moves: ['Acid', 'Poison Sting', 'Water Gun', 'Wrap'], moveTypes: ['Poison', 'Poison', 'Water', 'Normal'] },
-    { name: 'Vulpix', type: 'Fire', type2: null, hp: 38, maxHp: 38, attack: 41, spAtk: 50, color: '🦊', moves: ['Ember', 'Quick Attack', 'Flame Burst', 'Flamethrower'], moveTypes: ['Fire', 'Normal', 'Fire', 'Fire'] },
-    { name: 'Meowth', type: 'Normal', type2: null, hp: 40, maxHp: 40, attack: 45, spAtk: 40, color: '🐱', moves: ['Scratch', 'Bite', 'Fury Swipes', 'Pay Day'], moveTypes: ['Normal', 'Dark', 'Normal', 'Normal'] },
-    { name: 'Zubat', type: 'Poison', type2: 'Flying', hp: 40, maxHp: 40, attack: 45, spAtk: 30, color: '🦇', moves: ['Bite', 'Wing Attack', 'Air Slash', 'Poison Fang'], moveTypes: ['Dark', 'Flying', 'Flying', 'Poison'] },
-    { name: 'Onix', type: 'Rock', type2: 'Ground', hp: 35, maxHp: 35, attack: 45, spAtk: 30, color: '🐍', moves: ['Rock Throw', 'Bind', 'Rock Slide', 'Dig'], moveTypes: ['Rock', 'Normal', 'Rock', 'Ground'] },
-    { name: 'Oddish', type: 'Grass', type2: 'Poison', hp: 45, maxHp: 45, attack: 50, spAtk: 75, color: '🌱', moves: ['Absorb', 'Acid', 'Poison Powder', 'Mega Drain'], moveTypes: ['Grass', 'Poison', 'Poison', 'Grass'] },
-    { name: 'Poliwag', type: 'Water', type2: null, hp: 40, maxHp: 40, attack: 50, spAtk: 40, color: '💧', moves: ['Water Gun', 'Bubble', 'Hypnosis', 'Bubble Beam'], moveTypes: ['Water', 'Water', 'Psychic', 'Water'] },
-    { name: 'Paras', type: 'Bug', type2: 'Grass', hp: 35, maxHp: 35, attack: 45, spAtk: 45, color: '🍄', moves: ['Scratch', 'Stun Spore', 'Leech Life', 'Spore'], moveTypes: ['Normal', 'Grass', 'Bug', 'Grass'] },
-    { name: 'Venonat', type: 'Bug', type2: 'Poison', hp: 60, maxHp: 60, attack: 45, spAtk: 40, color: '🔮', moves: ['Tackle', 'Confusion', 'Poison Powder', 'Psybeam'], moveTypes: ['Normal', 'Psychic', 'Poison', 'Psychic'] },
-    { name: 'Krabby', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 50, spAtk: 25, color: '🦀', moves: ['Bubble', 'Vice Grip', 'Crabhammer', 'Stomp'], moveTypes: ['Water', 'Normal', 'Water', 'Normal'] },
-    { name: 'Horsea', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 40, spAtk: 70, color: '🐴', moves: ['Bubble', 'Water Gun', 'Twister', 'Hydro Pump'], moveTypes: ['Water', 'Water', 'Dragon', 'Water'] },
-    { name: 'Goldeen', type: 'Water', type2: null, hp: 45, maxHp: 45, attack: 48, spAtk: 35, color: '🐠', moves: ['Peck', 'Water Gun', 'Horn Attack', 'Waterfall'], moveTypes: ['Flying', 'Water', 'Normal', 'Water'] },
-    { name: 'Staryu', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 45, spAtk: 70, color: '⭐', moves: ['Tackle', 'Water Gun', 'Swift', 'Hydro Pump'], moveTypes: ['Normal', 'Water', 'Normal', 'Water'] },
+    { name: 'Gastly', type: 'Ghost', type2: 'Poison', hp: 30, maxHp: 30, attack: 35, spAtk: 100, def: 30, spDef: 35, color: '👻', moves: ['Lick', 'Hypnosis', 'Shadow Ball', 'Night Shade'], moveTypes: ['Ghost', 'Psychic', 'Ghost', 'Ghost'] },
+    { name: 'Tentacool', type: 'Water', type2: 'Poison', hp: 40, maxHp: 40, attack: 40, spAtk: 50, def: 35, spDef: 100, color: '🪼', moves: ['Acid', 'Poison Sting', 'Water Gun', 'Wrap'], moveTypes: ['Poison', 'Poison', 'Water', 'Normal'] },
+    { name: 'Vulpix', type: 'Fire', type2: null, hp: 38, maxHp: 38, attack: 41, spAtk: 50, def: 40, spDef: 65, color: '🦊', moves: ['Ember', 'Quick Attack', 'Flame Burst', 'Flamethrower'], moveTypes: ['Fire', 'Normal', 'Fire', 'Fire'] },
+    { name: 'Meowth', type: 'Normal', type2: null, hp: 40, maxHp: 40, attack: 45, spAtk: 40, def: 35, spDef: 40, color: '🐱', moves: ['Scratch', 'Bite', 'Fury Swipes', 'Pay Day'], moveTypes: ['Normal', 'Dark', 'Normal', 'Normal'] },
+    { name: 'Zubat', type: 'Poison', type2: 'Flying', hp: 40, maxHp: 40, attack: 45, spAtk: 30, def: 35, spDef: 40, color: '🦇', moves: ['Bite', 'Wing Attack', 'Air Slash', 'Poison Fang'], moveTypes: ['Dark', 'Flying', 'Flying', 'Poison'] },
+    { name: 'Onix', type: 'Rock', type2: 'Ground', hp: 35, maxHp: 35, attack: 45, spAtk: 30, def: 160, spDef: 45, color: '🐍', moves: ['Rock Throw', 'Bind', 'Rock Slide', 'Dig'], moveTypes: ['Rock', 'Normal', 'Rock', 'Ground'] },
+    { name: 'Oddish', type: 'Grass', type2: 'Poison', hp: 45, maxHp: 45, attack: 50, spAtk: 75, def: 55, spDef: 65, color: '🌱', moves: ['Absorb', 'Acid', 'Poison Powder', 'Mega Drain'], moveTypes: ['Grass', 'Poison', 'Poison', 'Grass'] },
+    { name: 'Poliwag', type: 'Water', type2: null, hp: 40, maxHp: 40, attack: 50, spAtk: 40, def: 40, spDef: 40, color: '💧', moves: ['Water Gun', 'Bubble', 'Hypnosis', 'Bubble Beam'], moveTypes: ['Water', 'Water', 'Psychic', 'Water'] },
+    { name: 'Paras', type: 'Bug', type2: 'Grass', hp: 35, maxHp: 35, attack: 45, spAtk: 45, def: 55, spDef: 55, color: '🍄', moves: ['Scratch', 'Stun Spore', 'Leech Life', 'Spore'], moveTypes: ['Normal', 'Grass', 'Bug', 'Grass'] },
+    { name: 'Venonat', type: 'Bug', type2: 'Poison', hp: 60, maxHp: 60, attack: 45, spAtk: 40, def: 50, spDef: 55, color: '🔮', moves: ['Tackle', 'Confusion', 'Poison Powder', 'Psybeam'], moveTypes: ['Normal', 'Psychic', 'Poison', 'Psychic'] },
+    { name: 'Krabby', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 50, spAtk: 25, def: 90, spDef: 25, color: '🦀', moves: ['Bubble', 'Vice Grip', 'Crabhammer', 'Stomp'], moveTypes: ['Water', 'Normal', 'Water', 'Normal'] },
+    { name: 'Horsea', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 40, spAtk: 70, def: 70, spDef: 25, color: '🐴', moves: ['Bubble', 'Water Gun', 'Twister', 'Hydro Pump'], moveTypes: ['Water', 'Water', 'Dragon', 'Water'] },
+    { name: 'Goldeen', type: 'Water', type2: null, hp: 45, maxHp: 45, attack: 48, spAtk: 35, def: 60, spDef: 50, color: '🐠', moves: ['Peck', 'Water Gun', 'Horn Attack', 'Waterfall'], moveTypes: ['Flying', 'Water', 'Normal', 'Water'] },
+    { name: 'Staryu', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 45, spAtk: 70, def: 55, spDef: 55, color: '⭐', moves: ['Tackle', 'Water Gun', 'Swift', 'Hydro Pump'], moveTypes: ['Normal', 'Water', 'Normal', 'Water'] },
 
     // Uncommon (attack 51-70) - Medium encounter rate
-    { name: 'Psyduck', type: 'Water', type2: null, hp: 50, maxHp: 50, attack: 52, spAtk: 65, color: '🦆', moves: ['Scratch', 'Water Gun', 'Confusion', 'Aqua Tail'], moveTypes: ['Normal', 'Water', 'Psychic', 'Water'] },
-    { name: 'Pikachu', type: 'Electric', type2: null, hp: 35, maxHp: 35, attack: 55, spAtk: 50, color: '⚡', moves: ['Thunder Shock', 'Quick Attack', 'Thunderbolt', 'Iron Tail'], moveTypes: ['Electric', 'Normal', 'Electric', 'Steel'] },
-    { name: 'Diglett', type: 'Ground', type2: null, hp: 10, maxHp: 10, attack: 55, spAtk: 35, color: '🕳️', moves: ['Scratch', 'Dig', 'Mud Slap', 'Earthquake'], moveTypes: ['Normal', 'Ground', 'Ground', 'Ground'] },
-    { name: 'Geodude', type: 'Rock', type2: 'Ground', hp: 40, maxHp: 40, attack: 55, spAtk: 30, color: '🪨', moves: ['Tackle', 'Rock Throw', 'Defense Curl', 'Rock Blast'], moveTypes: ['Normal', 'Rock', 'Normal', 'Rock'] },
-    { name: 'Spearow', type: 'Normal', type2: 'Flying', hp: 40, maxHp: 40, attack: 60, spAtk: 31, color: '🐦', moves: ['Peck', 'Fury Attack', 'Aerial Ace', 'Drill Peck'], moveTypes: ['Flying', 'Normal', 'Flying', 'Flying'] },
-    { name: 'Magnemite', type: 'Electric', type2: 'Steel', hp: 25, maxHp: 25, attack: 60, spAtk: 95, color: '🧲', moves: ['Thunder Shock', 'Sonic Boom', 'Spark', 'Thunderbolt'], moveTypes: ['Electric', 'Normal', 'Electric', 'Electric'] },
-    { name: 'Cubone', type: 'Ground', type2: null, hp: 50, maxHp: 50, attack: 65, spAtk: 40, color: '💀', moves: ['Bone Club', 'Headbutt', 'Bonemerang', 'Earthquake'], moveTypes: ['Ground', 'Normal', 'Ground', 'Ground'] },
-    { name: 'Drowzee', type: 'Psychic', type2: null, hp: 60, maxHp: 60, attack: 48, spAtk: 43, color: '😴', moves: ['Pound', 'Hypnosis', 'Confusion', 'Psychic'], moveTypes: ['Normal', 'Psychic', 'Psychic', 'Psychic'] },
-    { name: 'Slowpoke', type: 'Water', type2: 'Psychic', hp: 90, maxHp: 90, attack: 65, spAtk: 40, color: '🐚', moves: ['Tackle', 'Water Gun', 'Confusion', 'Psychic'], moveTypes: ['Normal', 'Water', 'Psychic', 'Psychic'] },
-    { name: 'Shellder', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 65, spAtk: 45, color: '🐚', moves: ['Tackle', 'Water Gun', 'Clamp', 'Ice Beam'], moveTypes: ['Normal', 'Water', 'Water', 'Ice'] },
-    { name: 'Voltorb', type: 'Electric', type2: null, hp: 40, maxHp: 40, attack: 55, spAtk: 55, color: '🔴', moves: ['Tackle', 'Spark', 'Self-Destruct', 'Thunderbolt'], moveTypes: ['Normal', 'Electric', 'Normal', 'Electric'] },
-    { name: 'Exeggcute', type: 'Grass', type2: 'Psychic', hp: 60, maxHp: 60, attack: 60, spAtk: 60, color: '🥚', moves: ['Barrage', 'Confusion', 'Leech Seed', 'Psychic'], moveTypes: ['Normal', 'Psychic', 'Grass', 'Psychic'] },
+    { name: 'Psyduck', type: 'Water', type2: null, hp: 50, maxHp: 50, attack: 52, spAtk: 65, def: 48, spDef: 50, color: '🦆', moves: ['Scratch', 'Water Gun', 'Confusion', 'Aqua Tail'], moveTypes: ['Normal', 'Water', 'Psychic', 'Water'] },
+    { name: 'Pikachu', type: 'Electric', type2: null, hp: 35, maxHp: 35, attack: 55, spAtk: 50, def: 40, spDef: 50, color: '⚡', moves: ['Thunder Shock', 'Quick Attack', 'Thunderbolt', 'Iron Tail'], moveTypes: ['Electric', 'Normal', 'Electric', 'Steel'] },
+    { name: 'Diglett', type: 'Ground', type2: null, hp: 10, maxHp: 10, attack: 55, spAtk: 35, def: 25, spDef: 45, color: '🕳️', moves: ['Scratch', 'Dig', 'Mud Slap', 'Earthquake'], moveTypes: ['Normal', 'Ground', 'Ground', 'Ground'] },
+    { name: 'Geodude', type: 'Rock', type2: 'Ground', hp: 40, maxHp: 40, attack: 55, spAtk: 30, def: 100, spDef: 30, color: '🪨', moves: ['Tackle', 'Rock Throw', 'Defense Curl', 'Rock Blast'], moveTypes: ['Normal', 'Rock', 'Normal', 'Rock'] },
+    { name: 'Spearow', type: 'Normal', type2: 'Flying', hp: 40, maxHp: 40, attack: 60, spAtk: 31, def: 30, spDef: 31, color: '🐦', moves: ['Peck', 'Fury Attack', 'Aerial Ace', 'Drill Peck'], moveTypes: ['Flying', 'Normal', 'Flying', 'Flying'] },
+    { name: 'Magnemite', type: 'Electric', type2: 'Steel', hp: 25, maxHp: 25, attack: 60, spAtk: 95, def: 70, spDef: 55, color: '🧲', moves: ['Thunder Shock', 'Sonic Boom', 'Spark', 'Thunderbolt'], moveTypes: ['Electric', 'Normal', 'Electric', 'Electric'] },
+    { name: 'Cubone', type: 'Ground', type2: null, hp: 50, maxHp: 50, attack: 65, spAtk: 40, def: 95, spDef: 50, color: '💀', moves: ['Bone Club', 'Headbutt', 'Bonemerang', 'Earthquake'], moveTypes: ['Ground', 'Normal', 'Ground', 'Ground'] },
+    { name: 'Drowzee', type: 'Psychic', type2: null, hp: 60, maxHp: 60, attack: 48, spAtk: 43, def: 45, spDef: 90, color: '😴', moves: ['Pound', 'Hypnosis', 'Confusion', 'Psychic'], moveTypes: ['Normal', 'Psychic', 'Psychic', 'Psychic'] },
+    { name: 'Slowpoke', type: 'Water', type2: 'Psychic', hp: 90, maxHp: 90, attack: 65, spAtk: 40, def: 65, spDef: 40, color: '🐚', moves: ['Tackle', 'Water Gun', 'Confusion', 'Psychic'], moveTypes: ['Normal', 'Water', 'Psychic', 'Psychic'] },
+    { name: 'Shellder', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 65, spAtk: 45, def: 100, spDef: 25, color: '🐚', moves: ['Tackle', 'Water Gun', 'Clamp', 'Ice Beam'], moveTypes: ['Normal', 'Water', 'Water', 'Ice'] },
+    { name: 'Voltorb', type: 'Electric', type2: null, hp: 40, maxHp: 40, attack: 55, spAtk: 55, def: 50, spDef: 55, color: '🔴', moves: ['Tackle', 'Spark', 'Self-Destruct', 'Thunderbolt'], moveTypes: ['Normal', 'Electric', 'Normal', 'Electric'] },
+    { name: 'Exeggcute', type: 'Grass', type2: 'Psychic', hp: 60, maxHp: 60, attack: 60, spAtk: 60, def: 80, spDef: 45, color: '🥚', moves: ['Barrage', 'Confusion', 'Leech Seed', 'Psychic'], moveTypes: ['Normal', 'Psychic', 'Grass', 'Psychic'] },
 
     // Rare (attack 71-85) - Low encounter rate
-    { name: 'Growlithe', type: 'Fire', type2: null, hp: 55, maxHp: 55, attack: 70, spAtk: 70, color: '🐕', moves: ['Ember', 'Bite', 'Flame Wheel', 'Fire Fang'], moveTypes: ['Fire', 'Dark', 'Fire', 'Fire'] },
-    { name: 'Bellsprout', type: 'Grass', type2: 'Poison', hp: 50, maxHp: 50, attack: 75, spAtk: 70, color: '🌿', moves: ['Vine Whip', 'Acid', 'Wrap', 'Razor Leaf'], moveTypes: ['Grass', 'Poison', 'Normal', 'Grass'] },
-    { name: 'Sandshrew', type: 'Ground', type2: null, hp: 50, maxHp: 50, attack: 75, spAtk: 20, color: '🦔', moves: ['Scratch', 'Sand Attack', 'Dig', 'Earthquake'], moveTypes: ['Normal', 'Ground', 'Ground', 'Ground'] },
-    { name: 'Machop', type: 'Fighting', type2: null, hp: 70, maxHp: 70, attack: 80, spAtk: 35, color: '💪', moves: ['Karate Chop', 'Low Kick', 'Focus Energy', 'Seismic Toss'], moveTypes: ['Fighting', 'Fighting', 'Normal', 'Fighting'] },
-    { name: 'Mankey', type: 'Fighting', type2: null, hp: 40, maxHp: 40, attack: 80, spAtk: 35, color: '🐵', moves: ['Scratch', 'Karate Chop', 'Fury Swipes', 'Cross Chop'], moveTypes: ['Normal', 'Fighting', 'Normal', 'Fighting'] },
-    { name: 'Ponyta', type: 'Fire', type2: null, hp: 50, maxHp: 50, attack: 85, spAtk: 65, color: '🐴', moves: ['Ember', 'Stomp', 'Flame Charge', 'Fire Blast'], moveTypes: ['Fire', 'Normal', 'Fire', 'Fire'] },
-    { name: 'Rhyhorn', type: 'Ground', type2: 'Rock', hp: 80, maxHp: 80, attack: 85, spAtk: 30, color: '🦏', moves: ['Horn Attack', 'Stomp', 'Rock Blast', 'Earthquake'], moveTypes: ['Normal', 'Normal', 'Rock', 'Ground'] },
-    { name: 'Tangela', type: 'Grass', type2: null, hp: 65, maxHp: 65, attack: 75, spAtk: 100, color: '🌿', moves: ['Vine Whip', 'Bind', 'Mega Drain', 'Power Whip'], moveTypes: ['Grass', 'Normal', 'Grass', 'Grass'] },
-    { name: 'Lickitung', type: 'Normal', type2: null, hp: 90, maxHp: 90, attack: 75, spAtk: 60, color: '👅', moves: ['Lick', 'Stomp', 'Slam', 'Power Whip'], moveTypes: ['Ghost', 'Normal', 'Normal', 'Grass'] },
-    { name: 'Chansey', type: 'Normal', type2: null, hp: 250, maxHp: 250, attack: 15, spAtk: 35, color: '🥚', moves: ['Pound', 'Double Slap', 'Egg Bomb', 'Softboiled'], moveTypes: ['Normal', 'Normal', 'Normal', 'Normal'] },
+    { name: 'Growlithe', type: 'Fire', type2: null, hp: 55, maxHp: 55, attack: 70, spAtk: 70, def: 45, spDef: 50, color: '🐕', moves: ['Ember', 'Bite', 'Flame Wheel', 'Fire Fang'], moveTypes: ['Fire', 'Dark', 'Fire', 'Fire'] },
+    { name: 'Bellsprout', type: 'Grass', type2: 'Poison', hp: 50, maxHp: 50, attack: 75, spAtk: 70, def: 35, spDef: 30, color: '🌿', moves: ['Vine Whip', 'Acid', 'Wrap', 'Razor Leaf'], moveTypes: ['Grass', 'Poison', 'Normal', 'Grass'] },
+    { name: 'Sandshrew', type: 'Ground', type2: null, hp: 50, maxHp: 50, attack: 75, spAtk: 20, def: 85, spDef: 30, color: '🦔', moves: ['Scratch', 'Sand Attack', 'Dig', 'Earthquake'], moveTypes: ['Normal', 'Ground', 'Ground', 'Ground'] },
+    { name: 'Machop', type: 'Fighting', type2: null, hp: 70, maxHp: 70, attack: 80, spAtk: 35, def: 50, spDef: 35, color: '💪', moves: ['Karate Chop', 'Low Kick', 'Focus Energy', 'Seismic Toss'], moveTypes: ['Fighting', 'Fighting', 'Normal', 'Fighting'] },
+    { name: 'Mankey', type: 'Fighting', type2: null, hp: 40, maxHp: 40, attack: 80, spAtk: 35, def: 35, spDef: 45, color: '🐵', moves: ['Scratch', 'Karate Chop', 'Fury Swipes', 'Cross Chop'], moveTypes: ['Normal', 'Fighting', 'Normal', 'Fighting'] },
+    { name: 'Ponyta', type: 'Fire', type2: null, hp: 50, maxHp: 50, attack: 85, spAtk: 65, def: 55, spDef: 65, color: '🐴', moves: ['Ember', 'Stomp', 'Flame Charge', 'Fire Blast'], moveTypes: ['Fire', 'Normal', 'Fire', 'Fire'] },
+    { name: 'Rhyhorn', type: 'Ground', type2: 'Rock', hp: 80, maxHp: 80, attack: 85, spAtk: 30, def: 95, spDef: 30, color: '🦏', moves: ['Horn Attack', 'Stomp', 'Rock Blast', 'Earthquake'], moveTypes: ['Normal', 'Normal', 'Rock', 'Ground'] },
+    { name: 'Tangela', type: 'Grass', type2: null, hp: 65, maxHp: 65, attack: 75, spAtk: 100, def: 115, spDef: 40, color: '🌿', moves: ['Vine Whip', 'Bind', 'Mega Drain', 'Power Whip'], moveTypes: ['Grass', 'Normal', 'Grass', 'Grass'] },
+    { name: 'Lickitung', type: 'Normal', type2: null, hp: 90, maxHp: 90, attack: 75, spAtk: 60, def: 75, spDef: 75, color: '👅', moves: ['Lick', 'Stomp', 'Slam', 'Power Whip'], moveTypes: ['Ghost', 'Normal', 'Normal', 'Grass'] },
+    { name: 'Chansey', type: 'Normal', type2: null, hp: 250, maxHp: 250, attack: 15, spAtk: 35, def: 5, spDef: 105, color: '🥚', moves: ['Pound', 'Double Slap', 'Egg Bomb', 'Softboiled'], moveTypes: ['Normal', 'Normal', 'Normal', 'Normal'] },
 
     // Very Rare (attack 86-100) - Very low encounter rate
-    { name: 'Abra', type: 'Psychic', type2: null, hp: 25, maxHp: 25, attack: 20, spAtk: 105, color: '🔮', moves: ['Teleport', 'Confusion', 'Psybeam', 'Psychic'], moveTypes: ['Psychic', 'Psychic', 'Psychic', 'Psychic'] },
-    { name: 'Electabuzz', type: 'Electric', type2: null, hp: 65, maxHp: 65, attack: 83, spAtk: 95, color: '⚡', moves: ['Thunder Punch', 'Spark', 'Thunderbolt', 'Thunder'], moveTypes: ['Electric', 'Electric', 'Electric', 'Electric'] },
-    { name: 'Magmar', type: 'Fire', type2: null, hp: 65, maxHp: 65, attack: 95, spAtk: 100, color: '🔥', moves: ['Fire Punch', 'Ember', 'Flamethrower', 'Fire Blast'], moveTypes: ['Fire', 'Fire', 'Fire', 'Fire'] },
-    { name: 'Pinsir', type: 'Bug', type2: null, hp: 65, maxHp: 65, attack: 125, spAtk: 55, color: '🪲', moves: ['Vice Grip', 'X-Scissor', 'Guillotine', 'Superpower'], moveTypes: ['Normal', 'Bug', 'Normal', 'Fighting'] },
-    { name: 'Tauros', type: 'Normal', type2: null, hp: 75, maxHp: 75, attack: 100, spAtk: 40, color: '🐂', moves: ['Tackle', 'Horn Attack', 'Thrash', 'Giga Impact'], moveTypes: ['Normal', 'Normal', 'Normal', 'Normal'] },
-    { name: 'Scyther', type: 'Bug', type2: 'Flying', hp: 70, maxHp: 70, attack: 110, spAtk: 55, color: '🦗', moves: ['Quick Attack', 'Fury Cutter', 'Slash', 'X-Scissor'], moveTypes: ['Normal', 'Bug', 'Normal', 'Bug'] },
-    { name: 'Ditto', type: 'Normal', type2: null, hp: 48, maxHp: 48, attack: 48, spAtk: 48, color: '🟣', moves: ['Transform', 'Struggle'], moveTypes: ['Normal', 'Normal'] },
-    { name: 'Eevee', type: 'Normal', type2: null, hp: 55, maxHp: 55, attack: 55, spAtk: 45, color: '🦊', moves: ['Tackle', 'Quick Attack', 'Bite', 'Take Down'], moveTypes: ['Normal', 'Normal', 'Dark', 'Normal'] },
-    { name: 'Porygon', type: 'Normal', type2: null, hp: 65, maxHp: 65, attack: 60, spAtk: 85, color: '🤖', moves: ['Tackle', 'Psybeam', 'Tri Attack', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Normal', 'Normal'] },
-    { name: 'Lapras', type: 'Water', type2: 'Ice', hp: 130, maxHp: 130, attack: 85, spAtk: 85, color: '🐋', moves: ['Water Gun', 'Ice Beam', 'Body Slam', 'Hydro Pump'], moveTypes: ['Water', 'Ice', 'Normal', 'Water'] },
-    { name: 'Aerodactyl', type: 'Rock', type2: 'Flying', hp: 80, maxHp: 80, attack: 105, spAtk: 60, color: '🦖', moves: ['Wing Attack', 'Bite', 'Rock Slide', 'Hyper Beam'], moveTypes: ['Flying', 'Dark', 'Rock', 'Normal'] }
+    { name: 'Abra', type: 'Psychic', type2: null, hp: 25, maxHp: 25, attack: 20, spAtk: 105, def: 15, spDef: 55, color: '🔮', moves: ['Teleport', 'Confusion', 'Psybeam', 'Psychic'], moveTypes: ['Psychic', 'Psychic', 'Psychic', 'Psychic'] },
+    { name: 'Electabuzz', type: 'Electric', type2: null, hp: 65, maxHp: 65, attack: 83, spAtk: 95, def: 57, spDef: 85, color: '⚡', moves: ['Thunder Punch', 'Spark', 'Thunderbolt', 'Thunder'], moveTypes: ['Electric', 'Electric', 'Electric', 'Electric'] },
+    { name: 'Magmar', type: 'Fire', type2: null, hp: 65, maxHp: 65, attack: 95, spAtk: 100, def: 57, spDef: 85, color: '🔥', moves: ['Fire Punch', 'Ember', 'Flamethrower', 'Fire Blast'], moveTypes: ['Fire', 'Fire', 'Fire', 'Fire'] },
+    { name: 'Pinsir', type: 'Bug', type2: null, hp: 65, maxHp: 65, attack: 125, spAtk: 55, def: 100, spDef: 70, color: '🪲', moves: ['Vice Grip', 'X-Scissor', 'Guillotine', 'Superpower'], moveTypes: ['Normal', 'Bug', 'Normal', 'Fighting'] },
+    { name: 'Tauros', type: 'Normal', type2: null, hp: 75, maxHp: 75, attack: 100, spAtk: 40, def: 95, spDef: 70, color: '🐂', moves: ['Tackle', 'Horn Attack', 'Thrash', 'Giga Impact'], moveTypes: ['Normal', 'Normal', 'Normal', 'Normal'] },
+    { name: 'Scyther', type: 'Bug', type2: 'Flying', hp: 70, maxHp: 70, attack: 110, spAtk: 55, def: 80, spDef: 80, color: '🦗', moves: ['Quick Attack', 'Fury Cutter', 'Slash', 'X-Scissor'], moveTypes: ['Normal', 'Bug', 'Normal', 'Bug'] },
+    { name: 'Ditto', type: 'Normal', type2: null, hp: 48, maxHp: 48, attack: 48, spAtk: 48, def: 48, spDef: 48, color: '🟣', moves: ['Transform', 'Struggle'], moveTypes: ['Normal', 'Normal'] },
+    { name: 'Eevee', type: 'Normal', type2: null, hp: 55, maxHp: 55, attack: 55, spAtk: 45, def: 50, spDef: 65, color: '🦊', moves: ['Tackle', 'Quick Attack', 'Bite', 'Take Down'], moveTypes: ['Normal', 'Normal', 'Dark', 'Normal'] },
+    { name: 'Porygon', type: 'Normal', type2: null, hp: 65, maxHp: 65, attack: 60, spAtk: 85, def: 70, spDef: 75, color: '🤖', moves: ['Tackle', 'Psybeam', 'Tri Attack', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Normal', 'Normal'] },
+    { name: 'Lapras', type: 'Water', type2: 'Ice', hp: 130, maxHp: 130, attack: 85, spAtk: 85, def: 80, spDef: 95, color: '🐋', moves: ['Water Gun', 'Ice Beam', 'Body Slam', 'Hydro Pump'], moveTypes: ['Water', 'Ice', 'Normal', 'Water'] },
+    { name: 'Aerodactyl', type: 'Rock', type2: 'Flying', hp: 80, maxHp: 80, attack: 105, spAtk: 60, def: 65, spDef: 75, color: '🦖', moves: ['Wing Attack', 'Bite', 'Rock Slide', 'Hyper Beam'], moveTypes: ['Flying', 'Dark', 'Rock', 'Normal'] }
   ];
 
   // Function to get weighted random Pokemon based on attack power
@@ -962,11 +962,13 @@ const PokemonGame = () => {
           maxHp: pokemon.maxHp + 10,
           attack: pokemon.attack + 10,
           spAtk: (pokemon.spAtk || 0) + 10,
+          def: (pokemon.def || 0) + 10,
+          spDef: (pokemon.spDef || 0) + 10,
           exp: newExp
         };
 
         addLog(`${pokemon.name} evolved into ${nextEvolution.name}!`);
-        addLog(`HP +10! ATK +10! Sp.ATK +10!`);
+        addLog(`All stats +10!`);
         
         setTimeout(() => {
           setPlayerPokemon(evolvedPokemon);
@@ -980,7 +982,7 @@ const PokemonGame = () => {
       } else {
         // No evolution available (final form)
         addLog(`${pokemon.name} is at max evolution!`);
-        addLog(`HP +5! ATK +5! Sp.ATK +5!`);
+        addLog(`All stats +5!`);
 
         const strengthenedPokemon = {
           ...pokemon,
@@ -988,6 +990,8 @@ const PokemonGame = () => {
           maxHp: pokemon.maxHp + 5,
           attack: pokemon.attack + 5,
           spAtk: (pokemon.spAtk || 0) + 5,
+          def: (pokemon.def || 0) + 5,
+          spDef: (pokemon.spDef || 0) + 5,
           exp: newExp
         };
         
@@ -1008,9 +1012,15 @@ const PokemonGame = () => {
   };
 
   const calculateDamage = (attacker, defender, moveIndex, isEnemyAttack = false) => {
-    // Use the higher of attack or special attack
+    // Use the higher of attack or special attack for offense
     const attackStat = Math.max(attacker.attack || 0, attacker.spAtk || 0);
-    let baseDamage = Math.floor(attackStat * 0.4) + Math.floor(Math.random() * 10);
+    // Use the higher of defense or special defense for defense
+    const defenseStat = Math.max(defender.def || 0, defender.spDef || 0);
+
+    // Calculate base damage with defense reduction
+    // Formula: (attack * 0.4) - (defense * 0.2) + random(0-10)
+    let baseDamage = Math.floor(attackStat * 0.4) - Math.floor(defenseStat * 0.2) + Math.floor(Math.random() * 10);
+    baseDamage = Math.max(1, baseDamage); // Minimum 1 damage
 
     // Apply difficulty multiplier for enemy attacks
     if (isEnemyAttack) {
@@ -1024,7 +1034,7 @@ const PokemonGame = () => {
     const stabMultiplier = hasSTAB ? 1.5 : 1.0;
 
     const effectiveness = getTypeEffectiveness(moveType, defender.type, defender.type2);
-    const damage = Math.floor(baseDamage * effectiveness * stabMultiplier);
+    const damage = Math.max(1, Math.floor(baseDamage * effectiveness * stabMultiplier));
 
     let effectText = '';
     if (effectiveness === 0) effectText = " It doesn't affect " + defender.name + "...";
@@ -1262,16 +1272,16 @@ const PokemonGame = () => {
     // STAGE 3: Post-Mewtwo - spawn final evolutions ONLY
     if (hasDefeatedMewtwo.current) {
       const finalEvolutionPokemon = [
-        { name: 'Charizard', type: 'Fire', type2: 'Flying', hp: 90, maxHp: 90, attack: 84, spAtk: 109, color: '🔥', moves: ['Flamethrower', 'Wing Attack', 'Fire Blast', 'Dragon Claw'], moveTypes: ['Fire', 'Flying', 'Fire', 'Dragon'] },
-        { name: 'Blastoise', type: 'Water', type2: null, hp: 95, maxHp: 95, attack: 83, spAtk: 85, color: '💧', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Skull Bash'], moveTypes: ['Water', 'Dark', 'Ice', 'Normal'] },
-        { name: 'Venusaur', type: 'Grass', type2: 'Poison', hp: 95, maxHp: 95, attack: 82, spAtk: 100, color: '🌿', moves: ['Solar Beam', 'Sludge Bomb', 'Earthquake', 'Petal Dance'], moveTypes: ['Grass', 'Poison', 'Ground', 'Grass'] },
-        { name: 'Pidgeot', type: 'Normal', type2: 'Flying', hp: 85, maxHp: 85, attack: 80, spAtk: 70, color: '🐦', moves: ['Hurricane', 'Wing Attack', 'Aerial Ace', 'Quick Attack'], moveTypes: ['Flying', 'Flying', 'Flying', 'Normal'] },
-        { name: 'Gengar', type: 'Ghost', type2: 'Poison', hp: 70, maxHp: 70, attack: 65, spAtk: 130, color: '👻', moves: ['Shadow Ball', 'Sludge Bomb', 'Dark Pulse', 'Hypnosis'], moveTypes: ['Ghost', 'Poison', 'Dark', 'Psychic'] },
-        { name: 'Machamp', type: 'Fighting', type2: null, hp: 110, maxHp: 110, attack: 130, spAtk: 65, color: '💪', moves: ['Dynamic Punch', 'Cross Chop', 'Stone Edge', 'Earthquake'], moveTypes: ['Fighting', 'Fighting', 'Rock', 'Ground'] },
-        { name: 'Golem', type: 'Rock', type2: 'Ground', hp: 90, maxHp: 90, attack: 120, spAtk: 55, color: '🪨', moves: ['Earthquake', 'Rock Slide', 'Stone Edge', 'Explosion'], moveTypes: ['Ground', 'Rock', 'Rock', 'Normal'] },
-        { name: 'Victreebel', type: 'Grass', type2: 'Poison', hp: 85, maxHp: 85, attack: 105, spAtk: 100, color: '🌿', moves: ['Razor Leaf', 'Sludge Bomb', 'Solar Beam', 'Leaf Blade'], moveTypes: ['Grass', 'Poison', 'Grass', 'Grass'] },
-        { name: 'Dragonite', type: 'Dragon', type2: 'Flying', hp: 110, maxHp: 110, attack: 134, spAtk: 100, color: '🐉', moves: ['Dragon Claw', 'Wing Attack', 'Thunder', 'Outrage'], moveTypes: ['Dragon', 'Flying', 'Electric', 'Dragon'] },
-        { name: 'Gyarados', type: 'Water', type2: 'Flying', hp: 105, maxHp: 105, attack: 125, spAtk: 60, color: '🐉', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Dragon Dance'], moveTypes: ['Water', 'Dark', 'Ice', 'Dragon'] }
+        { name: 'Charizard', type: 'Fire', type2: 'Flying', hp: 90, maxHp: 90, attack: 84, spAtk: 109, def: 78, spDef: 85, color: '🔥', moves: ['Flamethrower', 'Wing Attack', 'Fire Blast', 'Dragon Claw'], moveTypes: ['Fire', 'Flying', 'Fire', 'Dragon'] },
+        { name: 'Blastoise', type: 'Water', type2: null, hp: 95, maxHp: 95, attack: 83, spAtk: 85, def: 100, spDef: 105, color: '💧', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Skull Bash'], moveTypes: ['Water', 'Dark', 'Ice', 'Normal'] },
+        { name: 'Venusaur', type: 'Grass', type2: 'Poison', hp: 95, maxHp: 95, attack: 82, spAtk: 100, def: 83, spDef: 100, color: '🌿', moves: ['Solar Beam', 'Sludge Bomb', 'Earthquake', 'Petal Dance'], moveTypes: ['Grass', 'Poison', 'Ground', 'Grass'] },
+        { name: 'Pidgeot', type: 'Normal', type2: 'Flying', hp: 85, maxHp: 85, attack: 80, spAtk: 70, def: 75, spDef: 70, color: '🐦', moves: ['Hurricane', 'Wing Attack', 'Aerial Ace', 'Quick Attack'], moveTypes: ['Flying', 'Flying', 'Flying', 'Normal'] },
+        { name: 'Gengar', type: 'Ghost', type2: 'Poison', hp: 70, maxHp: 70, attack: 65, spAtk: 130, def: 60, spDef: 75, color: '👻', moves: ['Shadow Ball', 'Sludge Bomb', 'Dark Pulse', 'Hypnosis'], moveTypes: ['Ghost', 'Poison', 'Dark', 'Psychic'] },
+        { name: 'Machamp', type: 'Fighting', type2: null, hp: 110, maxHp: 110, attack: 130, spAtk: 65, def: 80, spDef: 85, color: '💪', moves: ['Dynamic Punch', 'Cross Chop', 'Stone Edge', 'Earthquake'], moveTypes: ['Fighting', 'Fighting', 'Rock', 'Ground'] },
+        { name: 'Golem', type: 'Rock', type2: 'Ground', hp: 90, maxHp: 90, attack: 120, spAtk: 55, def: 130, spDef: 65, color: '🪨', moves: ['Earthquake', 'Rock Slide', 'Stone Edge', 'Explosion'], moveTypes: ['Ground', 'Rock', 'Rock', 'Normal'] },
+        { name: 'Victreebel', type: 'Grass', type2: 'Poison', hp: 85, maxHp: 85, attack: 105, spAtk: 100, def: 65, spDef: 70, color: '🌿', moves: ['Razor Leaf', 'Sludge Bomb', 'Solar Beam', 'Leaf Blade'], moveTypes: ['Grass', 'Poison', 'Grass', 'Grass'] },
+        { name: 'Dragonite', type: 'Dragon', type2: 'Flying', hp: 110, maxHp: 110, attack: 134, spAtk: 100, def: 95, spDef: 100, color: '🐉', moves: ['Dragon Claw', 'Wing Attack', 'Thunder', 'Outrage'], moveTypes: ['Dragon', 'Flying', 'Electric', 'Dragon'] },
+        { name: 'Gyarados', type: 'Water', type2: 'Flying', hp: 105, maxHp: 105, attack: 125, spAtk: 60, def: 79, spDef: 100, color: '🐉', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Dragon Dance'], moveTypes: ['Water', 'Dark', 'Ice', 'Dragon'] }
       ];
 
       const wild = { ...finalEvolutionPokemon[Math.floor(Math.random() * finalEvolutionPokemon.length)] };
@@ -1616,6 +1626,8 @@ const PokemonGame = () => {
                 maxHp: 150,
                 attack: 110,
                 spAtk: 154,
+                def: 90,
+                spDef: 90,
                 color: '🧬',
                 moves: ['Psychic', 'Shadow Ball', 'Ice Beam', 'Aura Sphere'],
                 moveTypes: ['Psychic', 'Ghost', 'Ice', 'Fighting']
