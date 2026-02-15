@@ -1690,7 +1690,7 @@ const PokemonGame = () => {
             </p>
           </div>
           <div className="border-4 border-purple-500 bg-purple-800 text-white p-4 mb-8">
-            <p className="text-2xl font-bold mb-2">HP: 150 | ATK: 150 | SP.ATK: 154</p>
+            <p className="text-2xl font-bold mb-2">HP: 106 | ATK: 110 | SP.ATK: 154</p>
             <p className="text-2xl font-bold mb-2">DEF: 90 | SP.DEF: 90</p>
             <p className="text-lg font-bold text-purple-300">TYPE: PSYCHIC</p>
           </div>
@@ -1700,9 +1700,9 @@ const PokemonGame = () => {
                 name: 'Mewtwo',
                 type: 'Psychic',
                 type2: null,
-                hp: 150,
-                maxHp: 150,
-                attack: 150,
+                hp: 106,
+                maxHp: 106,
+                attack: 110,
                 spAtk: 154,
                 def: 90,
                 spDef: 90,
