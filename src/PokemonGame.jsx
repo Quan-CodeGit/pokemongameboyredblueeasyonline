@@ -934,7 +934,7 @@ const PokemonGame = () => {
         'mankey': { name: 'Primeape', type2: null },
         'gastly': { name: 'Haunter', type2: 'Poison' },
         'haunter': { name: 'Gengar', type2: 'Poison' },
-        'onix': { name: 'Steelix', type2: 'Ground' },
+        'onix': { name: 'Steelix', type: 'Steel', type2: 'Ground' },
         'dratini': { name: 'Dragonair', type2: null },
         'dragonair': { name: 'Dragonite', type2: 'Flying' },
         'growlithe': { name: 'Arcanine', type2: null },
@@ -1010,6 +1010,7 @@ const PokemonGame = () => {
         const evolvedPokemon = {
           ...pokemon,
           name: nextEvolution.name,
+          type: nextEvolution.type || pokemon.type,
           type2: nextEvolution.type2,
           hp: pokemon.maxHp + 15,
           maxHp: pokemon.maxHp + 15,
