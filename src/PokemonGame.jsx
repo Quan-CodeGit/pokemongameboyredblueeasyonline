@@ -400,8 +400,8 @@ const PokemonGame = () => {
               <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>📈 EVOLUTION:</h3>
               <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
                 <li>• Win battles to gain EXP</li>
-                <li>• Every 3 EXP = Evolution (+10 HP, +10 ATK)</li>
-                <li>• Max evolution = +5 HP, +5 ATK per 3 EXP</li>
+                <li>• Every 3 EXP = Evolution (+15 all stats)</li>
+                <li>• Max evolution = +5 all stats per 3 EXP</li>
               </ul>
             </div>
 
@@ -981,17 +981,17 @@ const PokemonGame = () => {
           ...pokemon,
           name: nextEvolution.name,
           type2: nextEvolution.type2,
-          hp: pokemon.maxHp + 10,
-          maxHp: pokemon.maxHp + 10,
-          attack: pokemon.attack + 10,
-          spAtk: (pokemon.spAtk || 0) + 10,
-          def: (pokemon.def || 0) + 10,
-          spDef: (pokemon.spDef || 0) + 10,
+          hp: pokemon.maxHp + 15,
+          maxHp: pokemon.maxHp + 15,
+          attack: pokemon.attack + 15,
+          spAtk: (pokemon.spAtk || 0) + 15,
+          def: (pokemon.def || 0) + 15,
+          spDef: (pokemon.spDef || 0) + 15,
           exp: newExp
         };
 
         addLog(`${pokemon.name} evolved into ${nextEvolution.name}!`);
-        addLog(`All stats +10!`);
+        addLog(`All stats +15!`);
         
         setTimeout(() => {
           setPlayerPokemon(evolvedPokemon);
