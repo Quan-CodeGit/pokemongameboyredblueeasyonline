@@ -645,7 +645,8 @@ const PokemonGame = () => {
       // Normal types
       'rattata': 19, 'raticate': 20,
       'snorlax': 143, 'tauros': 128, 'ditto': 132,
-      'eevee': 133, 'porygon': 137, 'lickitung': 108, 'chansey': 113,
+      'eevee': 133, 'vaporeon': 134, 'jolteon': 135, 'flareon': 136,
+      'porygon': 137, 'lickitung': 108, 'chansey': 113,
       // Electric types
       'pikachu': 25, 'raichu': 26,
       'magnemite': 81, 'magneton': 82,
@@ -969,13 +970,42 @@ const PokemonGame = () => {
         'jigglypuff': { name: 'Wigglytuff', type2: null },
         'venonat': { name: 'Venomoth', type2: 'Poison' },
         'seel': { name: 'Dewgong', type2: 'Ice' },
-        'voltorb': { name: 'Electrode', type2: null },
-        'eevee': { name: 'Vaporeon', type2: null }
+        'voltorb': { name: 'Electrode', type2: null }
       };
       
       const lowerName = pokemon.name.toLowerCase();
+
+      // Special case: Eevee randomly evolves into Vaporeon, Jolteon, or Flareon
+      if (lowerName === 'eevee') {
+        const eeveelutions = [
+          { name: 'Vaporeon', type: 'Water', type2: null, hp: 130, maxHp: 130, attack: 65, spAtk: 110, def: 60, spDef: 95, color: '💧', moves: ['Water Gun', 'Aurora Beam', 'Hydro Pump', 'Ice Beam'], moveTypes: ['Water', 'Ice', 'Water', 'Ice'] },
+          { name: 'Jolteon', type: 'Electric', type2: null, hp: 65, maxHp: 65, attack: 65, spAtk: 110, def: 60, spDef: 95, color: '⚡', moves: ['Thundershock', 'Quick Attack', 'Thunder', 'Pin Missile'], moveTypes: ['Electric', 'Normal', 'Electric', 'Bug'] },
+          { name: 'Flareon', type: 'Fire', type2: null, hp: 65, maxHp: 65, attack: 130, spAtk: 95, def: 60, spDef: 110, color: '🔥', moves: ['Ember', 'Quick Attack', 'Fire Blast', 'Bite'], moveTypes: ['Fire', 'Normal', 'Fire', 'Dark'] },
+        ];
+
+        const chosen = eeveelutions[Math.floor(Math.random() * eeveelutions.length)];
+
+        const evolvedPokemon = {
+          ...chosen,
+          exp: newExp,
+          defeatedMewtwo: pokemon.defeatedMewtwo
+        };
+
+        addLog(`${pokemon.name} evolved into ${chosen.name}!`);
+
+        setTimeout(() => {
+          setPlayerPokemon(evolvedPokemon);
+          setAvailableTeam(prev => prev.map(p =>
+            p.name.toLowerCase() === lowerName ? evolvedPokemon : p
+          ));
+          setIsEvolving(false);
+        }, 2000);
+
+        return evolvedPokemon;
+      }
+
       const nextEvolution = evolutionMap[lowerName];
-      
+
       if (nextEvolution) {
         const evolvedPokemon = {
           ...pokemon,
