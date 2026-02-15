@@ -920,7 +920,7 @@ const PokemonGame = () => {
         'metapod': { name: 'Butterfree', type2: 'Flying' },
         'weedle': { name: 'Kakuna', type2: 'Poison' },
         'kakuna': { name: 'Beedrill', type2: 'Poison' },
-        'magikarp': { name: 'Gyarados', type2: 'Flying' },
+        // magikarp has special evolution handling below
         'geodude': { name: 'Graveler', type2: 'Ground' },
         'graveler': { name: 'Golem', type2: 'Ground' },
         'zubat': { name: 'Golbat', type2: 'Flying' },
@@ -1002,6 +1002,29 @@ const PokemonGame = () => {
         }, 2000);
 
         return evolvedPokemon;
+      }
+
+      // Special case: Magikarp transforms into the mighty Gyarados
+      if (lowerName === 'magikarp') {
+        const gyarados = {
+          name: 'Gyarados', type: 'Water', type2: 'Flying',
+          hp: 95, maxHp: 95, attack: 125, spAtk: 60, def: 79, spDef: 100,
+          color: '🐉', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Thrash'],
+          moveTypes: ['Water', 'Dark', 'Ice', 'Normal'],
+          exp: newExp, defeatedMewtwo: pokemon.defeatedMewtwo
+        };
+
+        addLog(`${pokemon.name} evolved into Gyarados!`);
+
+        setTimeout(() => {
+          setPlayerPokemon(gyarados);
+          setAvailableTeam(prev => prev.map(p =>
+            p.name.toLowerCase() === lowerName ? gyarados : p
+          ));
+          setIsEvolving(false);
+        }, 2000);
+
+        return gyarados;
       }
 
       const nextEvolution = evolutionMap[lowerName];
@@ -1667,7 +1690,8 @@ const PokemonGame = () => {
             </p>
           </div>
           <div className="border-4 border-purple-500 bg-purple-800 text-white p-4 mb-8">
-            <p className="text-2xl font-bold mb-2">HP: 150 | ATTACK: 150</p>
+            <p className="text-2xl font-bold mb-2">HP: 150 | ATK: 150 | SP.ATK: 154</p>
+            <p className="text-2xl font-bold mb-2">DEF: 90 | SP.DEF: 90</p>
             <p className="text-lg font-bold text-purple-300">TYPE: PSYCHIC</p>
           </div>
           <button
@@ -1678,7 +1702,7 @@ const PokemonGame = () => {
                 type2: null,
                 hp: 150,
                 maxHp: 150,
-                attack: 110,
+                attack: 150,
                 spAtk: 154,
                 def: 90,
                 spDef: 90,
