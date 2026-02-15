@@ -1083,10 +1083,11 @@ const PokemonGame = () => {
     playSound('attack');
     
     const newWildHp = Math.max(0, wildPokemon.hp - damage);
+    const displayDamage = Math.min(damage, wildPokemon.hp);
     setWildPokemon(prev => ({ ...prev, hp: newWildHp }));
     addLog(`${playerPokemon.name} used ${moveName}!${effectText}`);
     if (damage > 0) {
-      addLog(`${wildPokemon.name} took ${damage} damage!`);
+      addLog(`${wildPokemon.name} took ${displayDamage} damage!`);
       playSound('damage');
     }
 
@@ -1163,8 +1164,9 @@ const PokemonGame = () => {
         p.name === currentName ? { ...p, hp: newPlayerHp } : p
       ));
 
+      const displayDamage = Math.min(damage, prevPlayerPokemon.hp);
       addLog(`${wildPokemon.name} used ${moveName}!${effectText}`);
-      if (damage > 0) addLog(`${currentName} took ${damage} damage!`);
+      if (damage > 0) addLog(`${currentName} took ${displayDamage} damage!`);
 
       if (newPlayerHp <= 0) {
         setTimeout(() => {
