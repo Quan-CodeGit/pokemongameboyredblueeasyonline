@@ -1250,17 +1250,9 @@ const PokemonGame = () => {
     const oldPokemonName = playerPokemon.name;
     
     const switchedPokemon = {
-      name: newPoke.name,
-      type: newPoke.type,
-      type2: newPoke.type2,
-      hp: newPoke.hp,
-      maxHp: newPoke.maxHp,
-      attack: newPoke.attack,
-      color: newPoke.color,
+      ...newPoke,
       moves: [...newPoke.moves],
       moveTypes: [...newPoke.moveTypes],
-      exp: newPoke.exp || 0,
-      defeatedMewtwo: newPoke.defeatedMewtwo
     };
     
     // Update the old pokemon's HP in the team
