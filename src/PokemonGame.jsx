@@ -17,8 +17,10 @@ const PokemonGame = () => {
   const [selectedMoveIndex, setSelectedMoveIndex] = useState(0);
   const [selectedActionIndex, setSelectedActionIndex] = useState(0); // 0-3: moves, 4: potion, 5: catch, 6: switch
   const [displayMode, setDisplayMode] = useState(() => {
-    // Load from localStorage or default to 'pc'
-    return localStorage.getItem('pokemonGameDisplayMode') || 'pc';
+    // Load from localStorage, or auto-detect from screen width
+    const saved = localStorage.getItem('pokemonGameDisplayMode');
+    if (saved) return saved;
+    return window.innerWidth <= 768 ? 'mobile' : 'pc';
   });
   const [audioVolume, setAudioVolume] = useState(() => {
     // Load from localStorage or default to 'high'
