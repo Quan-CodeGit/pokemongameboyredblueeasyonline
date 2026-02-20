@@ -1606,31 +1606,31 @@ const PokemonGame = () => {
               </p>
             </div>
           
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-1 sm:gap-3">
               {starters.map((starter, index) => (
                 <button
                   key={starter.name}
                   data-starter-index={index}
                   onClick={() => chooseStarter(starter)}
-                  className={`border-4 p-4 transition-all hover:scale-105 ${selectedStarterIndex === index ? 'border-blue-500 ring-4 ring-blue-300' : 'border-black'}`}
+                  className={`border-3 sm:border-4 p-1 sm:p-4 transition-all hover:scale-105 ${selectedStarterIndex === index ? 'border-blue-500 ring-4 ring-blue-300' : 'border-black'}`}
                   style={{backgroundColor: '#fbbf24', boxShadow: selectedStarterIndex === index ? '4px 4px 0px #3b82f6' : '4px 4px 0px #000'}}
                 >
-                  <div className="mb-2 flex justify-center bg-white border-2 border-black p-2 rounded">
+                  <div className="mb-1 sm:mb-2 flex justify-center bg-white border-2 border-black p-1 sm:p-2 rounded">
                     <img
                       src={getPokemonSprite(starter.name)}
                       alt={starter.name}
                       className="pixelated"
                       style={{
                         imageRendering: 'pixelated',
-                        width: `${getSpriteSize(128)}px`,
-                        height: `${getSpriteSize(128)}px`
+                        width: displayMode === 'pc' ? '128px' : '64px',
+                        height: displayMode === 'pc' ? '128px' : '64px'
                       }}
                     />
                   </div>
-                  <h3 className="font-bold text-xs mb-1 uppercase retro-text" style={{color: '#000'}}>
+                  <h3 className="font-bold mb-1 uppercase retro-text truncate" style={{color: '#000', fontSize: displayMode === 'pc' ? '12px' : '9px'}}>
                     {starter.name}
                   </h3>
-                  <div className="border-2 border-black px-2 py-1 text-xs font-bold inline-block retro-text" style={{backgroundColor: '#dc2626', color: '#fff'}}>
+                  <div className="border-2 border-black px-1 sm:px-2 py-1 font-bold inline-block retro-text" style={{backgroundColor: '#dc2626', color: '#fff', fontSize: displayMode === 'pc' ? '12px' : '9px'}}>
                     {starter.type.toUpperCase()}
                   </div>
                 </button>
