@@ -12,6 +12,8 @@ const PokemonGame = () => {
   const [availableTeam, setAvailableTeam] = useState([]);
   const [isEvolving, setIsEvolving] = useState(false);
   const [spriteCache, setSpriteCache] = useState({});
+  const [isPoisoned, setIsPoisoned] = useState({ player: false, enemy: false });
+  const [isSleeping, setIsSleeping] = useState({ player: 0, enemy: 0 }); // turns remaining
   const [introMusicPlaying, setIntroMusicPlaying] = useState(false);
   const [selectedStarterIndex, setSelectedStarterIndex] = useState(0);
   const [selectedMoveIndex, setSelectedMoveIndex] = useState(0);
@@ -1099,14 +1101,14 @@ const PokemonGame = () => {
     'Defense Curl': { effect: 'raise_defense', message: "'s defense rose!" },
     'String Shot': { effect: 'nothing', message: "'s speed fell!" },
     'Sand Attack': { effect: 'nothing', message: "'s accuracy fell!" },
-    'Hypnosis': { effect: 'nothing', message: ' fell asleep!' },
-    'Stun Spore': { effect: 'nothing', message: ' is paralyzed!' },
-    'Spore': { effect: 'nothing', message: ' fell asleep!' },
-    'Poison Powder': { effect: 'nothing', message: ' was poisoned!' },
+    'Hypnosis': { effect: 'sleep', message: ' fell asleep!' },
+    'Stun Spore': { effect: 'sleep', message: ' fell asleep!' },
+    'Spore': { effect: 'sleep', message: ' fell asleep!' },
+    'Poison Powder': { effect: 'poison', message: ' was poisoned!' },
     'Focus Energy': { effect: 'nothing', message: ' is getting pumped!' },
     'Dragon Dance': { effect: 'raise_attack', message: "'s attack rose!" },
-    'Teleport': { effect: 'nothing', message: ' But it failed!' },
-    'Transform': { effect: 'nothing', message: ' transformed!' },
+    'Teleport': { effect: 'teleport', message: ' teleported away!' },
+    'Transform': { effect: 'transform', message: ' transformed!' },
     'Leech Seed': { effect: 'heal_small', message: ' was seeded! HP restored!' },
     'Rest': { effect: 'heal_full', message: ' went to sleep and restored HP!' },
     'Softboiled': { effect: 'heal_half', message: ' restored its HP!' },
@@ -1213,13 +1215,84 @@ const PokemonGame = () => {
           setPlayerPokemon(prev => ({ ...prev, hp: 0 }));
         }
         break;
+      case 'sleep':
+        // Put target to sleep for 1-2 turns
+        if (isEnemy) {
+          setIsSleeping(prev => ({ ...prev, enemy: Math.floor(Math.random() * 2) + 1 }));
+        } else {
+          setIsSleeping(prev => ({ ...prev, player: Math.floor(Math.random() * 2) + 1 }));
+        }
+        break;
+      case 'poison':
+        if (isEnemy) {
+          setIsPoisoned(prev => ({ ...prev, enemy: true }));
+        } else {
+          setIsPoisoned(prev => ({ ...prev, player: true }));
+        }
+        break;
       default:
         break;
     }
   };
 
+  // Teleport: spawn a new wild Pokemon mid-battle (no heal, no EXP)
+  const teleportToNewBattle = () => {
+    let wild;
+    if (hasDefeatedMewtwo.current) {
+      const finalEvolutionPokemon = [
+        { name: 'Charizard', type: 'Fire', type2: 'Flying', hp: 90, maxHp: 90, attack: 84, spAtk: 109, def: 78, spDef: 85, color: '🔥', moves: ['Flamethrower', 'Wing Attack', 'Fire Blast', 'Dragon Claw'], moveTypes: ['Fire', 'Flying', 'Fire', 'Dragon'] },
+        { name: 'Blastoise', type: 'Water', type2: null, hp: 95, maxHp: 95, attack: 83, spAtk: 85, def: 100, spDef: 105, color: '💧', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Skull Bash'], moveTypes: ['Water', 'Dark', 'Ice', 'Normal'] },
+        { name: 'Venusaur', type: 'Grass', type2: 'Poison', hp: 95, maxHp: 95, attack: 82, spAtk: 100, def: 83, spDef: 100, color: '🌿', moves: ['Solar Beam', 'Sludge Bomb', 'Earthquake', 'Petal Dance'], moveTypes: ['Grass', 'Poison', 'Ground', 'Grass'] },
+        { name: 'Gengar', type: 'Ghost', type2: 'Poison', hp: 70, maxHp: 70, attack: 65, spAtk: 130, def: 60, spDef: 75, color: '👻', moves: ['Shadow Ball', 'Sludge Bomb', 'Dark Pulse', 'Hypnosis'], moveTypes: ['Ghost', 'Poison', 'Dark', 'Psychic'] },
+        { name: 'Dragonite', type: 'Dragon', type2: 'Flying', hp: 110, maxHp: 110, attack: 134, spAtk: 100, def: 95, spDef: 100, color: '🐉', moves: ['Dragon Claw', 'Wing Attack', 'Thunder', 'Outrage'], moveTypes: ['Dragon', 'Flying', 'Electric', 'Dragon'] },
+      ];
+      wild = { ...finalEvolutionPokemon[Math.floor(Math.random() * finalEvolutionPokemon.length)] };
+    } else {
+      wild = getWeightedRandomPokemon(wildPokemons);
+    }
+    setWildPokemon(wild);
+    // Reset enemy status only
+    setIsPoisoned(prev => ({ ...prev, enemy: false }));
+    setIsSleeping(prev => ({ ...prev, enemy: 0 }));
+    addLog(`Teleported to a new area!`);
+    addLog(`A wild ${wild.name} appeared!`);
+    setIsPlayerTurn(true);
+  };
+
+  // Transform: copy opponent's stats, type, moves (keep HP, name, exp)
+  const transformInto = (user, target, isEnemy = false) => {
+    const transformed = {
+      ...(isEnemy ? wildPokemon : playerPokemon),
+      type: target.type,
+      type2: target.type2,
+      attack: target.attack,
+      spAtk: target.spAtk || 0,
+      def: target.def || 0,
+      spDef: target.spDef || 0,
+      moves: [...target.moves],
+      moveTypes: [...target.moveTypes],
+    };
+    if (isEnemy) {
+      setWildPokemon(transformed);
+    } else {
+      setPlayerPokemon(transformed);
+    }
+  };
+
   const playerAttack = async (moveIndex) => {
     if (!isPlayerTurn || gameState !== 'battle' || isEvolving) return;
+
+    // Check if player is asleep
+    if (isSleeping.player > 0) {
+      addLog(`${playerPokemon.name} is fast asleep!`);
+      setIsSleeping(prev => ({ ...prev, player: prev.player - 1 }));
+      if (isSleeping.player <= 1) {
+        addLog(`${playerPokemon.name} woke up!`);
+      }
+      setIsPlayerTurn(false);
+      setTimeout(enemyAttack, 1500);
+      return;
+    }
 
     const moveName = playerPokemon.moves[moveIndex];
     const result = calculateDamage(playerPokemon, wildPokemon, moveIndex);
@@ -1261,7 +1334,27 @@ const PokemonGame = () => {
         applyStatusEffect(status.effect, playerPokemon, wildPokemon, false);
         addLog(`${playerPokemon.name}${status.message}`);
       }
-      // Flavor-only moves (Splash, Hypnosis, Stun Spore, etc.)
+      // Sleep: put enemy to sleep (skip 1-2 turns)
+      else if (status.effect === 'sleep') {
+        applyStatusEffect('sleep', playerPokemon, wildPokemon, true);
+        addLog(`${wildPokemon.name}${status.message}`);
+      }
+      // Poison: enemy loses 10 HP each turn
+      else if (status.effect === 'poison') {
+        applyStatusEffect('poison', playerPokemon, wildPokemon, true);
+        addLog(`${wildPokemon.name}${status.message}`);
+      }
+      // Teleport: skip to a new wild Pokemon
+      else if (status.effect === 'teleport') {
+        teleportToNewBattle();
+        return; // Don't trigger enemy attack - new battle started
+      }
+      // Transform: copy opponent's stats/type/moves
+      else if (status.effect === 'transform') {
+        transformInto(playerPokemon, wildPokemon, false);
+        addLog(`${playerPokemon.name} transformed into ${wildPokemon.name}!`);
+      }
+      // Flavor-only moves (Splash, String Shot, Sand Attack, Focus Energy)
       else {
         addLog(`${status.effect === 'nothing' && status.message.startsWith("'") ? playerPokemon.name : ''}${status.message}`);
       }
@@ -1332,12 +1425,50 @@ const PokemonGame = () => {
         setTimeout(() => setGameState('victory'), 2500);
       }, 500);
     } else {
+      // Apply poison damage to enemy before enemy's turn
+      if (isPoisoned.enemy) {
+        const poisonDmg = Math.min(10, wildPokemon.hp);
+        const newHp = Math.max(0, wildPokemon.hp - 10);
+        setWildPokemon(prev => ({ ...prev, hp: Math.max(0, prev.hp - 10) }));
+        addLog(`${wildPokemon.name} took ${poisonDmg} poison damage!`);
+        if (newHp <= 0) {
+          setIsPlayerTurn(false);
+          setTimeout(() => {
+            addLog(`${wildPokemon.name} fainted from poison!`);
+            playSound('victory');
+            setBattlesWon(prev => prev + 1);
+            setTimeout(() => setGameState('victory'), 1500);
+          }, 500);
+          return;
+        }
+      }
       setIsPlayerTurn(false);
       setTimeout(enemyAttack, 1500);
     }
   };
 
   const enemyAttack = () => {
+    // Check if enemy is asleep
+    if (isSleeping.enemy > 0) {
+      addLog(`${wildPokemon.name} is fast asleep!`);
+      setIsSleeping(prev => ({ ...prev, enemy: prev.enemy - 1 }));
+      if (isSleeping.enemy <= 1) {
+        addLog(`${wildPokemon.name} woke up!`);
+      }
+      // Apply poison damage to enemy if poisoned
+      if (isPoisoned.enemy && wildPokemon) {
+        const poisonDmg = Math.min(10, wildPokemon.hp);
+        setWildPokemon(prev => ({ ...prev, hp: Math.max(0, prev.hp - 10) }));
+        addLog(`${wildPokemon.name} took ${poisonDmg} poison damage!`);
+        if (wildPokemon.hp - 10 <= 0) {
+          setTimeout(() => setGameState('victory'), 1000);
+          return;
+        }
+      }
+      setIsPlayerTurn(true);
+      return;
+    }
+
     // Use functional setState to ensure we get the most current state
     setPlayerPokemon(prevPlayerPokemon => {
       if (!wildPokemon || !prevPlayerPokemon) return prevPlayerPokemon;
@@ -1382,6 +1513,27 @@ const PokemonGame = () => {
           applyStatusEffect(status.effect, wildPokemon, prevPlayerPokemon, true);
           addLog(`${wildPokemon.name}${status.message}`);
         }
+        // Sleep: put player to sleep
+        else if (status.effect === 'sleep') {
+          applyStatusEffect('sleep', wildPokemon, prevPlayerPokemon, false);
+          addLog(`${prevPlayerPokemon.name}${status.message}`);
+        }
+        // Poison: poison the player
+        else if (status.effect === 'poison') {
+          applyStatusEffect('poison', wildPokemon, prevPlayerPokemon, false);
+          addLog(`${prevPlayerPokemon.name}${status.message}`);
+        }
+        // Transform: enemy copies player's stats
+        else if (status.effect === 'transform') {
+          transformInto(wildPokemon, prevPlayerPokemon, true);
+          addLog(`${wildPokemon.name} transformed into ${prevPlayerPokemon.name}!`);
+        }
+        // Teleport: enemy flees, spawn new wild Pokemon (counts as win for player)
+        else if (status.effect === 'teleport') {
+          addLog(`${wildPokemon.name} fled!`);
+          teleportToNewBattle();
+          return prevPlayerPokemon;
+        }
         // Flavor-only
         else {
           addLog(`${status.effect === 'nothing' && status.message.startsWith("'") ? wildPokemon.name : ''}${status.message}`);
@@ -1411,6 +1563,27 @@ const PokemonGame = () => {
           setGameState('defeat');
         }, 500);
       } else {
+        // Apply poison damage to player before their turn
+        if (isPoisoned.player) {
+          const poisonHp = Math.max(0, newPlayerHp - 10);
+          const poisonDmg = Math.min(10, newPlayerHp);
+          addLog(`${currentName} took ${poisonDmg} poison damage!`);
+          if (poisonHp <= 0) {
+            setAvailableTeam(prev => prev.map(p =>
+              p.name === currentName ? { ...p, hp: 0 } : p
+            ));
+            setTimeout(() => {
+              addLog(`${currentName} fainted from poison!`);
+              setGameState('defeat');
+            }, 500);
+            return { ...prevPlayerPokemon, hp: 0 };
+          }
+          setAvailableTeam(prev => prev.map(p =>
+            p.name === currentName ? { ...p, hp: poisonHp } : p
+          ));
+          setIsPlayerTurn(true);
+          return { ...prevPlayerPokemon, hp: poisonHp };
+        }
         setIsPlayerTurn(true);
       }
 
@@ -1514,6 +1687,10 @@ const PokemonGame = () => {
     // Heal the Pokemon first
     const healedPokemon = { ...playerPokemon, hp: playerPokemon.maxHp };
 
+    // Reset status effects
+    setIsPoisoned({ player: false, enemy: false });
+    setIsSleeping({ player: 0, enemy: 0 });
+
     // Update states
     setPlayerPokemon(healedPokemon);
     setAvailableTeam(prev => prev.map(p =>
@@ -1577,6 +1754,8 @@ const PokemonGame = () => {
     setSelectedDifficultyIndex(1);
     shouldSpawnMewtwo.current = false;
     hasDefeatedMewtwo.current = false;
+    setIsPoisoned({ player: false, enemy: false });
+    setIsSleeping({ player: 0, enemy: 0 });
   };
 
   // Pokemon Red/Blue Intro Screen
