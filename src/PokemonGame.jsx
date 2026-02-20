@@ -1110,7 +1110,7 @@ const PokemonGame = () => {
     'Teleport': { effect: 'teleport', message: ' teleported away!' },
     'Transform': { effect: 'transform', message: ' transformed!' },
     'Leech Seed': { effect: 'heal_small', message: ' was seeded! HP restored!' },
-    'Rest': { effect: 'heal_full', message: ' went to sleep and restored HP!' },
+    'Rest': { effect: 'rest', message: ' went to sleep and restored HP!' },
     'Softboiled': { effect: 'heal_half', message: ' restored its HP!' },
     'Self-Destruct': { effect: 'self_destruct', message: '' },
   };
@@ -1230,6 +1230,16 @@ const PokemonGame = () => {
           setIsPoisoned(prev => ({ ...prev, player: true }));
         }
         break;
+      case 'rest':
+        // Heal to full HP and put self to sleep for 2 turns
+        if (isEnemy) {
+          setWildPokemon(prev => ({ ...prev, hp: prev.maxHp }));
+          setIsSleeping(prev => ({ ...prev, enemy: 2 }));
+        } else {
+          setPlayerPokemon(prev => ({ ...prev, hp: prev.maxHp }));
+          setIsSleeping(prev => ({ ...prev, player: 2 }));
+        }
+        break;
       default:
         break;
     }
@@ -1284,14 +1294,17 @@ const PokemonGame = () => {
 
     // Check if player is asleep
     if (isSleeping.player > 0) {
-      addLog(`${playerPokemon.name} is fast asleep!`);
-      setIsSleeping(prev => ({ ...prev, player: prev.player - 1 }));
-      if (isSleeping.player <= 1) {
+      const turnsLeft = isSleeping.player - 1;
+      setIsSleeping(prev => ({ ...prev, player: turnsLeft }));
+      if (turnsLeft > 0) {
+        addLog(`${playerPokemon.name} is fast asleep!`);
+        setIsPlayerTurn(false);
+        setTimeout(enemyAttack, 1500);
+        return;
+      } else {
         addLog(`${playerPokemon.name} woke up!`);
+        // Continue to attack normally below
       }
-      setIsPlayerTurn(false);
-      setTimeout(enemyAttack, 1500);
-      return;
     }
 
     const moveName = playerPokemon.moves[moveIndex];
@@ -1332,6 +1345,11 @@ const PokemonGame = () => {
       // Heal moves target self
       else if (status.effect === 'heal_full' || status.effect === 'heal_half' || status.effect === 'heal_small') {
         applyStatusEffect(status.effect, playerPokemon, wildPokemon, false);
+        addLog(`${playerPokemon.name}${status.message}`);
+      }
+      // Rest: heal full HP but fall asleep for 2 turns
+      else if (status.effect === 'rest') {
+        applyStatusEffect('rest', playerPokemon, wildPokemon, false);
         addLog(`${playerPokemon.name}${status.message}`);
       }
       // Sleep: put enemy to sleep (skip 1-2 turns)
@@ -1450,23 +1468,26 @@ const PokemonGame = () => {
   const enemyAttack = () => {
     // Check if enemy is asleep
     if (isSleeping.enemy > 0) {
-      addLog(`${wildPokemon.name} is fast asleep!`);
-      setIsSleeping(prev => ({ ...prev, enemy: prev.enemy - 1 }));
-      if (isSleeping.enemy <= 1) {
-        addLog(`${wildPokemon.name} woke up!`);
-      }
-      // Apply poison damage to enemy if poisoned
-      if (isPoisoned.enemy && wildPokemon) {
-        const poisonDmg = Math.min(10, wildPokemon.hp);
-        setWildPokemon(prev => ({ ...prev, hp: Math.max(0, prev.hp - 10) }));
-        addLog(`${wildPokemon.name} took ${poisonDmg} poison damage!`);
-        if (wildPokemon.hp - 10 <= 0) {
-          setTimeout(() => setGameState('victory'), 1000);
-          return;
+      const turnsLeft = isSleeping.enemy - 1;
+      setIsSleeping(prev => ({ ...prev, enemy: turnsLeft }));
+      if (turnsLeft > 0) {
+        addLog(`${wildPokemon.name} is fast asleep!`);
+        // Apply poison damage to enemy if poisoned
+        if (isPoisoned.enemy && wildPokemon) {
+          const poisonDmg = Math.min(10, wildPokemon.hp);
+          setWildPokemon(prev => ({ ...prev, hp: Math.max(0, prev.hp - 10) }));
+          addLog(`${wildPokemon.name} took ${poisonDmg} poison damage!`);
+          if (wildPokemon.hp - 10 <= 0) {
+            setTimeout(() => setGameState('victory'), 1000);
+            return;
+          }
         }
+        setIsPlayerTurn(true);
+        return;
+      } else {
+        addLog(`${wildPokemon.name} woke up!`);
+        // Continue to attack normally below
       }
-      setIsPlayerTurn(true);
-      return;
     }
 
     // Use functional setState to ensure we get the most current state
@@ -1511,6 +1532,11 @@ const PokemonGame = () => {
         // Enemy heal moves
         else if (status.effect === 'heal_full' || status.effect === 'heal_half' || status.effect === 'heal_small') {
           applyStatusEffect(status.effect, wildPokemon, prevPlayerPokemon, true);
+          addLog(`${wildPokemon.name}${status.message}`);
+        }
+        // Rest: enemy heals full but falls asleep
+        else if (status.effect === 'rest') {
+          applyStatusEffect('rest', wildPokemon, prevPlayerPokemon, true);
           addLog(`${wildPokemon.name}${status.message}`);
         }
         // Sleep: put player to sleep
@@ -1684,8 +1710,12 @@ const PokemonGame = () => {
   };
 
   const nextBattle = () => {
-    // Heal the Pokemon first
-    const healedPokemon = { ...playerPokemon, hp: playerPokemon.maxHp };
+    // Restore base stats from availableTeam (undo Withdraw/Growl/Dragon Dance etc.)
+    // then heal HP to max
+    const basePokemon = availableTeam.find(p => p.name === playerPokemon.name);
+    const healedPokemon = basePokemon
+      ? { ...basePokemon, hp: basePokemon.maxHp, exp: playerPokemon.exp, defeatedMewtwo: playerPokemon.defeatedMewtwo }
+      : { ...playerPokemon, hp: playerPokemon.maxHp };
 
     // Reset status effects
     setIsPoisoned({ player: false, enemy: false });
