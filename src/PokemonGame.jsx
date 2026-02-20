@@ -1090,8 +1090,39 @@ const PokemonGame = () => {
     return { ...pokemon, exp: newExp };
   };
 
+  // Status moves - deal no damage but have special effects
+  const statusMoves = {
+    'Splash': { effect: 'nothing', message: 'But nothing happened!' },
+    'Growl': { effect: 'lower_attack', message: "'s attack fell!" },
+    'Withdraw': { effect: 'raise_defense', message: "'s defense rose!" },
+    'Harden': { effect: 'raise_defense', message: "'s defense rose!" },
+    'Defense Curl': { effect: 'raise_defense', message: "'s defense rose!" },
+    'String Shot': { effect: 'nothing', message: "'s speed fell!" },
+    'Sand Attack': { effect: 'nothing', message: "'s accuracy fell!" },
+    'Hypnosis': { effect: 'nothing', message: ' fell asleep!' },
+    'Stun Spore': { effect: 'nothing', message: ' is paralyzed!' },
+    'Spore': { effect: 'nothing', message: ' fell asleep!' },
+    'Poison Powder': { effect: 'nothing', message: ' was poisoned!' },
+    'Focus Energy': { effect: 'nothing', message: ' is getting pumped!' },
+    'Dragon Dance': { effect: 'raise_attack', message: "'s attack rose!" },
+    'Teleport': { effect: 'nothing', message: ' But it failed!' },
+    'Transform': { effect: 'nothing', message: ' transformed!' },
+    'Leech Seed': { effect: 'heal_small', message: ' was seeded! HP restored!' },
+    'Rest': { effect: 'heal_full', message: ' went to sleep and restored HP!' },
+    'Softboiled': { effect: 'heal_half', message: ' restored its HP!' },
+    'Self-Destruct': { effect: 'self_destruct', message: '' },
+  };
+
+  const isStatusMove = (moveName) => statusMoves.hasOwnProperty(moveName);
+
   const calculateDamage = (attacker, defender, moveIndex, isEnemyAttack = false) => {
+    const moveName = attacker.moves[moveIndex];
     const moveType = attacker.moveTypes[moveIndex];
+
+    // Check if this is a status move
+    if (isStatusMove(moveName)) {
+      return { damage: 0, effectText: '', isStatus: true, statusData: statusMoves[moveName] };
+    }
 
     // Gen 1-3 Physical/Special split based on move TYPE (not Pokemon type)
     // Special types: Fire, Water, Electric, Grass, Ice, Psychic, Dragon, Dark
@@ -1127,17 +1158,122 @@ const PokemonGame = () => {
     else if (effectiveness > 1) effectText = " Super effective!";
     else if (effectiveness < 1) effectText = " Not very effective...";
 
-    return { damage, effectText };
+    return { damage, effectText, isStatus: false };
+  };
+
+  const applyStatusEffect = (effect, user, target, isEnemy = false) => {
+    const statBoost = 10;
+    switch (effect) {
+      case 'raise_defense':
+        if (isEnemy) {
+          setWildPokemon(prev => ({ ...prev, def: (prev.def || 0) + statBoost, spDef: (prev.spDef || 0) + statBoost }));
+        } else {
+          setPlayerPokemon(prev => ({ ...prev, def: (prev.def || 0) + statBoost, spDef: (prev.spDef || 0) + statBoost }));
+        }
+        break;
+      case 'raise_attack':
+        if (isEnemy) {
+          setWildPokemon(prev => ({ ...prev, attack: (prev.attack || 0) + statBoost, spAtk: (prev.spAtk || 0) + statBoost }));
+        } else {
+          setPlayerPokemon(prev => ({ ...prev, attack: (prev.attack || 0) + statBoost, spAtk: (prev.spAtk || 0) + statBoost }));
+        }
+        break;
+      case 'lower_attack':
+        if (isEnemy) {
+          setWildPokemon(prev => ({ ...prev, attack: Math.max(1, (prev.attack || 0) - statBoost), spAtk: Math.max(1, (prev.spAtk || 0) - statBoost) }));
+        } else {
+          setPlayerPokemon(prev => ({ ...prev, attack: Math.max(1, (prev.attack || 0) - statBoost), spAtk: Math.max(1, (prev.spAtk || 0) - statBoost) }));
+        }
+        break;
+      case 'heal_full':
+        if (isEnemy) {
+          setWildPokemon(prev => ({ ...prev, hp: prev.maxHp }));
+        } else {
+          setPlayerPokemon(prev => ({ ...prev, hp: prev.maxHp }));
+        }
+        break;
+      case 'heal_half':
+        if (isEnemy) {
+          setWildPokemon(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + Math.floor(prev.maxHp / 2)) }));
+        } else {
+          setPlayerPokemon(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + Math.floor(prev.maxHp / 2)) }));
+        }
+        break;
+      case 'heal_small':
+        if (isEnemy) {
+          setWildPokemon(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + Math.floor(prev.maxHp / 4)) }));
+        } else {
+          setPlayerPokemon(prev => ({ ...prev, hp: Math.min(prev.maxHp, prev.hp + Math.floor(prev.maxHp / 4)) }));
+        }
+        break;
+      case 'self_destruct':
+        if (isEnemy) {
+          setWildPokemon(prev => ({ ...prev, hp: 0 }));
+        } else {
+          setPlayerPokemon(prev => ({ ...prev, hp: 0 }));
+        }
+        break;
+      default:
+        break;
+    }
   };
 
   const playerAttack = async (moveIndex) => {
     if (!isPlayerTurn || gameState !== 'battle' || isEvolving) return;
 
     const moveName = playerPokemon.moves[moveIndex];
-    const { damage, effectText } = calculateDamage(playerPokemon, wildPokemon, moveIndex);
-    
+    const result = calculateDamage(playerPokemon, wildPokemon, moveIndex);
+
     playSound('attack');
-    
+
+    // Handle status moves
+    if (result.isStatus) {
+      const status = result.statusData;
+      addLog(`${playerPokemon.name} used ${moveName}!`);
+
+      if (status.effect === 'self_destruct') {
+        // Self-Destruct: deal massive damage to enemy, faint self
+        const selfDestructDamage = Math.min(wildPokemon.hp, Math.floor(playerPokemon.attack * 1.5));
+        setWildPokemon(prev => ({ ...prev, hp: Math.max(0, prev.hp - selfDestructDamage) }));
+        setPlayerPokemon(prev => ({ ...prev, hp: 0 }));
+        addLog(`${wildPokemon.name} took ${selfDestructDamage} damage!`);
+        addLog(`${playerPokemon.name} fainted from the explosion!`);
+        if (wildPokemon.hp - selfDestructDamage <= 0) {
+          setTimeout(() => setGameState('victory'), 1500);
+        } else {
+          setTimeout(() => setGameState('defeat'), 1500);
+        }
+        return;
+      }
+
+      // Moves that target the enemy (Growl lowers enemy attack)
+      if (status.effect === 'lower_attack') {
+        applyStatusEffect('lower_attack', playerPokemon, wildPokemon, true);
+        addLog(`${wildPokemon.name}${status.message}`);
+      }
+      // Moves that buff self (Withdraw, Harden, Dragon Dance, etc.)
+      else if (status.effect === 'raise_defense' || status.effect === 'raise_attack') {
+        applyStatusEffect(status.effect, playerPokemon, wildPokemon, false);
+        addLog(`${playerPokemon.name}${status.message}`);
+      }
+      // Heal moves target self
+      else if (status.effect === 'heal_full' || status.effect === 'heal_half' || status.effect === 'heal_small') {
+        applyStatusEffect(status.effect, playerPokemon, wildPokemon, false);
+        addLog(`${playerPokemon.name}${status.message}`);
+      }
+      // Flavor-only moves (Splash, Hypnosis, Stun Spore, etc.)
+      else {
+        addLog(`${status.effect === 'nothing' && status.message.startsWith("'") ? playerPokemon.name : ''}${status.message}`);
+      }
+
+      // After status move, enemy attacks
+      setIsPlayerTurn(false);
+      setTimeout(enemyAttack, 1500);
+      return;
+    }
+
+    const { damage, effectText } = result;
+
     const newWildHp = Math.max(0, wildPokemon.hp - damage);
     const displayDamage = Math.min(damage, wildPokemon.hp);
     setWildPokemon(prev => ({ ...prev, hp: newWildHp }));
@@ -1210,7 +1346,52 @@ const PokemonGame = () => {
       const moveName = wildPokemon.moves[moveIndex];
 
       // Calculate damage using the CURRENT playerPokemon from state
-      const { damage, effectText } = calculateDamage(wildPokemon, prevPlayerPokemon, moveIndex, true);
+      const result = calculateDamage(wildPokemon, prevPlayerPokemon, moveIndex, true);
+
+      // Handle status moves for enemy
+      if (result.isStatus) {
+        const status = result.statusData;
+        addLog(`${wildPokemon.name} used ${moveName}!`);
+
+        if (status.effect === 'self_destruct') {
+          // Enemy self-destructs - deal massive damage to player, enemy faints
+          const selfDestructDamage = Math.min(prevPlayerPokemon.hp, Math.floor(wildPokemon.attack * 1.5));
+          const newHp = Math.max(0, prevPlayerPokemon.hp - selfDestructDamage);
+          addLog(`${prevPlayerPokemon.name} took ${selfDestructDamage} damage!`);
+          addLog(`${wildPokemon.name} fainted from the explosion!`);
+          setWildPokemon(prev => ({ ...prev, hp: 0 }));
+          setAvailableTeam(prev => prev.map(p =>
+            p.name === prevPlayerPokemon.name ? { ...p, hp: newHp } : p
+          ));
+          setTimeout(() => setGameState('victory'), 1500);
+          return { ...prevPlayerPokemon, hp: newHp };
+        }
+
+        // Enemy buffs itself
+        if (status.effect === 'raise_defense' || status.effect === 'raise_attack') {
+          applyStatusEffect(status.effect, wildPokemon, prevPlayerPokemon, true);
+          addLog(`${wildPokemon.name}${status.message}`);
+        }
+        // Enemy lowers player's attack
+        else if (status.effect === 'lower_attack') {
+          applyStatusEffect('lower_attack', wildPokemon, prevPlayerPokemon, false);
+          addLog(`${prevPlayerPokemon.name}${status.message}`);
+        }
+        // Enemy heal moves
+        else if (status.effect === 'heal_full' || status.effect === 'heal_half' || status.effect === 'heal_small') {
+          applyStatusEffect(status.effect, wildPokemon, prevPlayerPokemon, true);
+          addLog(`${wildPokemon.name}${status.message}`);
+        }
+        // Flavor-only
+        else {
+          addLog(`${status.effect === 'nothing' && status.message.startsWith("'") ? wildPokemon.name : ''}${status.message}`);
+        }
+
+        setIsPlayerTurn(true);
+        return prevPlayerPokemon;
+      }
+
+      const { damage, effectText } = result;
 
       const newPlayerHp = Math.max(0, prevPlayerPokemon.hp - damage);
       const currentName = prevPlayerPokemon.name;
