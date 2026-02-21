@@ -685,6 +685,7 @@ const PokemonGame = () => {
       // Fighting types
       'mankey': 56, 'primeape': 57,
       'machop': 66, 'machoke': 67, 'machamp': 68,
+      'hitmonlee': 106, 'hitmonchan': 107,
       // Psychic types
       'abra': 63, 'kadabra': 64, 'alakazam': 65,
       'drowzee': 96, 'hypno': 97,
@@ -695,6 +696,8 @@ const PokemonGame = () => {
       'geodude': 74, 'graveler': 75, 'golem': 76,
       'onix': 95, 'steelix': 208,
       'aerodactyl': 142,
+      'omanyte': 138, 'omastar': 139,
+      'kabuto': 140, 'kabutops': 141,
       // Flying types
       'zubat': 41, 'golbat': 42, 'crobat': 169,
       // Cat types
@@ -751,6 +754,7 @@ const PokemonGame = () => {
     { name: 'Shellder', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 65, spAtk: 45, def: 100, spDef: 25, color: '🐚', moves: ['Tackle', 'Water Gun', 'Clamp', 'Ice Beam'], moveTypes: ['Normal', 'Water', 'Water', 'Ice'] },
     { name: 'Voltorb', type: 'Electric', type2: null, hp: 40, maxHp: 40, attack: 55, spAtk: 55, def: 50, spDef: 55, color: '🔴', moves: ['Tackle', 'Spark', 'Self-Destruct', 'Thunderbolt'], moveTypes: ['Normal', 'Electric', 'Normal', 'Electric'] },
     { name: 'Exeggcute', type: 'Grass', type2: 'Psychic', hp: 60, maxHp: 60, attack: 60, spAtk: 60, def: 80, spDef: 45, color: '🥚', moves: ['Barrage', 'Confusion', 'Leech Seed', 'Psychic'], moveTypes: ['Normal', 'Psychic', 'Grass', 'Psychic'] },
+    { name: 'Omanyte', type: 'Rock', type2: 'Water', hp: 35, maxHp: 35, attack: 40, spAtk: 90, def: 100, spDef: 55, color: '🐚', moves: ['Water Gun', 'Bite', 'Ancient Power', 'Hydro Pump'], moveTypes: ['Water', 'Dark', 'Rock', 'Water'] },
 
     // Rare (attack 71-85) - Low encounter rate
     { name: 'Growlithe', type: 'Fire', type2: null, hp: 55, maxHp: 55, attack: 70, spAtk: 70, def: 45, spDef: 50, color: '🐕', moves: ['Ember', 'Bite', 'Flame Wheel', 'Fire Fang'], moveTypes: ['Fire', 'Dark', 'Fire', 'Fire'] },
@@ -763,6 +767,9 @@ const PokemonGame = () => {
     { name: 'Tangela', type: 'Grass', type2: null, hp: 65, maxHp: 65, attack: 75, spAtk: 100, def: 115, spDef: 40, color: '🌿', moves: ['Vine Whip', 'Bind', 'Mega Drain', 'Power Whip'], moveTypes: ['Grass', 'Normal', 'Grass', 'Grass'] },
     { name: 'Lickitung', type: 'Normal', type2: null, hp: 90, maxHp: 90, attack: 75, spAtk: 60, def: 75, spDef: 75, color: '👅', moves: ['Lick', 'Stomp', 'Slam', 'Power Whip'], moveTypes: ['Ghost', 'Normal', 'Normal', 'Grass'] },
     { name: 'Chansey', type: 'Normal', type2: null, hp: 250, maxHp: 250, attack: 15, spAtk: 35, def: 5, spDef: 105, color: '🥚', moves: ['Pound', 'Double Slap', 'Egg Bomb', 'Softboiled'], moveTypes: ['Normal', 'Normal', 'Normal', 'Normal'] },
+    { name: 'Dragonair', type: 'Dragon', type2: null, hp: 61, maxHp: 61, attack: 84, spAtk: 70, def: 65, spDef: 70, color: '🐉', moves: ['Twister', 'Slam', 'Dragon Rage', 'Dragon Pulse'], moveTypes: ['Dragon', 'Normal', 'Dragon', 'Dragon'] },
+    { name: 'Weepinbell', type: 'Grass', type2: 'Poison', hp: 65, maxHp: 65, attack: 90, spAtk: 85, def: 50, spDef: 45, color: '🌿', moves: ['Vine Whip', 'Acid', 'Razor Leaf', 'Slam'], moveTypes: ['Grass', 'Poison', 'Grass', 'Normal'] },
+    { name: 'Kabuto', type: 'Rock', type2: 'Water', hp: 30, maxHp: 30, attack: 80, spAtk: 55, def: 90, spDef: 45, color: '🦀', moves: ['Scratch', 'Aqua Jet', 'Ancient Power', 'Mud Shot'], moveTypes: ['Normal', 'Water', 'Rock', 'Ground'] },
 
     // Very Rare (attack 86-100) - Very low encounter rate
     { name: 'Abra', type: 'Psychic', type2: null, hp: 25, maxHp: 25, attack: 20, spAtk: 105, def: 15, spDef: 55, color: '🔮', moves: ['Teleport', 'Confusion', 'Psybeam', 'Psychic'], moveTypes: ['Psychic', 'Psychic', 'Psychic', 'Psychic'] },
@@ -775,7 +782,11 @@ const PokemonGame = () => {
     { name: 'Eevee', type: 'Normal', type2: null, hp: 55, maxHp: 55, attack: 55, spAtk: 45, def: 50, spDef: 65, color: '🦊', moves: ['Tackle', 'Quick Attack', 'Bite', 'Take Down'], moveTypes: ['Normal', 'Normal', 'Dark', 'Normal'] },
     { name: 'Porygon', type: 'Normal', type2: null, hp: 65, maxHp: 65, attack: 60, spAtk: 85, def: 70, spDef: 75, color: '🤖', moves: ['Tackle', 'Psybeam', 'Tri Attack', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Normal', 'Normal'] },
     { name: 'Lapras', type: 'Water', type2: 'Ice', hp: 130, maxHp: 130, attack: 85, spAtk: 85, def: 80, spDef: 95, color: '🐋', moves: ['Water Gun', 'Ice Beam', 'Body Slam', 'Hydro Pump'], moveTypes: ['Water', 'Ice', 'Normal', 'Water'] },
-    { name: 'Aerodactyl', type: 'Rock', type2: 'Flying', hp: 80, maxHp: 80, attack: 105, spAtk: 60, def: 65, spDef: 75, color: '🦖', moves: ['Wing Attack', 'Bite', 'Rock Slide', 'Hyper Beam'], moveTypes: ['Flying', 'Dark', 'Rock', 'Normal'] }
+    { name: 'Aerodactyl', type: 'Rock', type2: 'Flying', hp: 80, maxHp: 80, attack: 105, spAtk: 60, def: 65, spDef: 75, color: '🦖', moves: ['Wing Attack', 'Bite', 'Rock Slide', 'Hyper Beam'], moveTypes: ['Flying', 'Dark', 'Rock', 'Normal'] },
+    { name: 'Beedrill', type: 'Bug', type2: 'Poison', hp: 65, maxHp: 65, attack: 90, spAtk: 45, def: 40, spDef: 80, color: '🐝', moves: ['Twineedle', 'Poison Jab', 'X-Scissor', 'Pin Missile'], moveTypes: ['Bug', 'Poison', 'Bug', 'Bug'] },
+    { name: 'Butterfree', type: 'Bug', type2: 'Flying', hp: 60, maxHp: 60, attack: 45, spAtk: 90, def: 50, spDef: 80, color: '🦋', moves: ['Confusion', 'Stun Spore', 'Psybeam', 'Bug Buzz'], moveTypes: ['Psychic', 'Grass', 'Psychic', 'Bug'] },
+    { name: 'Hitmonlee', type: 'Fighting', type2: null, hp: 50, maxHp: 50, attack: 120, spAtk: 35, def: 53, spDef: 110, color: '🦵', moves: ['Double Kick', 'High Jump Kick', 'Mega Kick', 'Blaze Kick'], moveTypes: ['Fighting', 'Fighting', 'Normal', 'Fire'] },
+    { name: 'Hitmonchan', type: 'Fighting', type2: null, hp: 50, maxHp: 50, attack: 105, spAtk: 35, def: 79, spDef: 110, color: '🥊', moves: ['Mach Punch', 'Fire Punch', 'Ice Punch', 'Thunder Punch'], moveTypes: ['Fighting', 'Fire', 'Ice', 'Electric'] }
   ];
 
   // Function to get weighted random Pokemon based on attack power
@@ -974,7 +985,9 @@ const PokemonGame = () => {
         'jigglypuff': { name: 'Wigglytuff', type2: null },
         'venonat': { name: 'Venomoth', type2: 'Poison' },
         'seel': { name: 'Dewgong', type2: 'Ice' },
-        'voltorb': { name: 'Electrode', type2: null }
+        'voltorb': { name: 'Electrode', type2: null },
+        'omanyte': { name: 'Omastar', type2: 'Water' },
+        'kabuto': { name: 'Kabutops', type2: 'Water' }
       };
       
       const lowerName = pokemon.name.toLowerCase();
