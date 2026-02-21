@@ -650,6 +650,8 @@ const PokemonGame = () => {
     { id: 21, name: 'Spearow' }, { id: 22, name: 'Fearow' },
     { id: 25, name: 'Pikachu' }, { id: 26, name: 'Raichu' },
     { id: 27, name: 'Sandshrew' }, { id: 28, name: 'Sandslash' },
+    { id: 29, name: 'NidoranF' }, { id: 30, name: 'Nidorina' }, { id: 31, name: 'Nidoqueen' },
+    { id: 32, name: 'NidoranM' }, { id: 33, name: 'Nidorino' }, { id: 34, name: 'Nidoking' },
     { id: 37, name: 'Vulpix' }, { id: 38, name: 'Ninetales' },
     { id: 41, name: 'Zubat' }, { id: 42, name: 'Golbat' },
     { id: 43, name: 'Oddish' }, { id: 44, name: 'Gloom' }, { id: 45, name: 'Vileplume' },
@@ -669,6 +671,9 @@ const PokemonGame = () => {
     { id: 77, name: 'Ponyta' }, { id: 78, name: 'Rapidash' },
     { id: 79, name: 'Slowpoke' }, { id: 80, name: 'Slowbro' },
     { id: 81, name: 'Magnemite' }, { id: 82, name: 'Magneton' },
+    { id: 84, name: 'Doduo' }, { id: 85, name: 'Dodrio' },
+    { id: 86, name: 'Seel' }, { id: 87, name: 'Dewgong' },
+    { id: 88, name: 'Grimer' }, { id: 89, name: 'Muk' },
     { id: 90, name: 'Shellder' }, { id: 91, name: 'Cloyster' },
     { id: 92, name: 'Gastly' }, { id: 93, name: 'Haunter' }, { id: 94, name: 'Gengar' },
     { id: 95, name: 'Onix' },
@@ -679,6 +684,7 @@ const PokemonGame = () => {
     { id: 104, name: 'Cubone' }, { id: 105, name: 'Marowak' },
     { id: 106, name: 'Hitmonlee' }, { id: 107, name: 'Hitmonchan' },
     { id: 108, name: 'Lickitung' },
+    { id: 109, name: 'Koffing' }, { id: 110, name: 'Weezing' },
     { id: 111, name: 'Rhyhorn' }, { id: 112, name: 'Rhydon' },
     { id: 113, name: 'Chansey' },
     { id: 114, name: 'Tangela' },
@@ -699,10 +705,8 @@ const PokemonGame = () => {
     { id: 140, name: 'Kabuto' }, { id: 141, name: 'Kabutops' },
     { id: 142, name: 'Aerodactyl' },
     { id: 143, name: 'Snorlax' },
-    { id: 148, name: 'Dragonair' }, { id: 149, name: 'Dragonite' },
+    { id: 147, name: 'Dratini' }, { id: 148, name: 'Dragonair' }, { id: 149, name: 'Dragonite' },
     { id: 150, name: 'Mewtwo' },
-    { id: 169, name: 'Crobat' },
-    { id: 208, name: 'Steelix' },
   ];
 
   // Pokedex modal component
@@ -848,14 +852,24 @@ const PokemonGame = () => {
       'gastly': 92, 'haunter': 93, 'gengar': 94,
       // Rock types
       'geodude': 74, 'graveler': 75, 'golem': 76,
-      'onix': 95, 'steelix': 208,
+      'onix': 95,
       'aerodactyl': 142,
       'omanyte': 138, 'omastar': 139,
       'kabuto': 140, 'kabutops': 141,
       // Flying types
-      'zubat': 41, 'golbat': 42, 'crobat': 169,
+      'zubat': 41, 'golbat': 42,
       // Cat types
       'meowth': 52, 'persian': 53,
+      // Poison types
+      'koffing': 109, 'weezing': 110,
+      'grimer': 88, 'muk': 89,
+      // Ice types
+      'seel': 86, 'dewgong': 87,
+      // Bird types
+      'doduo': 84, 'dodrio': 85,
+      // Nidoran family
+      'nidoranf': 29, 'nidorina': 30, 'nidoqueen': 31,
+      'nidoranm': 32, 'nidorino': 33, 'nidoking': 34,
       // Dragon types
       'dratini': 147, 'dragonair': 148, 'dragonite': 149
     };
@@ -880,6 +894,8 @@ const PokemonGame = () => {
     { name: 'Snorlax', type: 'Normal', type2: null, hp: 160, maxHp: 160, attack: 110, spAtk: 65, def: 65, spDef: 110, color: '😴', moves: ['Body Slam', 'Rest', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] },
 
     // Common (attack 31-50) - Medium-high encounter rate
+    { name: 'Seel', type: 'Water', type2: null, hp: 65, maxHp: 65, attack: 45, spAtk: 45, def: 55, spDef: 70, color: '🦭', moves: ['Headbutt', 'Icy Wind', 'Aqua Jet', 'Aurora Beam'], moveTypes: ['Normal', 'Ice', 'Water', 'Ice'] },
+    { name: 'NidoranF', type: 'Poison', type2: null, hp: 55, maxHp: 55, attack: 47, spAtk: 40, def: 52, spDef: 40, color: '🐰', moves: ['Scratch', 'Poison Sting', 'Bite', 'Double Kick'], moveTypes: ['Normal', 'Poison', 'Dark', 'Fighting'] },
     { name: 'Gastly', type: 'Ghost', type2: 'Poison', hp: 30, maxHp: 30, attack: 35, spAtk: 100, def: 30, spDef: 35, color: '👻', moves: ['Lick', 'Hypnosis', 'Shadow Ball', 'Night Shade'], moveTypes: ['Ghost', 'Psychic', 'Ghost', 'Ghost'] },
     { name: 'Tentacool', type: 'Water', type2: 'Poison', hp: 40, maxHp: 40, attack: 40, spAtk: 50, def: 35, spDef: 100, color: '🪼', moves: ['Acid', 'Poison Sting', 'Water Gun', 'Wrap'], moveTypes: ['Poison', 'Poison', 'Water', 'Normal'] },
     { name: 'Vulpix', type: 'Fire', type2: null, hp: 38, maxHp: 38, attack: 41, spAtk: 50, def: 40, spDef: 65, color: '🦊', moves: ['Ember', 'Quick Attack', 'Flame Burst', 'Flamethrower'], moveTypes: ['Fire', 'Normal', 'Fire', 'Fire'] },
@@ -896,6 +912,9 @@ const PokemonGame = () => {
     { name: 'Staryu', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 45, spAtk: 70, def: 55, spDef: 55, color: '⭐', moves: ['Tackle', 'Water Gun', 'Swift', 'Hydro Pump'], moveTypes: ['Normal', 'Water', 'Normal', 'Water'] },
 
     // Uncommon (attack 51-70) - Medium encounter rate
+    { name: 'NidoranM', type: 'Poison', type2: null, hp: 46, maxHp: 46, attack: 57, spAtk: 40, def: 40, spDef: 40, color: '🐰', moves: ['Peck', 'Poison Sting', 'Horn Attack', 'Double Kick'], moveTypes: ['Flying', 'Poison', 'Normal', 'Fighting'] },
+    { name: 'Dratini', type: 'Dragon', type2: null, hp: 41, maxHp: 41, attack: 64, spAtk: 50, def: 45, spDef: 50, color: '🐉', moves: ['Wrap', 'Twister', 'Dragon Rage', 'Slam'], moveTypes: ['Normal', 'Dragon', 'Dragon', 'Normal'] },
+    { name: 'Koffing', type: 'Poison', type2: null, hp: 40, maxHp: 40, attack: 65, spAtk: 60, def: 95, spDef: 45, color: '💨', moves: ['Tackle', 'Smog', 'Sludge', 'Self-Destruct'], moveTypes: ['Normal', 'Poison', 'Poison', 'Normal'] },
     { name: 'Psyduck', type: 'Water', type2: null, hp: 50, maxHp: 50, attack: 52, spAtk: 65, def: 48, spDef: 50, color: '🦆', moves: ['Scratch', 'Water Gun', 'Confusion', 'Aqua Tail'], moveTypes: ['Normal', 'Water', 'Psychic', 'Water'] },
     { name: 'Pikachu', type: 'Electric', type2: null, hp: 35, maxHp: 35, attack: 55, spAtk: 50, def: 40, spDef: 50, color: '⚡', moves: ['Thunder Shock', 'Quick Attack', 'Thunderbolt', 'Iron Tail'], moveTypes: ['Electric', 'Normal', 'Electric', 'Steel'] },
     { name: 'Diglett', type: 'Ground', type2: null, hp: 10, maxHp: 10, attack: 55, spAtk: 35, def: 25, spDef: 45, color: '🕳️', moves: ['Scratch', 'Dig', 'Mud Slap', 'Earthquake'], moveTypes: ['Normal', 'Ground', 'Ground', 'Ground'] },
@@ -911,6 +930,8 @@ const PokemonGame = () => {
     { name: 'Omanyte', type: 'Rock', type2: 'Water', hp: 35, maxHp: 35, attack: 40, spAtk: 90, def: 100, spDef: 55, color: '🐚', moves: ['Water Gun', 'Bite', 'Ancient Power', 'Hydro Pump'], moveTypes: ['Water', 'Dark', 'Rock', 'Water'] },
 
     // Rare (attack 71-85) - Low encounter rate
+    { name: 'Grimer', type: 'Poison', type2: null, hp: 80, maxHp: 80, attack: 80, spAtk: 40, def: 50, spDef: 50, color: '🟣', moves: ['Pound', 'Sludge', 'Mud Slap', 'Sludge Bomb'], moveTypes: ['Normal', 'Poison', 'Ground', 'Poison'] },
+    { name: 'Doduo', type: 'Normal', type2: 'Flying', hp: 35, maxHp: 35, attack: 85, spAtk: 35, def: 45, spDef: 35, color: '🐦', moves: ['Peck', 'Fury Attack', 'Drill Peck', 'Tri Attack'], moveTypes: ['Flying', 'Normal', 'Flying', 'Normal'] },
     { name: 'Growlithe', type: 'Fire', type2: null, hp: 55, maxHp: 55, attack: 70, spAtk: 70, def: 45, spDef: 50, color: '🐕', moves: ['Ember', 'Bite', 'Flame Wheel', 'Fire Fang'], moveTypes: ['Fire', 'Dark', 'Fire', 'Fire'] },
     { name: 'Bellsprout', type: 'Grass', type2: 'Poison', hp: 50, maxHp: 50, attack: 75, spAtk: 70, def: 35, spDef: 30, color: '🌿', moves: ['Vine Whip', 'Acid', 'Wrap', 'Razor Leaf'], moveTypes: ['Grass', 'Poison', 'Normal', 'Grass'] },
     { name: 'Sandshrew', type: 'Ground', type2: null, hp: 50, maxHp: 50, attack: 75, spAtk: 20, def: 85, spDef: 30, color: '🦔', moves: ['Scratch', 'Sand Attack', 'Dig', 'Earthquake'], moveTypes: ['Normal', 'Ground', 'Ground', 'Ground'] },
@@ -1094,7 +1115,6 @@ const PokemonGame = () => {
         'geodude': { name: 'Graveler', type2: 'Ground' },
         'graveler': { name: 'Golem', type2: 'Ground' },
         'zubat': { name: 'Golbat', type2: 'Flying' },
-        'golbat': { name: 'Crobat', type2: 'Flying' },
         'oddish': { name: 'Gloom', type2: 'Poison' },
         'gloom': { name: 'Vileplume', type2: 'Poison' },
         'bellsprout': { name: 'Weepinbell', type2: 'Poison' },
@@ -1104,7 +1124,6 @@ const PokemonGame = () => {
         'mankey': { name: 'Primeape', type2: null },
         'gastly': { name: 'Haunter', type2: 'Poison' },
         'haunter': { name: 'Gengar', type2: 'Poison' },
-        'onix': { name: 'Steelix', type: 'Steel', type2: 'Ground' },
         'dratini': { name: 'Dragonair', type2: null },
         'dragonair': { name: 'Dragonite', type2: 'Flying' },
         'growlithe': { name: 'Arcanine', type2: null },
@@ -1143,7 +1162,11 @@ const PokemonGame = () => {
         'seel': { name: 'Dewgong', type2: 'Ice' },
         'voltorb': { name: 'Electrode', type2: null },
         'omanyte': { name: 'Omastar', type2: 'Water' },
-        'kabuto': { name: 'Kabutops', type2: 'Water' }
+        'kabuto': { name: 'Kabutops', type2: 'Water' },
+        'koffing': { name: 'Weezing', type2: null },
+        'grimer': { name: 'Muk', type2: null },
+        'doduo': { name: 'Dodrio', type2: 'Flying' },
+        'dratini': { name: 'Dragonair', type2: null }
       };
       
       const lowerName = pokemon.name.toLowerCase();
