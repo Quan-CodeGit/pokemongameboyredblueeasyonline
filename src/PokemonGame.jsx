@@ -1270,9 +1270,22 @@ const PokemonGame = () => {
   };
 
   // Transform: copy opponent's stats, type, moves (keep HP, name, exp)
+  // spriteName = visual sprite override, originalForm = to revert on catch/next battle
   const transformInto = (user, target, isEnemy = false) => {
+    const base = isEnemy ? wildPokemon : playerPokemon;
     const transformed = {
-      ...(isEnemy ? wildPokemon : playerPokemon),
+      ...base,
+      spriteName: target.name,
+      originalForm: {
+        type: base.type,
+        type2: base.type2,
+        attack: base.attack,
+        spAtk: base.spAtk,
+        def: base.def,
+        spDef: base.spDef,
+        moves: [...base.moves],
+        moveTypes: [...base.moveTypes],
+      },
       type: target.type,
       type2: target.type2,
       attack: target.attack,
@@ -1651,7 +1664,25 @@ const PokemonGame = () => {
     // Base: catchChance > catchRate * 0.7 means ~30% base catch at full HP
     // With multiplier: Easy = 1.5x easier, Hard = 0.9x harder
     if (catchChance > catchRate * (0.7 / catchMultiplier)) {
-      const newPokemon = { ...wildPokemon, hp: wildPokemon.maxHp };
+      // Revert transformed Pokemon (Ditto) to original form when caught
+      let caughtPokemon = { ...wildPokemon };
+      if (caughtPokemon.originalForm) {
+        const orig = caughtPokemon.originalForm;
+        caughtPokemon = {
+          ...caughtPokemon,
+          type: orig.type,
+          type2: orig.type2,
+          attack: orig.attack,
+          spAtk: orig.spAtk,
+          def: orig.def,
+          spDef: orig.spDef,
+          moves: [...orig.moves],
+          moveTypes: [...orig.moveTypes],
+        };
+        delete caughtPokemon.spriteName;
+        delete caughtPokemon.originalForm;
+      }
+      const newPokemon = { ...caughtPokemon, hp: caughtPokemon.maxHp };
       
       // Mark Mewtwo as defeated for ALL team members if caught
       if (wildPokemon.name === 'Mewtwo') {
@@ -1713,9 +1744,12 @@ const PokemonGame = () => {
     // Restore base stats from availableTeam (undo Withdraw/Growl/Dragon Dance etc.)
     // then heal HP to max
     const basePokemon = availableTeam.find(p => p.name === playerPokemon.name);
-    const healedPokemon = basePokemon
+    let healedPokemon = basePokemon
       ? { ...basePokemon, hp: basePokemon.maxHp, exp: playerPokemon.exp, defeatedMewtwo: playerPokemon.defeatedMewtwo }
       : { ...playerPokemon, hp: playerPokemon.maxHp };
+    // Clean up transform properties
+    delete healedPokemon.spriteName;
+    delete healedPokemon.originalForm;
 
     // Reset status effects
     setIsPoisoned({ player: false, enemy: false });
@@ -2134,7 +2168,7 @@ const PokemonGame = () => {
                 <div className="border-4 border-black p-3" style={{backgroundColor: '#fef3c7'}}>
                 <div className="mb-2 flex justify-center">
                   <img
-                    src={getPokemonSprite(wildPokemon.name)}
+                    src={getPokemonSprite(wildPokemon.spriteName || wildPokemon.name)}
                     alt={wildPokemon.name}
                     style={{
                       imageRendering: 'pixelated',
@@ -2178,7 +2212,7 @@ const PokemonGame = () => {
               <div className="border-4 border-black p-3" style={{backgroundColor: '#dbeafe'}}>
                 <div className="mb-2 flex justify-center">
                   <img
-                    src={getPokemonSprite(playerPokemon.name)}
+                    src={getPokemonSprite(playerPokemon.spriteName || playerPokemon.name)}
                     alt={playerPokemon.name}
                     style={{
                       imageRendering: 'pixelated',
