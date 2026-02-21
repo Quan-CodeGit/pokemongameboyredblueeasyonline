@@ -34,6 +34,7 @@ const PokemonGame = () => {
   });
   const [showSettings, setShowSettings] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [showPokedex, setShowPokedex] = useState(false);
   const [quickMenuFocused, setQuickMenuFocused] = useState(false);
   const [quickMenuIndex, setQuickMenuIndex] = useState(0); // 0: Settings, 1: How to Play, 2: Debug
   const [settingsIndex, setSettingsIndex] = useState(0); // 0-1: Display, 2-4: Audio, 5-6: Debug, 7: Close
@@ -330,6 +331,19 @@ const PokemonGame = () => {
         ❓ HOW TO PLAY
       </button>
 
+      {/* Pokedex Button */}
+      <button
+        onClick={() => setShowPokedex(true)}
+        className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text border-black`}
+        style={{
+          backgroundColor: '#dc2626',
+          color: '#fff',
+          boxShadow: '4px 4px 0px #000'
+        }}
+      >
+        📖 POKéDEX
+      </button>
+
       {/* Debug Button - only show if debug mode is enabled */}
       {debugMode && (
         <button
@@ -624,6 +638,146 @@ const PokemonGame = () => {
     }
   };
 
+  // Master list of all Pokemon available in this game, sorted by Pokedex number
+  const allGamePokemon = [
+    { id: 1, name: 'Bulbasaur' }, { id: 2, name: 'Ivysaur' }, { id: 3, name: 'Venusaur' },
+    { id: 4, name: 'Charmander' }, { id: 5, name: 'Charmeleon' }, { id: 6, name: 'Charizard' },
+    { id: 7, name: 'Squirtle' }, { id: 8, name: 'Wartortle' }, { id: 9, name: 'Blastoise' },
+    { id: 10, name: 'Caterpie' }, { id: 11, name: 'Metapod' }, { id: 12, name: 'Butterfree' },
+    { id: 13, name: 'Weedle' }, { id: 14, name: 'Kakuna' }, { id: 15, name: 'Beedrill' },
+    { id: 16, name: 'Pidgey' }, { id: 17, name: 'Pidgeotto' }, { id: 18, name: 'Pidgeot' },
+    { id: 19, name: 'Rattata' }, { id: 20, name: 'Raticate' },
+    { id: 21, name: 'Spearow' }, { id: 22, name: 'Fearow' },
+    { id: 25, name: 'Pikachu' }, { id: 26, name: 'Raichu' },
+    { id: 27, name: 'Sandshrew' }, { id: 28, name: 'Sandslash' },
+    { id: 37, name: 'Vulpix' }, { id: 38, name: 'Ninetales' },
+    { id: 41, name: 'Zubat' }, { id: 42, name: 'Golbat' },
+    { id: 43, name: 'Oddish' }, { id: 44, name: 'Gloom' }, { id: 45, name: 'Vileplume' },
+    { id: 46, name: 'Paras' }, { id: 47, name: 'Parasect' },
+    { id: 48, name: 'Venonat' }, { id: 49, name: 'Venomoth' },
+    { id: 50, name: 'Diglett' }, { id: 51, name: 'Dugtrio' },
+    { id: 52, name: 'Meowth' }, { id: 53, name: 'Persian' },
+    { id: 54, name: 'Psyduck' }, { id: 55, name: 'Golduck' },
+    { id: 56, name: 'Mankey' }, { id: 57, name: 'Primeape' },
+    { id: 58, name: 'Growlithe' }, { id: 59, name: 'Arcanine' },
+    { id: 60, name: 'Poliwag' }, { id: 61, name: 'Poliwhirl' }, { id: 62, name: 'Poliwrath' },
+    { id: 63, name: 'Abra' }, { id: 64, name: 'Kadabra' }, { id: 65, name: 'Alakazam' },
+    { id: 66, name: 'Machop' }, { id: 67, name: 'Machoke' }, { id: 68, name: 'Machamp' },
+    { id: 69, name: 'Bellsprout' }, { id: 70, name: 'Weepinbell' }, { id: 71, name: 'Victreebel' },
+    { id: 72, name: 'Tentacool' }, { id: 73, name: 'Tentacruel' },
+    { id: 74, name: 'Geodude' }, { id: 75, name: 'Graveler' }, { id: 76, name: 'Golem' },
+    { id: 77, name: 'Ponyta' }, { id: 78, name: 'Rapidash' },
+    { id: 79, name: 'Slowpoke' }, { id: 80, name: 'Slowbro' },
+    { id: 81, name: 'Magnemite' }, { id: 82, name: 'Magneton' },
+    { id: 90, name: 'Shellder' }, { id: 91, name: 'Cloyster' },
+    { id: 92, name: 'Gastly' }, { id: 93, name: 'Haunter' }, { id: 94, name: 'Gengar' },
+    { id: 95, name: 'Onix' },
+    { id: 96, name: 'Drowzee' }, { id: 97, name: 'Hypno' },
+    { id: 98, name: 'Krabby' }, { id: 99, name: 'Kingler' },
+    { id: 100, name: 'Voltorb' }, { id: 101, name: 'Electrode' },
+    { id: 102, name: 'Exeggcute' }, { id: 103, name: 'Exeggutor' },
+    { id: 104, name: 'Cubone' }, { id: 105, name: 'Marowak' },
+    { id: 106, name: 'Hitmonlee' }, { id: 107, name: 'Hitmonchan' },
+    { id: 108, name: 'Lickitung' },
+    { id: 111, name: 'Rhyhorn' }, { id: 112, name: 'Rhydon' },
+    { id: 113, name: 'Chansey' },
+    { id: 114, name: 'Tangela' },
+    { id: 116, name: 'Horsea' }, { id: 117, name: 'Seadra' },
+    { id: 118, name: 'Goldeen' }, { id: 119, name: 'Seaking' },
+    { id: 120, name: 'Staryu' }, { id: 121, name: 'Starmie' },
+    { id: 123, name: 'Scyther' },
+    { id: 125, name: 'Electabuzz' },
+    { id: 126, name: 'Magmar' },
+    { id: 127, name: 'Pinsir' },
+    { id: 128, name: 'Tauros' },
+    { id: 129, name: 'Magikarp' }, { id: 130, name: 'Gyarados' },
+    { id: 131, name: 'Lapras' },
+    { id: 132, name: 'Ditto' },
+    { id: 133, name: 'Eevee' }, { id: 134, name: 'Vaporeon' }, { id: 135, name: 'Jolteon' }, { id: 136, name: 'Flareon' },
+    { id: 137, name: 'Porygon' },
+    { id: 138, name: 'Omanyte' }, { id: 139, name: 'Omastar' },
+    { id: 140, name: 'Kabuto' }, { id: 141, name: 'Kabutops' },
+    { id: 142, name: 'Aerodactyl' },
+    { id: 143, name: 'Snorlax' },
+    { id: 148, name: 'Dragonair' }, { id: 149, name: 'Dragonite' },
+    { id: 150, name: 'Mewtwo' },
+    { id: 169, name: 'Crobat' },
+    { id: 208, name: 'Steelix' },
+  ];
+
+  // Pokedex modal component
+  const PokedexModal = () => {
+    if (!showPokedex) return null;
+
+    const collectedNames = new Set(pokedex.map(p => p.name));
+    const collectedCount = allGamePokemon.filter(p => collectedNames.has(p.name)).length;
+    const isMobile = displayMode === 'mobile';
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{backgroundColor: 'rgba(0,0,0,0.8)'}}>
+        <div className="border-4 border-black w-full relative" style={{backgroundColor: '#fff', maxWidth: '700px', maxHeight: '90vh', display: 'flex', flexDirection: 'column'}}>
+          {/* Header */}
+          <div className="border-b-4 border-black p-3 flex items-center justify-between" style={{backgroundColor: '#dc2626'}}>
+            <h2 className="text-lg font-bold retro-text" style={{color: '#fff'}}>
+              📖 POKéDEX
+            </h2>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-bold retro-text" style={{color: '#fef3c7'}}>
+                {collectedCount}/{allGamePokemon.length}
+              </span>
+              <button
+                onClick={() => setShowPokedex(false)}
+                className="border-2 border-white px-3 py-1 font-bold text-xs retro-text hover:scale-105 transition-all"
+                style={{backgroundColor: '#000', color: '#fff'}}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+
+          {/* Pokemon Grid - scrollable */}
+          <div className="overflow-y-auto p-3" style={{flex: 1}}>
+            <div className="grid gap-2" style={{gridTemplateColumns: `repeat(${isMobile ? 4 : 6}, 1fr)`}}>
+              {allGamePokemon.map(pokemon => {
+                const isCollected = collectedNames.has(pokemon.name);
+                return (
+                  <div
+                    key={pokemon.id}
+                    className="border-4 p-1 text-center transition-all"
+                    style={{
+                      borderColor: isCollected ? '#dc2626' : '#d1d5db',
+                      backgroundColor: isCollected ? '#fef3c7' : '#f3f4f6',
+                    }}
+                  >
+                    <div className="flex justify-center">
+                      <img
+                        src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                        alt={isCollected ? pokemon.name : '???'}
+                        style={{
+                          imageRendering: 'pixelated',
+                          width: isMobile ? '40px' : '56px',
+                          height: isMobile ? '40px' : '56px',
+                          filter: isCollected ? 'none' : 'brightness(0)',
+                          opacity: isCollected ? 1 : 0.3,
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs font-bold retro-text truncate" style={{color: isCollected ? '#000' : '#9ca3af', fontSize: isMobile ? '8px' : '10px'}}>
+                      #{String(pokemon.id).padStart(3, '0')}
+                    </p>
+                    <p className="text-xs font-bold retro-text truncate" style={{color: isCollected ? '#000' : '#9ca3af', fontSize: isMobile ? '8px' : '10px'}}>
+                      {isCollected ? pokemon.name : '???'}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Helper function to get Pokemon sprite from PokeAPI
   const getPokemonSprite = (pokemonName) => {
     const name = pokemonName.toLowerCase();
@@ -895,6 +1049,7 @@ const PokemonGame = () => {
     const newPokemon = { ...starter };
     setPlayerPokemon(newPokemon);
     setAvailableTeam([newPokemon]);
+    setPokedex([newPokemon]); // Add starter to pokedex
     encounterWildPokemon();
     setGameState('battle');
     setBattleLog([`You chose ${starter.name}!`]);
@@ -970,6 +1125,7 @@ const PokemonGame = () => {
         'abra': { name: 'Kadabra', type2: null },
         'kadabra': { name: 'Alakazam', type2: null },
         'krabby': { name: 'Kingler', type2: null },
+        'goldeen': { name: 'Seaking', type2: null },
         'horsea': { name: 'Seadra', type2: null },
         'staryu': { name: 'Starmie', type2: 'Psychic' },
         'slowpoke': { name: 'Slowbro', type2: 'Psychic' },
@@ -1015,6 +1171,7 @@ const PokemonGame = () => {
           setAvailableTeam(prev => prev.map(p =>
             p.name.toLowerCase() === lowerName ? evolvedPokemon : p
           ));
+          setPokedex(prev => prev.find(p => p.name === chosen.name) ? prev : [...prev, evolvedPokemon]);
           setIsEvolving(false);
         }, 2000);
 
@@ -1038,6 +1195,7 @@ const PokemonGame = () => {
           setAvailableTeam(prev => prev.map(p =>
             p.name.toLowerCase() === lowerName ? gyarados : p
           ));
+          setPokedex(prev => prev.find(p => p.name === 'Gyarados') ? prev : [...prev, gyarados]);
           setIsEvolving(false);
         }, 2000);
 
@@ -1063,12 +1221,13 @@ const PokemonGame = () => {
 
         addLog(`${pokemon.name} evolved into ${nextEvolution.name}!`);
         addLog(`All stats +15!`);
-        
+
         setTimeout(() => {
           setPlayerPokemon(evolvedPokemon);
-          setAvailableTeam(prev => prev.map(p => 
+          setAvailableTeam(prev => prev.map(p =>
             p.name.toLowerCase() === lowerName ? evolvedPokemon : p
           ));
+          setPokedex(prev => prev.find(p => p.name === nextEvolution.name) ? prev : [...prev, evolvedPokemon]);
           setIsEvolving(false);
         }, 2000);
         
@@ -1842,6 +2001,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <SettingsModal />
         <HowToPlayModal />
+        <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor: '#ffffff'}}>
             {/* Pokemon Logo using SVG-style text */}
@@ -1961,6 +2121,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <SettingsModal />
         <HowToPlayModal />
+        <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
@@ -2029,6 +2190,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <SettingsModal />
         <HowToPlayModal />
+        <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
@@ -2101,6 +2263,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <SettingsModal />
         <HowToPlayModal />
+        <PokedexModal />
         <div className={`border-8 border-purple-500 bg-black p-8 ${getContainerClass()} w-full text-center`} style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)'}}>
           <div className="mb-6 flex justify-center animate-pulse">
             <img
@@ -2174,6 +2337,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <SettingsModal />
         <HowToPlayModal />
+        <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen">
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -2396,6 +2560,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <SettingsModal />
         <HowToPlayModal />
+        <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
@@ -2425,6 +2590,13 @@ const PokemonGame = () => {
             >
               NEXT BATTLE
             </button>
+            <button
+              onClick={() => setShowPokedex(true)}
+              className="w-full border-4 border-black hover:scale-105 font-bold py-2 px-6 retro-text transition-all mt-3"
+              style={{backgroundColor: '#dc2626', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+            >
+              📖 POKéDEX ({pokedex.length}/{allGamePokemon.length})
+            </button>
           </div>
 
           {/* Game Boy Controls */}
@@ -2453,6 +2625,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <SettingsModal />
         <HowToPlayModal />
+        <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#22c55e'}}>
@@ -2485,6 +2658,13 @@ const PokemonGame = () => {
             >
               NEXT BATTLE
             </button>
+            <button
+              onClick={() => setShowPokedex(true)}
+              className="w-full border-4 border-black hover:scale-105 font-bold py-2 px-6 retro-text transition-all mt-3"
+              style={{backgroundColor: '#dc2626', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+            >
+              📖 POKéDEX ({pokedex.length}/{allGamePokemon.length})
+            </button>
           </div>
 
           {/* Game Boy Controls */}
@@ -2513,6 +2693,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <SettingsModal />
         <HowToPlayModal />
+        <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-6 mb-6" style={{backgroundColor: '#dc2626'}}>
