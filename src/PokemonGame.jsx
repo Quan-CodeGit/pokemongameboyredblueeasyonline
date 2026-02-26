@@ -2088,15 +2088,15 @@ const PokemonGame = () => {
     setRocketPhase('intro');
     setBattleLog([]);
 
-    // Animation sequence
+    // Animation sequence - slow and smooth
     setTimeout(() => setRocketPhase('walking'), 2000);
-    setTimeout(() => setRocketPhase('grabbing'), 3500);
-    setTimeout(() => setRocketPhase('leaving'), 4500);
+    setTimeout(() => setRocketPhase('grabbing'), 5200);
+    setTimeout(() => setRocketPhase('leaving'), 6200);
     setTimeout(() => {
       // Remove stolen Pokemon from team
       setAvailableTeam(prev => prev.filter(p => p.name !== stolenName));
       setRocketPhase('done');
-    }, 6000);
+    }, 9500);
 
     // Set next rocket battle (7-10 battles from now)
     nextRocketBattle.current = totalBattles.current + Math.floor(Math.random() * 4) + 7;
@@ -2843,8 +2843,7 @@ const PokemonGame = () => {
                   style={{
                     position: 'absolute',
                     bottom: '10px',
-                    right: rocketPhase === 'walking' ? '0px' : undefined,
-                    left: rocketPhase !== 'walking' ? `${(stolenPokemonIndex % 4) * 25 + 5}%` : undefined,
+                    left: `${(stolenPokemonIndex % 4) * 25 + 5}%`,
                     zIndex: 10,
                     pointerEvents: 'none',
                   }}
@@ -2856,7 +2855,6 @@ const PokemonGame = () => {
                       imageRendering: 'pixelated',
                       width: isMobile ? '48px' : '64px',
                       height: isMobile ? '48px' : '64px',
-                      transform: 'scaleX(-1)',
                     }}
                   />
                 </div>
