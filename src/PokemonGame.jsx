@@ -707,6 +707,7 @@ const PokemonGame = () => {
     { id: 143, name: 'Snorlax' },
     { id: 147, name: 'Dratini' }, { id: 148, name: 'Dragonair' }, { id: 149, name: 'Dragonite' },
     { id: 150, name: 'Mewtwo' },
+    { id: 151, name: 'Mew' },
   ];
 
   // Pokedex modal component
@@ -871,7 +872,9 @@ const PokemonGame = () => {
       'nidoranf': 29, 'nidorina': 30, 'nidoqueen': 31,
       'nidoranm': 32, 'nidorino': 33, 'nidoking': 34,
       // Dragon types
-      'dratini': 147, 'dragonair': 148, 'dragonite': 149
+      'dratini': 147, 'dragonair': 148, 'dragonite': 149,
+      // Mythical
+      'mew': 151
     };
     return pokemonIds[name] || 1;
   };
@@ -1076,7 +1079,17 @@ const PokemonGame = () => {
     setBattleLog([`You chose ${starter.name}!`]);
   };
 
+  // Mew - mythical Pokemon, 1% encounter rate
+  const mewData = { name: 'Mew', type: 'Psychic', type2: null, hp: 100, maxHp: 100, attack: 100, spAtk: 100, def: 100, spDef: 100, color: '🩷', moves: ['Psychic', 'Ancient Power', 'Aura Sphere', 'Shadow Ball'], moveTypes: ['Psychic', 'Rock', 'Fighting', 'Ghost'] };
+
   const encounterWildPokemon = () => {
+    // 1% chance to encounter Mew
+    if (Math.random() < 0.01) {
+      const wild = { ...mewData };
+      setWildPokemon(wild);
+      setBattleLog([`A wild Mew appeared!`]);
+      return;
+    }
     // STAGE 1: Normal wild Pokemon encounters (used only on game start)
     // Uses weighted random: weaker Pokemon appear more often, stronger Pokemon are rare
     const wild = getWeightedRandomPokemon(wildPokemons);
@@ -1452,6 +1465,8 @@ const PokemonGame = () => {
         { name: 'Dragonite', type: 'Dragon', type2: 'Flying', hp: 110, maxHp: 110, attack: 134, spAtk: 100, def: 95, spDef: 100, color: '🐉', moves: ['Dragon Claw', 'Wing Attack', 'Thunder', 'Outrage'], moveTypes: ['Dragon', 'Flying', 'Electric', 'Dragon'] },
       ];
       wild = { ...finalEvolutionPokemon[Math.floor(Math.random() * finalEvolutionPokemon.length)] };
+    } else if (Math.random() < 0.01) {
+      wild = { ...mewData };
     } else {
       wild = getWeightedRandomPokemon(wildPokemons);
     }
@@ -1990,6 +2005,16 @@ const PokemonGame = () => {
     }
 
     // STAGE 1: Normal battles (before reaching 20 EXP)
+    // 1% chance to encounter Mew
+    if (Math.random() < 0.01) {
+      const wild = { ...mewData };
+      setWildPokemon(wild);
+      setBattleLog([`A wild Mew appeared!`]);
+      setGameState('battle');
+      setIsPlayerTurn(true);
+      setPotionUsed(false);
+      return;
+    }
     // Uses weighted random: weaker Pokemon appear more often, stronger Pokemon are rare
     const wild = getWeightedRandomPokemon(wildPokemons);
     setWildPokemon(wild);
