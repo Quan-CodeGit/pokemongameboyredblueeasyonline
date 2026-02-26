@@ -648,11 +648,14 @@ const PokemonGame = () => {
     { id: 16, name: 'Pidgey' }, { id: 17, name: 'Pidgeotto' }, { id: 18, name: 'Pidgeot' },
     { id: 19, name: 'Rattata' }, { id: 20, name: 'Raticate' },
     { id: 21, name: 'Spearow' }, { id: 22, name: 'Fearow' },
+    { id: 23, name: 'Ekans' }, { id: 24, name: 'Arbok' },
     { id: 25, name: 'Pikachu' }, { id: 26, name: 'Raichu' },
     { id: 27, name: 'Sandshrew' }, { id: 28, name: 'Sandslash' },
     { id: 29, name: 'NidoranF' }, { id: 30, name: 'Nidorina' }, { id: 31, name: 'Nidoqueen' },
     { id: 32, name: 'NidoranM' }, { id: 33, name: 'Nidorino' }, { id: 34, name: 'Nidoking' },
+    { id: 35, name: 'Clefairy' }, { id: 36, name: 'Clefable' },
     { id: 37, name: 'Vulpix' }, { id: 38, name: 'Ninetales' },
+    { id: 39, name: 'Jigglypuff' }, { id: 40, name: 'Wigglytuff' },
     { id: 41, name: 'Zubat' }, { id: 42, name: 'Golbat' },
     { id: 43, name: 'Oddish' }, { id: 44, name: 'Gloom' }, { id: 45, name: 'Vileplume' },
     { id: 46, name: 'Paras' }, { id: 47, name: 'Parasect' },
@@ -671,6 +674,7 @@ const PokemonGame = () => {
     { id: 77, name: 'Ponyta' }, { id: 78, name: 'Rapidash' },
     { id: 79, name: 'Slowpoke' }, { id: 80, name: 'Slowbro' },
     { id: 81, name: 'Magnemite' }, { id: 82, name: 'Magneton' },
+    { id: 83, name: 'Farfetchd' },
     { id: 84, name: 'Doduo' }, { id: 85, name: 'Dodrio' },
     { id: 86, name: 'Seel' }, { id: 87, name: 'Dewgong' },
     { id: 88, name: 'Grimer' }, { id: 89, name: 'Muk' },
@@ -688,10 +692,13 @@ const PokemonGame = () => {
     { id: 111, name: 'Rhyhorn' }, { id: 112, name: 'Rhydon' },
     { id: 113, name: 'Chansey' },
     { id: 114, name: 'Tangela' },
+    { id: 115, name: 'Kangaskhan' },
     { id: 116, name: 'Horsea' }, { id: 117, name: 'Seadra' },
     { id: 118, name: 'Goldeen' }, { id: 119, name: 'Seaking' },
     { id: 120, name: 'Staryu' }, { id: 121, name: 'Starmie' },
+    { id: 122, name: 'Mr. Mime' },
     { id: 123, name: 'Scyther' },
+    { id: 124, name: 'Jynx' },
     { id: 125, name: 'Electabuzz' },
     { id: 126, name: 'Magmar' },
     { id: 127, name: 'Pinsir' },
@@ -802,14 +809,21 @@ const PokemonGame = () => {
       'paras': 46, 'parasect': 47,
       'venonat': 48, 'venomoth': 49,
       'scyther': 123, 'pinsir': 127,
+      'ekans': 23, 'arbok': 24,
       // Birds
       'pidgey': 16, 'pidgeotto': 17, 'pidgeot': 18,
       'spearow': 21, 'fearow': 22,
       // Normal types
       'rattata': 19, 'raticate': 20,
+      'clefairy': 35, 'clefable': 36,
+      'jigglypuff': 39, 'wigglytuff': 40,
+      'farfetchd': 83,
+      'kangaskhan': 115,
       'snorlax': 143, 'tauros': 128, 'ditto': 132,
       'eevee': 133, 'vaporeon': 134, 'jolteon': 135, 'flareon': 136,
       'porygon': 137, 'lickitung': 108, 'chansey': 113,
+      // Psychic/Ice types
+      'mr. mime': 122, 'jynx': 124,
       // Electric types
       'pikachu': 25, 'raichu': 26,
       'magnemite': 81, 'magneton': 82,
@@ -897,6 +911,8 @@ const PokemonGame = () => {
     { name: 'Snorlax', type: 'Normal', type2: null, hp: 160, maxHp: 160, attack: 110, spAtk: 65, def: 65, spDef: 110, color: '😴', moves: ['Body Slam', 'Rest', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] },
 
     // Common (attack 31-50) - Medium-high encounter rate
+    { name: 'Clefairy', type: 'Normal', type2: null, hp: 70, maxHp: 70, attack: 45, spAtk: 60, def: 48, spDef: 65, color: '🌙', moves: ['Pound', 'Sing', 'Double Slap', 'Moonblast'], moveTypes: ['Normal', 'Normal', 'Normal', 'Normal'] },
+    { name: 'Jigglypuff', type: 'Normal', type2: null, hp: 115, maxHp: 115, attack: 45, spAtk: 45, def: 20, spDef: 25, color: '🎤', moves: ['Pound', 'Sing', 'Double Slap', 'Body Slam'], moveTypes: ['Normal', 'Normal', 'Normal', 'Normal'] },
     { name: 'Seel', type: 'Water', type2: null, hp: 65, maxHp: 65, attack: 45, spAtk: 45, def: 55, spDef: 70, color: '🦭', moves: ['Headbutt', 'Icy Wind', 'Aqua Jet', 'Aurora Beam'], moveTypes: ['Normal', 'Ice', 'Water', 'Ice'] },
     { name: 'NidoranF', type: 'Poison', type2: null, hp: 55, maxHp: 55, attack: 47, spAtk: 40, def: 52, spDef: 40, color: '🐰', moves: ['Scratch', 'Poison Sting', 'Bite', 'Double Kick'], moveTypes: ['Normal', 'Poison', 'Dark', 'Fighting'] },
     { name: 'Gastly', type: 'Ghost', type2: 'Poison', hp: 30, maxHp: 30, attack: 35, spAtk: 100, def: 30, spDef: 35, color: '👻', moves: ['Lick', 'Hypnosis', 'Shadow Ball', 'Night Shade'], moveTypes: ['Ghost', 'Psychic', 'Ghost', 'Ghost'] },
@@ -915,6 +931,7 @@ const PokemonGame = () => {
     { name: 'Staryu', type: 'Water', type2: null, hp: 30, maxHp: 30, attack: 45, spAtk: 70, def: 55, spDef: 55, color: '⭐', moves: ['Tackle', 'Water Gun', 'Swift', 'Hydro Pump'], moveTypes: ['Normal', 'Water', 'Normal', 'Water'] },
 
     // Uncommon (attack 51-70) - Medium encounter rate
+    { name: 'Ekans', type: 'Poison', type2: null, hp: 35, maxHp: 35, attack: 60, spAtk: 40, def: 44, spDef: 54, color: '🐍', moves: ['Wrap', 'Poison Sting', 'Bite', 'Acid'], moveTypes: ['Normal', 'Poison', 'Dark', 'Poison'] },
     { name: 'NidoranM', type: 'Poison', type2: null, hp: 46, maxHp: 46, attack: 57, spAtk: 40, def: 40, spDef: 40, color: '🐰', moves: ['Peck', 'Poison Sting', 'Horn Attack', 'Double Kick'], moveTypes: ['Flying', 'Poison', 'Normal', 'Fighting'] },
     { name: 'Dratini', type: 'Dragon', type2: null, hp: 41, maxHp: 41, attack: 64, spAtk: 50, def: 45, spDef: 50, color: '🐉', moves: ['Wrap', 'Twister', 'Dragon Rage', 'Slam'], moveTypes: ['Normal', 'Dragon', 'Dragon', 'Normal'] },
     { name: 'Koffing', type: 'Poison', type2: null, hp: 40, maxHp: 40, attack: 65, spAtk: 60, def: 95, spDef: 45, color: '💨', moves: ['Tackle', 'Smog', 'Sludge', 'Self-Destruct'], moveTypes: ['Normal', 'Poison', 'Poison', 'Normal'] },
@@ -933,6 +950,7 @@ const PokemonGame = () => {
     { name: 'Omanyte', type: 'Rock', type2: 'Water', hp: 35, maxHp: 35, attack: 40, spAtk: 90, def: 100, spDef: 55, color: '🐚', moves: ['Water Gun', 'Bite', 'Ancient Power', 'Hydro Pump'], moveTypes: ['Water', 'Dark', 'Rock', 'Water'] },
 
     // Rare (attack 71-85) - Low encounter rate
+    { name: 'Farfetchd', type: 'Normal', type2: 'Flying', hp: 52, maxHp: 52, attack: 90, spAtk: 58, def: 55, spDef: 62, color: '🦆', moves: ['Peck', 'Slash', 'Aerial Ace', 'Leaf Blade'], moveTypes: ['Flying', 'Normal', 'Flying', 'Grass'] },
     { name: 'Grimer', type: 'Poison', type2: null, hp: 80, maxHp: 80, attack: 80, spAtk: 40, def: 50, spDef: 50, color: '🟣', moves: ['Pound', 'Sludge', 'Mud Slap', 'Sludge Bomb'], moveTypes: ['Normal', 'Poison', 'Ground', 'Poison'] },
     { name: 'Doduo', type: 'Normal', type2: 'Flying', hp: 35, maxHp: 35, attack: 85, spAtk: 35, def: 45, spDef: 35, color: '🐦', moves: ['Peck', 'Fury Attack', 'Drill Peck', 'Tri Attack'], moveTypes: ['Flying', 'Normal', 'Flying', 'Normal'] },
     { name: 'Growlithe', type: 'Fire', type2: null, hp: 55, maxHp: 55, attack: 70, spAtk: 70, def: 45, spDef: 50, color: '🐕', moves: ['Ember', 'Bite', 'Flame Wheel', 'Fire Fang'], moveTypes: ['Fire', 'Dark', 'Fire', 'Fire'] },
@@ -950,6 +968,9 @@ const PokemonGame = () => {
     { name: 'Kabuto', type: 'Rock', type2: 'Water', hp: 30, maxHp: 30, attack: 80, spAtk: 55, def: 90, spDef: 45, color: '🦀', moves: ['Scratch', 'Aqua Jet', 'Ancient Power', 'Mud Shot'], moveTypes: ['Normal', 'Water', 'Rock', 'Ground'] },
 
     // Very Rare (attack 86-100) - Very low encounter rate
+    { name: 'Kangaskhan', type: 'Normal', type2: null, hp: 105, maxHp: 105, attack: 95, spAtk: 40, def: 80, spDef: 80, color: '🦘', moves: ['Mega Punch', 'Bite', 'Dizzy Punch', 'Outrage'], moveTypes: ['Normal', 'Dark', 'Normal', 'Dragon'] },
+    { name: 'Mr. Mime', type: 'Psychic', type2: null, hp: 40, maxHp: 40, attack: 45, spAtk: 100, def: 65, spDef: 120, color: '🤡', moves: ['Confusion', 'Psybeam', 'Psychic', 'Dazzling Gleam'], moveTypes: ['Psychic', 'Psychic', 'Psychic', 'Normal'] },
+    { name: 'Jynx', type: 'Ice', type2: 'Psychic', hp: 65, maxHp: 65, attack: 50, spAtk: 115, def: 35, spDef: 95, color: '💋', moves: ['Pound', 'Ice Punch', 'Psychic', 'Blizzard'], moveTypes: ['Normal', 'Ice', 'Psychic', 'Ice'] },
     { name: 'Abra', type: 'Psychic', type2: null, hp: 25, maxHp: 25, attack: 20, spAtk: 105, def: 15, spDef: 55, color: '🔮', moves: ['Teleport', 'Confusion', 'Psybeam', 'Psychic'], moveTypes: ['Psychic', 'Psychic', 'Psychic', 'Psychic'] },
     { name: 'Electabuzz', type: 'Electric', type2: null, hp: 65, maxHp: 65, attack: 83, spAtk: 95, def: 57, spDef: 85, color: '⚡', moves: ['Thunder Punch', 'Spark', 'Thunderbolt', 'Thunder'], moveTypes: ['Electric', 'Electric', 'Electric', 'Electric'] },
     { name: 'Magmar', type: 'Fire', type2: null, hp: 65, maxHp: 65, attack: 95, spAtk: 100, def: 57, spDef: 85, color: '🔥', moves: ['Fire Punch', 'Ember', 'Flamethrower', 'Fire Blast'], moveTypes: ['Fire', 'Fire', 'Fire', 'Fire'] },
@@ -1179,7 +1200,10 @@ const PokemonGame = () => {
         'koffing': { name: 'Weezing', type2: null },
         'grimer': { name: 'Muk', type2: null },
         'doduo': { name: 'Dodrio', type2: 'Flying' },
-        'dratini': { name: 'Dragonair', type2: null }
+        'dratini': { name: 'Dragonair', type2: null },
+        'ekans': { name: 'Arbok', type2: null },
+        'clefairy': { name: 'Clefable', type2: null },
+        'jigglypuff': { name: 'Wigglytuff', type2: null }
       };
       
       const lowerName = pokemon.name.toLowerCase();
@@ -1309,6 +1333,7 @@ const PokemonGame = () => {
     'Defense Curl': { effect: 'raise_defense', message: "'s defense rose!" },
     'String Shot': { effect: 'nothing', message: "'s speed fell!" },
     'Sand Attack': { effect: 'nothing', message: "'s accuracy fell!" },
+    'Sing': { effect: 'sleep', message: ' fell asleep!' },
     'Hypnosis': { effect: 'sleep', message: ' fell asleep!' },
     'Stun Spore': { effect: 'sleep', message: ' fell asleep!' },
     'Spore': { effect: 'sleep', message: ' fell asleep!' },
