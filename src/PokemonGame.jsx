@@ -993,11 +993,11 @@ const PokemonGame = () => {
   const getEncounterRates = () => {
     switch (difficulty) {
       case 'easy':
-        return { veryCommon: 35, common: 30, uncommon: 25, rare: 5, veryRare: 5 };
+        return { veryCommon: 40, common: 30, uncommon: 22.5, rare: 5, veryRare: 2.5 };
       case 'hard':
-        return { veryCommon: 15, common: 20, uncommon: 30, rare: 20, veryRare: 15 };
+        return { veryCommon: 20, common: 25, uncommon: 25, rare: 15, veryRare: 15 };
       default: // medium
-        return { veryCommon: 30, common: 25, uncommon: 20, rare: 15, veryRare: 10 };
+        return { veryCommon: 35, common: 30, uncommon: 20, rare: 10, veryRare: 5 };
     }
   };
 
