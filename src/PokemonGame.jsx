@@ -41,10 +41,15 @@ const PokemonGame = () => {
   const [difficulty, setDifficulty] = useState('medium'); // 'easy', 'medium', 'hard'
   const [selectedDifficultyIndex, setSelectedDifficultyIndex] = useState(1); // 0: Easy, 1: Medium, 2: Hard
 
+  const [rocketPhase, setRocketPhase] = useState(''); // '', 'intro', 'walking', 'grabbing', 'leaving', 'done'
+  const [stolenPokemonIndex, setStolenPokemonIndex] = useState(-1);
+
   // Use ref to track Mewtwo spawn - bypasses React state timing issues
   const shouldSpawnMewtwo = useRef(false);
   const hasDefeatedMewtwo = useRef(false);
   const introMusicRef = useRef(null);
+  const nextRocketBattle = useRef(Math.floor(Math.random() * 4) + 7); // first rocket at battle 7-10
+  const totalBattles = useRef(0);
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
@@ -1976,6 +1981,26 @@ const PokemonGame = () => {
   };
 
   const nextBattle = () => {
+    totalBattles.current += 1;
+
+    // Check if Team Rocket should appear (every 7-10 battles, only if player has bench Pokemon)
+    if (totalBattles.current >= nextRocketBattle.current && availableTeam.length > 1) {
+      // Restore/heal before rocket event
+      const basePokemon = availableTeam.find(p => p.name === playerPokemon.name);
+      let healedPokemon = basePokemon
+        ? { ...basePokemon, hp: basePokemon.maxHp, exp: playerPokemon.exp, defeatedMewtwo: playerPokemon.defeatedMewtwo }
+        : { ...playerPokemon, hp: playerPokemon.maxHp };
+      delete healedPokemon.spriteName;
+      delete healedPokemon.originalForm;
+      setPlayerPokemon(healedPokemon);
+      setAvailableTeam(prev => prev.map(p =>
+        p.name === healedPokemon.name ? healedPokemon : p
+      ));
+      setIsPoisoned({ player: false, enemy: false });
+      setIsSleeping({ player: 0, enemy: 0 });
+      if (triggerRocketEvent()) return;
+    }
+
     // Restore base stats from availableTeam (undo Withdraw/Growl/Dragon Dance etc.)
     // then heal HP to max
     const basePokemon = availableTeam.find(p => p.name === playerPokemon.name);
@@ -2049,6 +2074,47 @@ const PokemonGame = () => {
     setPotionUsed(false);
   };
 
+  // Team Rocket steal event
+  const triggerRocketEvent = () => {
+    // Only steal from bench (not active Pokemon), need at least 2 Pokemon
+    const benchPokemon = availableTeam.filter(p => p.name !== playerPokemon.name);
+    if (benchPokemon.length === 0) return false; // Skip if only 1 Pokemon
+
+    const randomBenchIndex = Math.floor(Math.random() * benchPokemon.length);
+    const stolenName = benchPokemon[randomBenchIndex].name;
+    const teamIndex = availableTeam.findIndex(p => p.name === stolenName);
+    setStolenPokemonIndex(teamIndex);
+    setGameState('rocket');
+    setRocketPhase('intro');
+    setBattleLog([]);
+
+    // Animation sequence
+    setTimeout(() => setRocketPhase('walking'), 2000);
+    setTimeout(() => setRocketPhase('grabbing'), 3500);
+    setTimeout(() => setRocketPhase('leaving'), 4500);
+    setTimeout(() => {
+      // Remove stolen Pokemon from team
+      setAvailableTeam(prev => prev.filter(p => p.name !== stolenName));
+      setRocketPhase('done');
+    }, 6000);
+
+    // Set next rocket battle (7-10 battles from now)
+    nextRocketBattle.current = totalBattles.current + Math.floor(Math.random() * 4) + 7;
+    return true;
+  };
+
+  const continueAfterRocket = () => {
+    setRocketPhase('');
+    setStolenPokemonIndex(-1);
+    // Start next normal battle
+    const wild = getWeightedRandomPokemon(wildPokemons);
+    setWildPokemon(wild);
+    setBattleLog([`A wild ${wild.name} appeared!`]);
+    setGameState('battle');
+    setIsPlayerTurn(true);
+    setPotionUsed(false);
+  };
+
   const resetGame = () => {
     setGameState('intro');
     setPlayerPokemon(null);
@@ -2065,6 +2131,10 @@ const PokemonGame = () => {
     hasDefeatedMewtwo.current = false;
     setIsPoisoned({ player: false, enemy: false });
     setIsSleeping({ player: 0, enemy: 0 });
+    setRocketPhase('');
+    setStolenPokemonIndex(-1);
+    nextRocketBattle.current = Math.floor(Math.random() * 4) + 7;
+    totalBattles.current = 0;
   };
 
   // Pokemon Red/Blue Intro Screen
@@ -2670,6 +2740,139 @@ const PokemonGame = () => {
             >
               📖 POKéDEX ({pokedex.length}/{allGamePokemon.length})
             </button>
+          </div>
+
+          {/* Game Boy Controls */}
+          <div className="gameboy-controls">
+            <div className="dpad">
+              <div className="dpad-button dpad-up"></div>
+              <div className="dpad-button dpad-left"></div>
+              <div className="dpad-button dpad-center"></div>
+              <div className="dpad-button dpad-right"></div>
+              <div className="dpad-button dpad-down"></div>
+            </div>
+            <div className="action-buttons">
+              <div className="action-button"></div>
+              <div className="action-button"></div>
+            </div>
+          </div>
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'rocket') {
+    const stolenPoke = stolenPokemonIndex >= 0 ? availableTeam[stolenPokemonIndex] : null;
+    const isMobile = displayMode === 'mobile';
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+        <SettingsButton />
+        <SettingsModal />
+        <HowToPlayModal />
+        <PokedexModal />
+        <div className={`gameboy-console ${getContainerClass()} w-full`} style={{overflow: 'hidden', position: 'relative'}}>
+          <div className="gameboy-screen text-center" style={{overflow: 'hidden', position: 'relative'}}>
+            {/* Team Rocket Image */}
+            <div className={`border-4 border-black mb-4 ${rocketPhase === 'intro' ? 'rocket-flash' : ''}`} style={{backgroundColor: '#1a1a1a'}}>
+              <img
+                src="https://art.pixilart.com/thumb/sr22f5fb7a1edaws3.png"
+                alt="Team Rocket"
+                style={{
+                  width: '100%',
+                  imageRendering: 'pixelated',
+                }}
+              />
+            </div>
+
+            {/* Battle Log */}
+            <div className="border-4 border-black p-3 mb-4" style={{backgroundColor: '#fef3c7'}}>
+              <p className="text-sm font-bold retro-text" style={{color: '#dc2626'}}>
+                {rocketPhase === 'intro' && '⚡ TEAM ROCKET APPEARED! ⚡'}
+                {rocketPhase === 'walking' && 'Meowth is sneaking toward your team...'}
+                {rocketPhase === 'grabbing' && `Meowth grabbed ${stolenPoke?.name || 'a Pokemon'}!`}
+                {rocketPhase === 'leaving' && `Team Rocket stole ${stolenPoke?.name || 'your Pokemon'}!`}
+                {rocketPhase === 'done' && `${stolenPoke?.name || 'Your Pokemon'} was stolen!`}
+              </p>
+            </div>
+
+            {/* Team display with Meowth animation */}
+            <div className="border-4 border-black p-3" style={{backgroundColor: '#e5e7eb', position: 'relative', minHeight: '100px', overflow: 'hidden'}}>
+              <p className="text-xs font-bold mb-2 retro-text" style={{color: '#000'}}>YOUR TEAM:</p>
+              <div className="grid grid-cols-4 gap-2" style={{position: 'relative'}}>
+                {availableTeam.map((pokemon, index) => {
+                  const isStolen = index === stolenPokemonIndex;
+                  const isBeingCarried = isStolen && (rocketPhase === 'leaving');
+                  const isGone = isStolen && rocketPhase === 'done';
+                  return (
+                    <div
+                      key={index}
+                      className={`border-3 py-1 px-1 text-center ${isGone ? '' : ''} ${isBeingCarried ? 'stolen-pokemon-fade' : ''}`}
+                      style={{
+                        borderColor: isGone ? '#9ca3af' : '#000',
+                        borderStyle: isGone ? 'dashed' : 'solid',
+                        backgroundColor: isGone ? 'transparent' : (pokemon.name === playerPokemon?.name ? '#9ca3af' : '#fbbf24'),
+                        borderWidth: '3px',
+                        opacity: isGone ? 0.4 : 1,
+                      }}
+                    >
+                      {!isGone && (
+                        <>
+                          <div className="mb-1 flex justify-center bg-white border-2 border-black p-1">
+                            <img
+                              src={getPokemonSprite(pokemon.name)}
+                              alt={pokemon.name}
+                              style={{imageRendering: 'pixelated', width: `${getSpriteSize(48)}px`, height: `${getSpriteSize(48)}px`}}
+                            />
+                          </div>
+                          <p className="text-xs font-bold truncate uppercase retro-text" style={{color: '#000', fontSize: '8px'}}>{pokemon.name}</p>
+                        </>
+                      )}
+                      {isGone && (
+                        <p className="text-xs retro-text py-4" style={{color: '#9ca3af', fontSize: '8px'}}>STOLEN</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Meowth animation overlay */}
+              {(rocketPhase === 'walking' || rocketPhase === 'grabbing' || rocketPhase === 'leaving') && (
+                <div
+                  className={rocketPhase === 'walking' ? 'meowth-walk-in' : rocketPhase === 'grabbing' ? 'meowth-grab' : 'meowth-leave'}
+                  style={{
+                    position: 'absolute',
+                    bottom: '10px',
+                    right: rocketPhase === 'walking' ? '0px' : undefined,
+                    left: rocketPhase !== 'walking' ? `${(stolenPokemonIndex % 4) * 25 + 5}%` : undefined,
+                    zIndex: 10,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <img
+                    src={getPokemonSprite('Meowth')}
+                    alt="Meowth"
+                    style={{
+                      imageRendering: 'pixelated',
+                      width: isMobile ? '48px' : '64px',
+                      height: isMobile ? '48px' : '64px',
+                      transform: 'scaleX(-1)',
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Continue button (only after done) */}
+            {rocketPhase === 'done' && (
+              <button
+                onClick={continueAfterRocket}
+                className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all mt-4"
+                style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
+              >
+                CONTINUE
+              </button>
+            )}
           </div>
 
           {/* Game Boy Controls */}
