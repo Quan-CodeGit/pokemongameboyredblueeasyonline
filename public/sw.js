@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pokemon-game-v1';
+const CACHE_NAME = 'pokemon-game-v2';
 
 // Install: cache all game assets
 self.addEventListener('install', (event) => {
@@ -39,13 +39,53 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Handle Range requests for video files from cache
+async function handleRangeRequest(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request.url, { ignoreSearch: true });
+  if (!cached) return fetch(request);
+
+  const buf = await cached.arrayBuffer();
+  const total = buf.byteLength;
+  const rangeHeader = request.headers.get('Range');
+
+  if (!rangeHeader) {
+    return new Response(buf, {
+      status: 200,
+      headers: { 'Content-Type': 'video/mp4', 'Content-Length': total },
+    });
+  }
+
+  const match = rangeHeader.match(/bytes=(\d+)-(\d*)/);
+  const start = parseInt(match[1], 10);
+  const end = match[2] ? parseInt(match[2], 10) : total - 1;
+  const chunk = buf.slice(start, end + 1);
+
+  return new Response(chunk, {
+    status: 206,
+    headers: {
+      'Content-Type': 'video/mp4',
+      'Content-Range': `bytes ${start}-${end}/${total}`,
+      'Content-Length': chunk.byteLength,
+      'Accept-Ranges': 'bytes',
+    },
+  });
+}
+
 // Fetch: serve from cache first, fall back to network
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Handle video Range requests specially
+  if (url.pathname.endsWith('.mp4')) {
+    event.respondWith(handleRangeRequest(event.request));
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
       return fetch(event.request).then((response) => {
-        // Cache new requests dynamically (JS/CSS bundles from Vite)
         if (response.ok && event.request.method === 'GET') {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));

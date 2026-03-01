@@ -35,8 +35,9 @@ const PokemonGame = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showPokedex, setShowPokedex] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [quickMenuFocused, setQuickMenuFocused] = useState(false);
-  const [quickMenuIndex, setQuickMenuIndex] = useState(0); // 0: Settings, 1: How to Play, 2: Debug
+  const [quickMenuIndex, setQuickMenuIndex] = useState(0); // 0: Settings, 1: How to Play, 2: Pokedex, 3: Debug
   const [settingsIndex, setSettingsIndex] = useState(0); // 0-1: Display, 2-4: Audio, 5-6: Debug, 7: Close
   const [difficulty, setDifficulty] = useState('medium'); // 'easy', 'medium', 'hard'
   const [selectedDifficultyIndex, setSelectedDifficultyIndex] = useState(1); // 0: Easy, 1: Medium, 2: Hard
@@ -100,16 +101,17 @@ const PokemonGame = () => {
         e.preventDefault();
       }
 
-      // Space key - toggle quick menu focus (Settings/Debug buttons)
+      // Space key - toggle 3-dot menu and quick menu focus
       if (e.key === ' ') {
+        setMenuOpen(prev => !prev);
         setQuickMenuFocused(prev => !prev);
-        setQuickMenuIndex(0); // Reset to first option when opening
+        setQuickMenuIndex(0);
         return;
       }
 
       // Quick menu navigation when focused
       if (quickMenuFocused) {
-        const maxIndex = debugMode ? 2 : 1; // 0: Settings, 1: How to Play, 2: Debug (if enabled)
+        const maxIndex = debugMode ? 3 : 2; // 0: Settings, 1: How to Play, 2: Pokedex, 3: Debug (if enabled)
         if (e.key === 'ArrowUp') {
           setQuickMenuIndex(prev => (prev - 1 + maxIndex + 1) % (maxIndex + 1));
         } else if (e.key === 'ArrowDown') {
@@ -118,17 +120,25 @@ const PokemonGame = () => {
           if (quickMenuIndex === 0) {
             setShowSettings(true);
             setQuickMenuFocused(false);
+            setMenuOpen(false);
           } else if (quickMenuIndex === 1) {
             setShowHowToPlay(true);
             setQuickMenuFocused(false);
-          } else if (quickMenuIndex === 2 && debugMode) {
-            // Trigger debug button
+            setMenuOpen(false);
+          } else if (quickMenuIndex === 2) {
+            setShowPokedex(true);
+            setQuickMenuFocused(false);
+            setMenuOpen(false);
+          } else if (quickMenuIndex === 3 && debugMode) {
             const debugBtn = document.querySelector('[data-debug-button]');
             if (debugBtn) debugBtn.click();
             setQuickMenuFocused(false);
+            setMenuOpen(false);
           }
-        } else if (e.key === 'Escape') {
+        } else if (e.key === 'Escape' || e.key === ' ') {
+          e.preventDefault();
           setQuickMenuFocused(false);
+          setMenuOpen(false);
         }
         return;
       }
@@ -306,80 +316,98 @@ const PokemonGame = () => {
 
   // Settings button component
   const SettingsButton = () => (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2">
-      {/* Settings Button */}
+    <div className="fixed top-4 right-4 z-50">
+      {/* 3-dot menu toggle */}
       <button
-        onClick={() => setShowSettings(true)}
-        className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
-          quickMenuFocused && quickMenuIndex === 0 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
-        }`}
+        onClick={() => { setMenuOpen(prev => !prev); setQuickMenuIndex(0); }}
+        className="hover:scale-110 transition-all"
         style={{
-          backgroundColor: '#3b82f6',
-          color: '#fff',
-          boxShadow: quickMenuFocused && quickMenuIndex === 0 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
+          width: '44px',
+          height: '44px',
+          borderRadius: '50%',
+          backgroundColor: '#1a1a1a',
+          border: '3px solid #fbbf24',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '3px',
+          cursor: 'pointer',
+          boxShadow: '2px 2px 0px #000',
         }}
       >
-        ⚙️ SETTINGS
+        <span style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:'#fff',display:'inline-block'}}></span>
+        <span style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:'#fff',display:'inline-block'}}></span>
+        <span style={{width:'6px',height:'6px',borderRadius:'50%',backgroundColor:'#fff',display:'inline-block'}}></span>
       </button>
 
-      {/* How to Play Button */}
-      <button
-        onClick={() => setShowHowToPlay(true)}
-        className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
-          quickMenuFocused && quickMenuIndex === 1 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
-        }`}
-        style={{
-          backgroundColor: '#22c55e',
-          color: '#fff',
-          boxShadow: quickMenuFocused && quickMenuIndex === 1 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
-        }}
-      >
-        ❓ HOW TO PLAY
-      </button>
-
-      {/* Pokedex Button */}
-      <button
-        onClick={() => setShowPokedex(true)}
-        className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text border-black`}
-        style={{
-          backgroundColor: '#dc2626',
-          color: '#fff',
-          boxShadow: '4px 4px 0px #000'
-        }}
-      >
-        📖 POKéDEX
-      </button>
-
-      {/* Debug Button - only show if debug mode is enabled */}
-      {debugMode && (
-        <button
-          data-debug-button
-          onClick={() => {
-            if (playerPokemon) {
-              setPlayerPokemon(prev => ({ ...prev, exp: 19 }));
-              setAvailableTeam(prev => prev.map(p =>
-                p.name === playerPokemon.name ? { ...p, exp: 19 } : p
-              ));
-              setBattleLog(prev => [...prev, 'DEBUG: EXP set to 19. Win one more battle for Mewtwo!']);
-            }
-          }}
-          className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
-            quickMenuFocused && quickMenuIndex === 2 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
-          }`}
-          style={{
-            backgroundColor: '#dc2626',
-            color: '#fff',
-            boxShadow: quickMenuFocused && quickMenuIndex === 2 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
-          }}
-        >
-          🐛 DEBUG: EXP→19
-        </button>
-      )}
-
-      {/* Quick menu indicator */}
-      {quickMenuFocused && (
-        <div className="text-xs text-center mt-2 bg-yellow-400 border-2 border-black px-2 py-1 retro-text">
-          ↑↓ Navigate | Enter Select | Space Close
+      {/* Dropdown menu */}
+      {menuOpen && (
+        <div className="flex flex-col gap-2 mt-2" style={{minWidth: '160px'}}>
+          <button
+            onClick={() => { setShowSettings(true); setMenuOpen(false); }}
+            className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
+              quickMenuFocused && quickMenuIndex === 0 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+            }`}
+            style={{
+              backgroundColor: '#3b82f6', color: '#fff',
+              boxShadow: quickMenuFocused && quickMenuIndex === 0 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
+            }}
+          >
+            SETTINGS
+          </button>
+          <button
+            onClick={() => { setShowHowToPlay(true); setMenuOpen(false); }}
+            className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
+              quickMenuFocused && quickMenuIndex === 1 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+            }`}
+            style={{
+              backgroundColor: '#22c55e', color: '#fff',
+              boxShadow: quickMenuFocused && quickMenuIndex === 1 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
+            }}
+          >
+            HOW TO PLAY
+          </button>
+          <button
+            onClick={() => { setShowPokedex(true); setMenuOpen(false); }}
+            className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
+              quickMenuFocused && quickMenuIndex === 2 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+            }`}
+            style={{
+              backgroundColor: '#dc2626', color: '#fff',
+              boxShadow: quickMenuFocused && quickMenuIndex === 2 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
+            }}
+          >
+            POKéDEX
+          </button>
+          {debugMode && (
+            <button
+              data-debug-button
+              onClick={() => {
+                if (playerPokemon) {
+                  setPlayerPokemon(prev => ({ ...prev, exp: 19 }));
+                  setAvailableTeam(prev => prev.map(p =>
+                    p.name === playerPokemon.name ? { ...p, exp: 19 } : p
+                  ));
+                  setBattleLog(prev => [...prev, 'DEBUG: EXP set to 19. Win one more battle for Mewtwo!']);
+                }
+                setMenuOpen(false);
+              }}
+              className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
+                quickMenuFocused && quickMenuIndex === 3 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+              }`}
+              style={{
+                backgroundColor: '#dc2626', color: '#fff',
+                boxShadow: quickMenuFocused && quickMenuIndex === 3 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
+              }}
+            >
+              DEBUG: EXP→19
+            </button>
+          )}
+          {quickMenuFocused && (
+            <div className="text-xs text-center mt-1 bg-yellow-400 border-2 border-black px-2 py-1 retro-text">
+              ↑↓ Navigate | Enter Select
+            </div>
+          )}
         </div>
       )}
     </div>
