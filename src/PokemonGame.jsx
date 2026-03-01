@@ -2782,24 +2782,38 @@ const PokemonGame = () => {
             {rocketPhase === 'video' ? (
               <>
                 {/* Team Rocket Video Intro */}
-                <div className="border-4 border-black mb-4" style={{backgroundColor: '#1a1a1a'}}>
-                  <div style={{position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden'}}>
-                    <iframe
-                      src="https://www.youtube.com/embed/ZBVrPWwSlRM?autoplay=1&rel=0&modestbranding=1"
-                      style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none'}}
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                      title="Team Rocket Intro"
+                <div className="border-4 border-black mb-4" style={{backgroundColor: '#1a1a1a', position: 'relative'}}>
+                  <video
+                    autoPlay
+                    onEnded={startRocketAnimation}
+                    style={{width: '100%', display: 'block'}}
+                  >
+                    <source src="/team-rocket-intro.mp4" type="video/mp4" />
+                  </video>
+                  <button
+                    onClick={startRocketAnimation}
+                    style={{
+                      position: 'absolute',
+                      bottom: '8px',
+                      right: '8px',
+                      background: 'rgba(0,0,0,0.5)',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '4px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    className="hover:scale-110 transition-all"
+                  >
+                    <img
+                      src="/skip-icon.png"
+                      alt="Skip"
+                      style={{width: '36px', height: '36px', filter: 'invert(1)', opacity: 0.9}}
                     />
-                  </div>
+                  </button>
                 </div>
-                <button
-                  onClick={startRocketAnimation}
-                  className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
-                  style={{backgroundColor: '#dc2626', color: '#fff', boxShadow: '4px 4px 0px #000'}}
-                >
-                  SKIP VIDEO
-                </button>
               </>
             ) : (
               <>
