@@ -2109,13 +2109,14 @@ const PokemonGame = () => {
     setTimeout(() => setRocketPhase('grabbing'), 5200);
     setTimeout(() => setRocketPhase('leaving'), 6200);
     setTimeout(() => {
-      // Remove stolen Pokemon from team
-      setAvailableTeam(prev => prev.filter(p => p.name !== stolenName));
       setRocketPhase('done');
     }, 9500);
   };
 
   const continueAfterRocket = () => {
+    // Remove stolen Pokemon from team now (kept in array during animation for correct indexing)
+    const stolenName = stolenNameRef.current;
+    setAvailableTeam(prev => prev.filter(p => p.name !== stolenName));
     setRocketPhase('');
     setStolenPokemonIndex(-1);
     // Start next normal battle
