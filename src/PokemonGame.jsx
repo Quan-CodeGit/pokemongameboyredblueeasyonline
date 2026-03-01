@@ -2097,6 +2097,12 @@ const PokemonGame = () => {
 
   const startRocketAnimation = () => {
     setRocketPhase('intro');
+    // Play Team Rocket encounter sound
+    try {
+      const rocketSound = new Audio('/team-rocket-encounter.mp3');
+      rocketSound.volume = 0.5;
+      rocketSound.play().catch(() => {});
+    } catch (e) {}
     const stolenName = stolenNameRef.current;
     // Animation sequence - slow and smooth
     setTimeout(() => setRocketPhase('walking'), 2000);
@@ -2794,24 +2800,25 @@ const PokemonGame = () => {
                     onClick={startRocketAnimation}
                     style={{
                       position: 'absolute',
-                      bottom: '8px',
-                      right: '8px',
-                      background: 'rgba(0,0,0,0.5)',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '4px',
+                      bottom: '10px',
+                      right: '10px',
+                      background: 'rgba(0,0,0,0.65)',
+                      border: '2px solid rgba(255,255,255,0.7)',
+                      borderRadius: '10px',
+                      padding: '6px 14px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
+                      gap: '6px',
+                      backdropFilter: 'blur(4px)',
                     }}
                     className="hover:scale-110 transition-all"
                   >
-                    <img
-                      src="/skip-icon.png"
-                      alt="Skip"
-                      style={{width: '36px', height: '36px', filter: 'invert(1)', opacity: 0.9}}
-                    />
+                    <span style={{color: '#fff', fontSize: '12px', fontWeight: 'bold', fontFamily: 'monospace', letterSpacing: '1px'}}>SKIP</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{display: 'block'}}>
+                      <path d="M6 4l12 8-12 8V4z" fill="#fff"/>
+                      <rect x="19" y="4" width="3" height="16" rx="1" fill="#fff"/>
+                    </svg>
                   </button>
                 </div>
               </>
