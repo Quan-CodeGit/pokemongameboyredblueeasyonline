@@ -70,7 +70,7 @@ const PokemonGame = () => {
     if (gameState === 'start' && introMusicPlaying && audioVolume !== 'none') {
       // Pokemon Red/Blue intro theme
       if (!introMusicRef.current) {
-        const introMusic = new Audio('https://www.myinstants.com/media/sounds/pokemon-red-blue-intro.mp3');
+        const introMusic = new Audio('/sounds/intro.mp3');
         introMusic.loop = true;
         introMusic.volume = audioVolume === 'low' ? 0.3 : 0.7;
         introMusic.play().catch(err => console.log('Intro music play failed:', err));
@@ -573,11 +573,11 @@ const PokemonGame = () => {
       if (audioVolume === 'none') return;
 
       const soundUrls = {
-        'mewtwo-warning': 'https://www.myinstants.com/media/sounds/mewtwo-pokemon-go-sound.mp3',
-        'evolve': 'https://www.myinstants.com/media/sounds/pokemon-evolve.mp3',
-        'sendout': 'https://www.myinstants.com/media/sounds/ichooseyou.mp3',
-        'catch': 'https://www.myinstants.com/media/sounds/06-caught-a-pokemon.mp3',
-        'levelup': 'https://www.myinstants.com/media/sounds/12_3.mp3'
+        'mewtwo-warning': '/sounds/mewtwo-warning.mp3',
+        'evolve': '/sounds/evolve.mp3',
+        'sendout': '/sounds/sendout.mp3',
+        'catch': '/sounds/catch.mp3',
+        'levelup': '/sounds/levelup.mp3'
       };
 
       const volumeLevels = {
@@ -769,7 +769,7 @@ const PokemonGame = () => {
                   >
                     <div className="flex justify-center">
                       <img
-                        src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`}
+                        src={`/sprites/${pokemon.id}.png`}
                         alt={isCollected ? pokemon.name : '???'}
                         style={{
                           imageRendering: 'pixelated',
@@ -799,7 +799,7 @@ const PokemonGame = () => {
   // Helper function to get Pokemon sprite from PokeAPI
   const getPokemonSprite = (pokemonName) => {
     const name = pokemonName.toLowerCase();
-    return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${getPokemonId(name)}.png`;
+    return `/sprites/${getPokemonId(name)}.png`;
   };
 
   // Helper function to get Pokemon ID from name
@@ -2828,7 +2828,7 @@ const PokemonGame = () => {
             {/* Team Rocket Image */}
             <div className={`border-4 border-black mb-4 ${rocketPhase === 'intro' ? 'rocket-flash' : ''}`} style={{backgroundColor: '#1a1a1a'}}>
               <img
-                src="https://art.pixilart.com/thumb/sr22f5fb7a1edaws3.png"
+                src="/team-rocket.png"
                 alt="Team Rocket"
                 style={{
                   width: '100%',
