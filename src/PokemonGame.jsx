@@ -2854,21 +2854,20 @@ const PokemonGame = () => {
               <div className="grid grid-cols-4 gap-2" style={{position: 'relative'}}>
                 {availableTeam.map((pokemon, index) => {
                   const isStolen = index === stolenPokemonIndex;
-                  const isBeingCarried = isStolen && (rocketPhase === 'leaving');
-                  const isGone = isStolen && rocketPhase === 'done';
+                  const isCarriedOrGone = isStolen && (rocketPhase === 'leaving' || rocketPhase === 'done');
                   return (
                     <div
                       key={index}
-                      className={`border-3 py-1 px-1 text-center ${isGone ? '' : ''} ${isBeingCarried ? 'stolen-pokemon-fade' : ''}`}
+                      className="border-3 py-1 px-1 text-center"
                       style={{
-                        borderColor: isGone ? '#9ca3af' : '#000',
-                        borderStyle: isGone ? 'dashed' : 'solid',
-                        backgroundColor: isGone ? 'transparent' : (pokemon.name === playerPokemon?.name ? '#9ca3af' : '#fbbf24'),
+                        borderColor: isCarriedOrGone ? '#9ca3af' : '#000',
+                        borderStyle: isCarriedOrGone ? 'dashed' : 'solid',
+                        backgroundColor: isCarriedOrGone ? 'transparent' : (pokemon.name === playerPokemon?.name ? '#9ca3af' : '#fbbf24'),
                         borderWidth: '3px',
-                        opacity: isGone ? 0.4 : 1,
+                        opacity: isCarriedOrGone ? 0.4 : 1,
                       }}
                     >
-                      {!isGone && (
+                      {!isCarriedOrGone && (
                         <>
                           <div className="mb-1 flex justify-center bg-white border-2 border-black p-1">
                             <img
@@ -2880,7 +2879,7 @@ const PokemonGame = () => {
                           <p className="text-xs font-bold truncate uppercase retro-text" style={{color: '#000', fontSize: '8px'}}>{pokemon.name}</p>
                         </>
                       )}
-                      {isGone && (
+                      {isCarriedOrGone && (
                         <p className="text-xs retro-text py-4" style={{color: '#9ca3af', fontSize: '8px'}}>STOLEN</p>
                       )}
                     </div>
@@ -2898,8 +2897,24 @@ const PokemonGame = () => {
                     left: `${(stolenPokemonIndex % 4) * 25 + 5}%`,
                     zIndex: 10,
                     pointerEvents: 'none',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
                   }}
                 >
+                  {/* Stolen Pokemon carried by Meowth */}
+                  {rocketPhase === 'leaving' && stolenPoke && (
+                    <img
+                      src={getPokemonSprite(stolenPoke.name)}
+                      alt={stolenPoke.name}
+                      style={{
+                        imageRendering: 'pixelated',
+                        width: isMobile ? '36px' : '48px',
+                        height: isMobile ? '36px' : '48px',
+                        marginBottom: '-8px',
+                      }}
+                    />
+                  )}
                   <img
                     src={getPokemonSprite('Meowth')}
                     alt="Meowth"
