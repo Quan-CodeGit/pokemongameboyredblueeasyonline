@@ -41,8 +41,9 @@ const PokemonGame = () => {
   const [difficulty, setDifficulty] = useState('medium'); // 'easy', 'medium', 'hard'
   const [selectedDifficultyIndex, setSelectedDifficultyIndex] = useState(1); // 0: Easy, 1: Medium, 2: Hard
 
-  const [rocketPhase, setRocketPhase] = useState(''); // '', 'intro', 'walking', 'grabbing', 'leaving', 'done'
+  const [rocketPhase, setRocketPhase] = useState(''); // '', 'video', 'intro', 'walking', 'grabbing', 'leaving', 'done'
   const [stolenPokemonIndex, setStolenPokemonIndex] = useState(-1);
+  const stolenNameRef = useRef('');
 
   // Use ref to track Mewtwo spawn - bypasses React state timing issues
   const shouldSpawnMewtwo = useRef(false);
@@ -2082,12 +2083,21 @@ const PokemonGame = () => {
 
     const randomBenchIndex = Math.floor(Math.random() * benchPokemon.length);
     const stolenName = benchPokemon[randomBenchIndex].name;
+    stolenNameRef.current = stolenName;
     const teamIndex = availableTeam.findIndex(p => p.name === stolenName);
     setStolenPokemonIndex(teamIndex);
     setGameState('rocket');
-    setRocketPhase('intro');
+    setRocketPhase('video');
     setBattleLog([]);
 
+    // Set next rocket battle (7-10 battles from now)
+    nextRocketBattle.current = totalBattles.current + Math.floor(Math.random() * 4) + 7;
+    return true;
+  };
+
+  const startRocketAnimation = () => {
+    setRocketPhase('intro');
+    const stolenName = stolenNameRef.current;
     // Animation sequence - slow and smooth
     setTimeout(() => setRocketPhase('walking'), 2000);
     setTimeout(() => setRocketPhase('grabbing'), 5200);
@@ -2097,10 +2107,6 @@ const PokemonGame = () => {
       setAvailableTeam(prev => prev.filter(p => p.name !== stolenName));
       setRocketPhase('done');
     }, 9500);
-
-    // Set next rocket battle (7-10 battles from now)
-    nextRocketBattle.current = totalBattles.current + Math.floor(Math.random() * 4) + 7;
-    return true;
   };
 
   const continueAfterRocket = () => {
@@ -2773,6 +2779,30 @@ const PokemonGame = () => {
         <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`} style={{overflow: 'hidden', position: 'relative'}}>
           <div className="gameboy-screen text-center" style={{overflow: 'hidden', position: 'relative'}}>
+            {rocketPhase === 'video' ? (
+              <>
+                {/* Team Rocket Video Intro */}
+                <div className="border-4 border-black mb-4" style={{backgroundColor: '#1a1a1a'}}>
+                  <div style={{position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden'}}>
+                    <iframe
+                      src="https://www.youtube.com/embed/ZBVrPWwSlRM?autoplay=1&rel=0&modestbranding=1"
+                      style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none'}}
+                      allow="autoplay; encrypted-media"
+                      allowFullScreen
+                      title="Team Rocket Intro"
+                    />
+                  </div>
+                </div>
+                <button
+                  onClick={startRocketAnimation}
+                  className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+                  style={{backgroundColor: '#dc2626', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+                >
+                  SKIP VIDEO
+                </button>
+              </>
+            ) : (
+              <>
             {/* Team Rocket Image */}
             <div className={`border-4 border-black mb-4 ${rocketPhase === 'intro' ? 'rocket-flash' : ''}`} style={{backgroundColor: '#1a1a1a'}}>
               <img
@@ -2870,6 +2900,8 @@ const PokemonGame = () => {
               >
                 CONTINUE
               </button>
+            )}
+              </>
             )}
           </div>
 
