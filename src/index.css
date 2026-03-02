@@ -106,6 +106,18 @@ img[style*="pixelated"] {
   box-shadow:
     0 4px 8px rgba(0, 0, 0, 0.3),
     inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.05s, box-shadow 0.05s;
+}
+
+.dpad-button:not(.dpad-center):hover {
+  background: #2563eb;
+}
+
+.dpad-button:not(.dpad-center):active {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(0, 0, 0, 0.3);
+  transform: scale(0.95);
 }
 
 .dpad-up { grid-area: 1 / 2 / 2 / 3; border-radius: 8px 8px 0 0; }
@@ -131,12 +143,27 @@ img[style*="pixelated"] {
     inset 0 -3px 4px rgba(0, 0, 0, 0.2);
   position: relative;
   transform: rotate(-20deg);
+  transition: box-shadow 0.05s;
+}
+
+.action-button:hover {
+  background: #ef4444;
+}
+
+.action-button:active {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .action-button:last-child {
   background: #0ea5e9;
   border-color: #0284c7;
   transform: rotate(-20deg) translateY(-10px);
+}
+
+.action-button:last-child:hover {
+  background: #38bdf8;
 }
 
 .action-button::before {

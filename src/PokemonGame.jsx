@@ -32,13 +32,17 @@ const PokemonGame = () => {
     // Load from localStorage or default to false
     return localStorage.getItem('pokemonGameDebugMode') === 'true';
   });
+  const [teamRocketEnabled, setTeamRocketEnabled] = useState(() => {
+    const saved = localStorage.getItem('pokemonGameTeamRocket');
+    return saved === null ? true : saved === 'true';
+  });
   const [showSettings, setShowSettings] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showPokedex, setShowPokedex] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [quickMenuFocused, setQuickMenuFocused] = useState(false);
   const [quickMenuIndex, setQuickMenuIndex] = useState(0); // 0: Settings, 1: How to Play, 2: Pokedex, 3: Debug
-  const [settingsIndex, setSettingsIndex] = useState(0); // 0-1: Display, 2-4: Audio, 5-6: Debug, 7: Close
+  const [settingsIndex, setSettingsIndex] = useState(0); // 0-1: Display, 2-4: Audio, 5-6: Team Rocket, 7-8: Debug, 9: Close
   const [difficulty, setDifficulty] = useState('medium'); // 'easy', 'medium', 'hard'
   const [selectedDifficultyIndex, setSelectedDifficultyIndex] = useState(1); // 0: Easy, 1: Medium, 2: Hard
 
@@ -65,6 +69,10 @@ const PokemonGame = () => {
   useEffect(() => {
     localStorage.setItem('pokemonGameDebugMode', debugMode.toString());
   }, [debugMode]);
+
+  useEffect(() => {
+    localStorage.setItem('pokemonGameTeamRocket', teamRocketEnabled.toString());
+  }, [teamRocketEnabled]);
 
   // Play intro music on start screen only, stop when choosing starter
   useEffect(() => {
@@ -153,21 +161,23 @@ const PokemonGame = () => {
 
       // Settings modal navigation
       if (showSettings) {
-        // Settings layout: Row 0: PC(0), Mobile(1) | Row 1: None(2), Low(3), High(4) | Row 2: Off(5), On(6) | Row 3: Close(7)
+        // Settings layout: Row 0: PC(0), Mobile(1) | Row 1: None(2), Low(3), High(4) | Row 2: Rocket Off(5), On(6) | Row 3: Debug Off(7), On(8) | Row 4: Close(9)
         if (e.key === 'ArrowUp') {
           setSettingsIndex(prev => {
-            if (prev === 0 || prev === 1) return 7; // Display to Close
+            if (prev === 0 || prev === 1) return 9; // Display to Close (wrap)
             if (prev === 2 || prev === 3 || prev === 4) return prev - 2; // Audio to Display
-            if (prev === 5 || prev === 6) return prev - 2; // Debug to Audio
-            if (prev === 7) return 5; // Close to Debug
+            if (prev === 5 || prev === 6) return prev - 2; // Rocket to Audio
+            if (prev === 7 || prev === 8) return prev - 2; // Debug to Rocket
+            if (prev === 9) return 7; // Close to Debug
             return prev;
           });
         } else if (e.key === 'ArrowDown') {
           setSettingsIndex(prev => {
             if (prev === 0 || prev === 1) return prev + 2; // Display to Audio
-            if (prev === 2 || prev === 3 || prev === 4) return prev <= 3 ? 5 : 6; // Audio to Debug
-            if (prev === 5 || prev === 6) return 7; // Debug to Close
-            if (prev === 7) return 0; // Close to Display
+            if (prev === 2 || prev === 3 || prev === 4) return prev <= 3 ? 5 : 6; // Audio to Rocket
+            if (prev === 5 || prev === 6) return prev + 2; // Rocket to Debug
+            if (prev === 7 || prev === 8) return 9; // Debug to Close
+            if (prev === 9) return 0; // Close to Display (wrap)
             return prev;
           });
         } else if (e.key === 'ArrowLeft') {
@@ -176,6 +186,7 @@ const PokemonGame = () => {
             if (prev === 3) return 2;
             if (prev === 4) return 3;
             if (prev === 6) return 5;
+            if (prev === 8) return 7;
             return prev;
           });
         } else if (e.key === 'ArrowRight') {
@@ -184,6 +195,7 @@ const PokemonGame = () => {
             if (prev === 2) return 3;
             if (prev === 3) return 4;
             if (prev === 5) return 6;
+            if (prev === 7) return 8;
             return prev;
           });
         } else if (e.key === 'Enter') {
@@ -193,9 +205,11 @@ const PokemonGame = () => {
           else if (settingsIndex === 2) setAudioVolume('none');
           else if (settingsIndex === 3) setAudioVolume('low');
           else if (settingsIndex === 4) setAudioVolume('high');
-          else if (settingsIndex === 5) setDebugMode(false);
-          else if (settingsIndex === 6) setDebugMode(true);
-          else if (settingsIndex === 7) setShowSettings(false);
+          else if (settingsIndex === 5) setTeamRocketEnabled(false);
+          else if (settingsIndex === 6) setTeamRocketEnabled(true);
+          else if (settingsIndex === 7) setDebugMode(false);
+          else if (settingsIndex === 8) setDebugMode(true);
+          else if (settingsIndex === 9) setShowSettings(false);
         } else if (e.key === 'Escape') {
           setShowSettings(false);
         }
@@ -287,8 +301,8 @@ const PokemonGame = () => {
         return;
       }
 
-      // Victory/Defeat/Catch screens - Enter to continue
-      if (['victory', 'defeat', 'catch'].includes(gameState)) {
+      // Victory/Defeat/Catch/Rocket screens - Enter to continue/skip
+      if (['victory', 'defeat', 'catch', 'rocket'].includes(gameState)) {
         if (e.key === 'Enter') {
           const continueButton = document.querySelector('[data-continue-button]');
           if (continueButton) {
@@ -550,19 +564,38 @@ const PokemonGame = () => {
             </div>
           </div>
 
+          {/* Team Rocket */}
+          <div className="border-4 border-black bg-white p-4 mb-3">
+            <h3 className="font-bold text-sm mb-2 retro-text">TEAM ROCKET:</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setTeamRocketEnabled(false)}
+                className={getButtonClass(5, !teamRocketEnabled) + (!teamRocketEnabled ? 'bg-red-500 text-white' : 'bg-gray-200')}
+              >
+                OFF
+              </button>
+              <button
+                onClick={() => setTeamRocketEnabled(true)}
+                className={getButtonClass(6, teamRocketEnabled) + (teamRocketEnabled ? 'bg-green-500 text-white' : 'bg-gray-200')}
+              >
+                ON
+              </button>
+            </div>
+          </div>
+
           {/* Debug Mode */}
           <div className="border-4 border-black bg-white p-4 mb-4">
             <h3 className="font-bold text-sm mb-2 retro-text">DEBUG MODE:</h3>
             <div className="flex gap-2">
               <button
                 onClick={() => setDebugMode(false)}
-                className={getButtonClass(5, !debugMode) + (!debugMode ? 'bg-gray-500 text-white' : 'bg-gray-200')}
+                className={getButtonClass(7, !debugMode) + (!debugMode ? 'bg-gray-500 text-white' : 'bg-gray-200')}
               >
                 OFF
               </button>
               <button
                 onClick={() => setDebugMode(true)}
-                className={getButtonClass(6, debugMode) + (debugMode ? 'bg-purple-500 text-white' : 'bg-gray-200')}
+                className={getButtonClass(8, debugMode) + (debugMode ? 'bg-purple-500 text-white' : 'bg-gray-200')}
               >
                 ON
               </button>
@@ -573,7 +606,7 @@ const PokemonGame = () => {
           <button
             onClick={() => setShowSettings(false)}
             className={`w-full border-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 retro-text transition-all ${
-              settingsIndex === 7 ? 'border-yellow-400 ring-2 ring-yellow-400 scale-105' : 'border-black'
+              settingsIndex === 9 ? 'border-yellow-400 ring-2 ring-yellow-400 scale-105' : 'border-black'
             }`}
             style={{boxShadow: '4px 4px 0px #000'}}
           >
@@ -584,6 +617,28 @@ const PokemonGame = () => {
     );
   };
 
+
+  // Game Boy Controls component - clickable D-pad and action buttons
+  const GameboyControlsComponent = () => {
+    const dispatchKey = (key) => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    };
+    return (
+      <div className="gameboy-controls">
+        <div className="dpad">
+          <div className="dpad-button dpad-up" onClick={() => dispatchKey('ArrowUp')} style={{cursor: 'pointer'}}></div>
+          <div className="dpad-button dpad-left" onClick={() => dispatchKey('ArrowLeft')} style={{cursor: 'pointer'}}></div>
+          <div className="dpad-button dpad-center"></div>
+          <div className="dpad-button dpad-right" onClick={() => dispatchKey('ArrowRight')} style={{cursor: 'pointer'}}></div>
+          <div className="dpad-button dpad-down" onClick={() => dispatchKey('ArrowDown')} style={{cursor: 'pointer'}}></div>
+        </div>
+        <div className="action-buttons">
+          <div className="action-button" onClick={() => dispatchKey('Enter')} style={{cursor: 'pointer'}} title="Enter"></div>
+          <div className="action-button" onClick={() => dispatchKey(' ')} style={{cursor: 'pointer'}} title="Space"></div>
+        </div>
+      </div>
+    );
+  };
 
   // Footer component - placed inside gameboy console
   const Footer = () => (
@@ -2012,8 +2067,8 @@ const PokemonGame = () => {
   const nextBattle = () => {
     totalBattles.current += 1;
 
-    // Check if Team Rocket should appear (every 7-10 battles, only if player has bench Pokemon)
-    if (totalBattles.current >= nextRocketBattle.current && availableTeam.length > 1) {
+    // Check if Team Rocket should appear (every 7-10 battles, only if player has bench Pokemon and enabled)
+    if (teamRocketEnabled && totalBattles.current >= nextRocketBattle.current && availableTeam.length > 1) {
       // Restore/heal before rocket event
       const basePokemon = availableTeam.find(p => p.name === playerPokemon.name);
       let healedPokemon = basePokemon
@@ -2125,12 +2180,14 @@ const PokemonGame = () => {
 
   const startRocketAnimation = () => {
     setRocketPhase('intro');
-    // Play Team Rocket encounter sound
-    try {
-      const rocketSound = new Audio('/team-rocket-encounter.mp3');
-      rocketSound.volume = 0.5;
-      rocketSound.play().catch(() => {});
-    } catch (e) {}
+    // Play Team Rocket encounter sound (respects audio volume)
+    if (audioVolume !== 'none') {
+      try {
+        const rocketSound = new Audio('/team-rocket-encounter.mp3');
+        rocketSound.volume = audioVolume === 'low' ? 0.3 : 0.7;
+        rocketSound.play().catch(() => {});
+      } catch (e) {}
+    }
     const stolenName = stolenNameRef.current;
     // Animation sequence - slow and smooth
     setTimeout(() => setRocketPhase('walking'), 2000);
@@ -2261,19 +2318,7 @@ const PokemonGame = () => {
           </div>
 
           {/* Game Boy Controls */}
-          <div className="gameboy-controls">
-            <div className="dpad">
-              <div className="dpad-button dpad-up"></div>
-              <div className="dpad-button dpad-left"></div>
-              <div className="dpad-button dpad-center"></div>
-              <div className="dpad-button dpad-right"></div>
-              <div className="dpad-button dpad-down"></div>
-            </div>
-            <div className="action-buttons">
-              <div className="action-button"></div>
-              <div className="action-button"></div>
-            </div>
-          </div>
+          <GameboyControlsComponent />
           <Footer />
         </div>
       </div>
@@ -2349,19 +2394,7 @@ const PokemonGame = () => {
           </div>
 
           {/* Game Boy Controls */}
-          <div className="gameboy-controls">
-            <div className="dpad">
-              <div className="dpad-button dpad-up"></div>
-              <div className="dpad-button dpad-left"></div>
-              <div className="dpad-button dpad-center"></div>
-              <div className="dpad-button dpad-right"></div>
-              <div className="dpad-button dpad-down"></div>
-            </div>
-            <div className="action-buttons">
-              <div className="action-button"></div>
-              <div className="action-button"></div>
-            </div>
-          </div>
+          <GameboyControlsComponent />
           <Footer />
         </div>
       </div>
@@ -2422,19 +2455,7 @@ const PokemonGame = () => {
           </div>
 
           {/* Game Boy Controls */}
-          <div className="gameboy-controls">
-            <div className="dpad">
-              <div className="dpad-button dpad-up"></div>
-              <div className="dpad-button dpad-left"></div>
-              <div className="dpad-button dpad-center"></div>
-              <div className="dpad-button dpad-right"></div>
-              <div className="dpad-button dpad-down"></div>
-            </div>
-            <div className="action-buttons">
-              <div className="action-button"></div>
-              <div className="action-button"></div>
-            </div>
-          </div>
+          <GameboyControlsComponent />
           <Footer />
         </div>
       </div>
@@ -2719,19 +2740,7 @@ const PokemonGame = () => {
           </div>
 
           {/* Game Boy Controls */}
-          <div className="gameboy-controls">
-            <div className="dpad">
-              <div className="dpad-button dpad-up"></div>
-              <div className="dpad-button dpad-left"></div>
-              <div className="dpad-button dpad-center"></div>
-              <div className="dpad-button dpad-right"></div>
-              <div className="dpad-button dpad-down"></div>
-            </div>
-            <div className="action-buttons">
-              <div className="action-button"></div>
-              <div className="action-button"></div>
-            </div>
-          </div>
+          <GameboyControlsComponent />
           <Footer />
         </div>
       </div>
@@ -2784,19 +2793,7 @@ const PokemonGame = () => {
           </div>
 
           {/* Game Boy Controls */}
-          <div className="gameboy-controls">
-            <div className="dpad">
-              <div className="dpad-button dpad-up"></div>
-              <div className="dpad-button dpad-left"></div>
-              <div className="dpad-button dpad-center"></div>
-              <div className="dpad-button dpad-right"></div>
-              <div className="dpad-button dpad-down"></div>
-            </div>
-            <div className="action-buttons">
-              <div className="action-button"></div>
-              <div className="action-button"></div>
-            </div>
-          </div>
+          <GameboyControlsComponent />
           <Footer />
         </div>
       </div>
@@ -2820,12 +2817,15 @@ const PokemonGame = () => {
                 <div className="border-4 border-black mb-4" style={{backgroundColor: '#1a1a1a', position: 'relative'}}>
                   <video
                     autoPlay
+                    muted={audioVolume === 'none'}
                     onEnded={startRocketAnimation}
                     style={{width: '100%', display: 'block'}}
+                    ref={el => { if (el) el.volume = audioVolume === 'low' ? 0.3 : audioVolume === 'none' ? 0 : 0.7; }}
                   >
                     <source src="/team-rocket-intro.mp4" type="video/mp4" />
                   </video>
                   <button
+                    data-continue-button
                     onClick={startRocketAnimation}
                     style={{
                       position: 'absolute',
@@ -2959,6 +2959,7 @@ const PokemonGame = () => {
             {/* Continue button (only after done) */}
             {rocketPhase === 'done' && (
               <button
+                data-continue-button
                 onClick={continueAfterRocket}
                 className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all mt-4"
                 style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
@@ -2971,19 +2972,7 @@ const PokemonGame = () => {
           </div>
 
           {/* Game Boy Controls */}
-          <div className="gameboy-controls">
-            <div className="dpad">
-              <div className="dpad-button dpad-up"></div>
-              <div className="dpad-button dpad-left"></div>
-              <div className="dpad-button dpad-center"></div>
-              <div className="dpad-button dpad-right"></div>
-              <div className="dpad-button dpad-down"></div>
-            </div>
-            <div className="action-buttons">
-              <div className="action-button"></div>
-              <div className="action-button"></div>
-            </div>
-          </div>
+          <GameboyControlsComponent />
           <Footer />
         </div>
       </div>
@@ -3039,19 +3028,7 @@ const PokemonGame = () => {
           </div>
 
           {/* Game Boy Controls */}
-          <div className="gameboy-controls">
-            <div className="dpad">
-              <div className="dpad-button dpad-up"></div>
-              <div className="dpad-button dpad-left"></div>
-              <div className="dpad-button dpad-center"></div>
-              <div className="dpad-button dpad-right"></div>
-              <div className="dpad-button dpad-down"></div>
-            </div>
-            <div className="action-buttons">
-              <div className="action-button"></div>
-              <div className="action-button"></div>
-            </div>
-          </div>
+          <GameboyControlsComponent />
           <Footer />
         </div>
       </div>
@@ -3081,19 +3058,7 @@ const PokemonGame = () => {
           </div>
 
           {/* Game Boy Controls */}
-          <div className="gameboy-controls">
-            <div className="dpad">
-              <div className="dpad-button dpad-up"></div>
-              <div className="dpad-button dpad-left"></div>
-              <div className="dpad-button dpad-center"></div>
-              <div className="dpad-button dpad-right"></div>
-              <div className="dpad-button dpad-down"></div>
-            </div>
-            <div className="action-buttons">
-              <div className="action-button"></div>
-              <div className="action-button"></div>
-            </div>
-          </div>
+          <GameboyControlsComponent />
           <Footer />
         </div>
       </div>
