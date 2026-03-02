@@ -67,7 +67,7 @@ img[style*="pixelated"] {
 }
 
 .gameboy-screen::before {
-  content: 'GAME BOY';
+  content: '';
   position: absolute;
   bottom: -32px;
   left: 50%;

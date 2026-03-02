@@ -2199,11 +2199,11 @@ const PokemonGame = () => {
                 lineHeight: '1',
                 WebkitTextStroke: '2px #3b5dae'
               }}>
-                POKéMON
+                POKEMON
               </h1>
             </div>
 
-            {/* Red Version */}
+            {/* Fire Version */}
             <div className="mb-6">
               <h2 className="retro-text text-center" style={{
                 fontSize: '18px',
@@ -2212,7 +2212,7 @@ const PokemonGame = () => {
                 textShadow: '2px 2px 0px #000',
                 letterSpacing: '3px'
               }}>
-                Red Version
+                Fire Version
               </h2>
             </div>
 
@@ -2230,10 +2230,10 @@ const PokemonGame = () => {
               />
             </div>
 
-            {/* Copyright */}
+            {/* Disclaimer */}
             <div className="mb-4 text-center">
-              <p className="retro-text" style={{color: '#000', fontSize: '8px'}}>
-                ©'95,'96,'98 GAME FREAK inc.
+              <p className="retro-text" style={{color: '#000', fontSize: '7px'}}>
+                Disclaimer! This is a non-profit, educational project
               </p>
             </div>
 
@@ -2310,7 +2310,7 @@ const PokemonGame = () => {
           <div className="gameboy-screen">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
               <h1 className="text-2xl font-bold text-center retro-text" style={{color: '#ffffff'}}>
-                POKéMON
+                POKEMON
               </h1>
             </div>
 
@@ -2379,7 +2379,7 @@ const PokemonGame = () => {
           <div className="gameboy-screen">
             <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#dc2626'}}>
               <h1 className="text-2xl font-bold text-center retro-text" style={{color: '#ffffff'}}>
-                POKéMON
+                POKEMON
               </h1>
             </div>
 
@@ -2472,7 +2472,7 @@ const PokemonGame = () => {
             </h2>
             <h1 className="text-6xl font-bold mb-4 text-purple-300 animate-pulse">MEWTWO</h1>
             <p className="text-xl font-bold text-purple-200">
-              THE STRONGEST POKéMON IN THE WORLD!
+              THE STRONGEST POKEMON IN THE WORLD!
             </p>
           </div>
           <div className="border-4 border-purple-500 bg-purple-800 text-white p-4 mb-8">
