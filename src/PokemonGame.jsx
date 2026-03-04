@@ -391,7 +391,7 @@ const PokemonGame = () => {
               boxShadow: quickMenuFocused && quickMenuIndex === 2 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
             }}
           >
-            POKéDEX
+            POKEDEX
           </button>
           {debugMode && (
             <button
@@ -820,7 +820,7 @@ const PokemonGame = () => {
           {/* Header */}
           <div className="border-b-4 border-black p-3 flex items-center justify-between" style={{backgroundColor: '#dc2626'}}>
             <h2 className="text-lg font-bold retro-text" style={{color: '#fff'}}>
-              📖 POKéDEX
+              📖 POKEDEX
             </h2>
             <div className="flex items-center gap-3">
               <span className="text-sm font-bold retro-text" style={{color: '#fef3c7'}}>
@@ -2788,7 +2788,7 @@ const PokemonGame = () => {
               className="w-full border-4 border-black hover:scale-105 font-bold py-2 px-6 retro-text transition-all mt-3"
               style={{backgroundColor: '#dc2626', color: '#fff', boxShadow: '4px 4px 0px #000'}}
             >
-              📖 POKéDEX ({pokedex.length}/{allGamePokemon.length})
+              📖 POKEDEX ({pokedex.length}/{allGamePokemon.length})
             </button>
           </div>
 
@@ -3023,7 +3023,7 @@ const PokemonGame = () => {
               className="w-full border-4 border-black hover:scale-105 font-bold py-2 px-6 retro-text transition-all mt-3"
               style={{backgroundColor: '#dc2626', color: '#fff', boxShadow: '4px 4px 0px #000'}}
             >
-              📖 POKéDEX ({pokedex.length}/{allGamePokemon.length})
+              📖 POKEDEX ({pokedex.length}/{allGamePokemon.length})
             </button>
           </div>
 

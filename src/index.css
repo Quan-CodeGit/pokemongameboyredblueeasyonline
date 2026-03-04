@@ -30,28 +30,6 @@ img[style*="pixelated"] {
   position: relative;
 }
 
-.gameboy-console::before {
-  content: '';
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 45px;
-  height: 45px;
-  background: radial-gradient(circle, #4a5568 40%, transparent 41%);
-  border-radius: 50%;
-}
-
-.gameboy-console::after {
-  content: '◉';
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 30px;
-  color: #2d3748;
-  opacity: 0.3;
-}
 
 /* Game Boy Screen */
 .gameboy-screen {
