@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pokemon-game-v2';
+const CACHE_NAME = 'pokemon-game-v3';
 
 // Install: cache all game assets
 self.addEventListener('install', (event) => {
@@ -72,7 +72,9 @@ async function handleRangeRequest(request) {
   });
 }
 
-// Fetch: serve from cache first, fall back to network
+// Fetch strategy:
+// - HTML / JS / CSS → network first (always get latest deploy), fallback to cache
+// - Everything else (sprites, sounds, video) → cache first (fast, offline-friendly)
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -82,16 +84,38 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
-        if (response.ok && event.request.method === 'GET') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return response;
-      });
-    }).catch(() => caches.match('/'))
-  );
+  const isAppShell =
+    url.pathname === '/' ||
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css');
+
+  if (isAppShell) {
+    // Network first: always fetch fresh, cache as fallback
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok && event.request.method === 'GET') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/')))
+    );
+  } else {
+    // Cache first: sprites, sounds, images load instantly
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response.ok && event.request.method === 'GET') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
+      }).catch(() => caches.match('/'))
+    );
+  }
 });
