@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pokemon-game-v3';
+const CACHE_NAME = 'pokemon-game-v4';
 
 // Install: cache all game assets
 self.addEventListener('install', (event) => {
