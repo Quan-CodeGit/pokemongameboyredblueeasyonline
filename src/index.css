@@ -208,6 +208,19 @@ img[style*="pixelated"] {
   50% { opacity: 0.6; }
 }
 
+@keyframes spriteHit {
+  0%, 100% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0; filter: brightness(10); }
+}
+
+.sprite-flash-once {
+  animation: spriteHit 0.35s ease-in-out 1;
+}
+
+.sprite-flash-triple {
+  animation: spriteHit 0.2s ease-in-out 3;
+}
+
 .meowth-walk-in {
   animation: meowthWalkIn 3s linear forwards;
 }

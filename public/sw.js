@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pokemon-game-v4';
+const CACHE_NAME = 'pokemon-game-v5';
 
 // Install: cache all game assets
 self.addEventListener('install', (event) => {
@@ -22,6 +22,8 @@ self.addEventListener('install', (event) => {
         '/sounds/sendout.mp3',
         '/sounds/catch.mp3',
         '/sounds/levelup.mp3',
+        '/sounds/super-effective.mp3',
+        '/sounds/not-very-effective.mp3',
         ...spriteUrls,
       ]);
     })

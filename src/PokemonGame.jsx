@@ -37,6 +37,8 @@ const PokemonGame = () => {
     return saved === null ? true : saved === 'true';
   });
   const [teleportSwitchPending, setTeleportSwitchPending] = useState(false);
+  const [wildFlashClass, setWildFlashClass] = useState('');
+  const [playerFlashClass, setPlayerFlashClass] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showPokedex, setShowPokedex] = useState(false);
@@ -682,7 +684,9 @@ const PokemonGame = () => {
         'evolve': '/sounds/evolve.mp3',
         'sendout': '/sounds/sendout.mp3',
         'catch': '/sounds/catch.mp3',
-        'levelup': '/sounds/levelup.mp3'
+        'levelup': '/sounds/levelup.mp3',
+        'super-effective': '/sounds/super-effective.mp3',
+        'not-very-effective': '/sounds/not-very-effective.mp3'
       };
 
       const volumeLevels = {
@@ -1233,6 +1237,21 @@ const PokemonGame = () => {
     setBattleLog(prev => [...prev.slice(-4), message]);
   };
 
+  const triggerHitFlash = (target, effectiveness) => {
+    const isSuperEffective = effectiveness > 1;
+    const flashClass = isSuperEffective ? 'sprite-flash-triple' : 'sprite-flash-once';
+    const sound = isSuperEffective ? 'super-effective' : 'not-very-effective';
+    const duration = isSuperEffective ? 650 : 400;
+    if (target === 'wild') {
+      setWildFlashClass(flashClass);
+      setTimeout(() => setWildFlashClass(''), duration);
+    } else {
+      setPlayerFlashClass(flashClass);
+      setTimeout(() => setPlayerFlashClass(''), duration);
+    }
+    playSound(sound);
+  };
+
   const checkEvolution = async (pokemon) => {
     const newExp = (pokemon.exp || 0) + 1;
     
@@ -1504,7 +1523,7 @@ const PokemonGame = () => {
     else if (effectiveness > 1) effectText = " Super effective!";
     else if (effectiveness < 1) effectText = " Not very effective...";
 
-    return { damage, effectText, isStatus: false };
+    return { damage, effectText, effectiveness, isStatus: false };
   };
 
   const applyStatusEffect = (effect, user, target, isEnemy = false) => {
@@ -1750,7 +1769,7 @@ const PokemonGame = () => {
       return;
     }
 
-    const { damage, effectText } = result;
+    const { damage, effectText, effectiveness } = result;
 
     const newWildHp = Math.max(0, wildPokemon.hp - damage);
     const displayDamage = Math.min(damage, wildPokemon.hp);
@@ -1758,7 +1777,7 @@ const PokemonGame = () => {
     addLog(`${playerPokemon.name} used ${moveName}!${effectText}`);
     if (damage > 0) {
       addLog(`${wildPokemon.name} took ${displayDamage} damage!`);
-      playSound('damage');
+      triggerHitFlash('wild', effectiveness);
     }
 
     if (newWildHp <= 0) {
@@ -1936,7 +1955,7 @@ const PokemonGame = () => {
         return prevPlayerPokemon;
       }
 
-      const { damage, effectText } = result;
+      const { damage, effectText, effectiveness } = result;
 
       const newPlayerHp = Math.max(0, prevPlayerPokemon.hp - damage);
       const currentName = prevPlayerPokemon.name;
@@ -1948,7 +1967,10 @@ const PokemonGame = () => {
 
       const displayDamage = Math.min(damage, prevPlayerPokemon.hp);
       addLog(`${wildPokemon.name} used ${moveName}!${effectText}`);
-      if (damage > 0) addLog(`${currentName} took ${displayDamage} damage!`);
+      if (damage > 0) {
+        addLog(`${currentName} took ${displayDamage} damage!`);
+        triggerHitFlash('player', effectiveness);
+      }
 
       if (newPlayerHp <= 0) {
         setTimeout(() => {
@@ -2564,6 +2586,7 @@ const PokemonGame = () => {
                   <img
                     src={getPokemonSprite(wildPokemon.spriteName || wildPokemon.name)}
                     alt={wildPokemon.name}
+                    className={wildFlashClass}
                     style={{
                       imageRendering: 'pixelated',
                       width: `${getSpriteSize(192)}px`,
@@ -2608,6 +2631,7 @@ const PokemonGame = () => {
                   <img
                     src={getPokemonSprite(playerPokemon.spriteName || playerPokemon.name)}
                     alt={playerPokemon.name}
+                    className={playerFlashClass}
                     style={{
                       imageRendering: 'pixelated',
                       width: `${getSpriteSize(192)}px`,
