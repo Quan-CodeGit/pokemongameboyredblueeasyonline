@@ -36,6 +36,7 @@ const PokemonGame = () => {
     const saved = localStorage.getItem('pokemonGameTeamRocket');
     return saved === null ? true : saved === 'true';
   });
+  const [teleportSwitchPending, setTeleportSwitchPending] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showPokedex, setShowPokedex] = useState(false);
@@ -302,7 +303,7 @@ const PokemonGame = () => {
       }
 
       // Victory/Defeat/Catch/Rocket screens - Enter to continue/skip
-      if (['victory', 'defeat', 'catch', 'rocket'].includes(gameState)) {
+      if (['victory', 'defeat', 'catch', 'rocket', 'mewtwo-intro'].includes(gameState)) {
         if (e.key === 'Enter') {
           const continueButton = document.querySelector('[data-continue-button]');
           if (continueButton) {
@@ -1332,8 +1333,8 @@ const PokemonGame = () => {
         const gyarados = {
           name: 'Gyarados', type: 'Water', type2: 'Flying',
           hp: 95, maxHp: 95, attack: 125, spAtk: 60, def: 79, spDef: 100,
-          color: '🐉', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Thrash'],
-          moveTypes: ['Water', 'Dark', 'Ice', 'Normal'],
+          color: '🐉', moves: ['Hydro Pump', 'Bite', 'Return', 'Thrash'],
+          moveTypes: ['Water', 'Dark', 'Normal', 'Normal'],
           exp: newExp, defeatedMewtwo: pokemon.defeatedMewtwo
         };
 
@@ -1699,10 +1700,18 @@ const PokemonGame = () => {
         applyStatusEffect('poison', playerPokemon, wildPokemon, true);
         addLog(`${wildPokemon.name}${status.message}`);
       }
-      // Teleport: skip to a new wild Pokemon
+      // Teleport: player switches to another team Pokemon
       else if (status.effect === 'teleport') {
-        teleportToNewBattle();
-        return; // Don't trigger enemy attack - new battle started
+        if (availableTeam.length > 1) {
+          addLog(`${playerPokemon.name} used Teleport!`);
+          addLog(`Choose a Pokemon to switch to!`);
+          setTeleportSwitchPending(true);
+        } else {
+          addLog(`${playerPokemon.name} used Teleport! But there's no one to switch to!`);
+          setIsPlayerTurn(false);
+          setTimeout(enemyAttack, 1500);
+        }
+        return;
       }
       // Transform: copy opponent's stats/type/moves
       else if (status.effect === 'transform') {
@@ -2038,7 +2047,8 @@ const PokemonGame = () => {
   };
 
   const switchPokemon = (newPoke) => {
-    if (!isPlayerTurn || newPoke.name === playerPokemon.name) return;
+    if ((!isPlayerTurn && !teleportSwitchPending) || newPoke.name === playerPokemon.name) return;
+    setTeleportSwitchPending(false);
     
     const oldPokemonName = playerPokemon.name;
     
@@ -2126,7 +2136,7 @@ const PokemonGame = () => {
         { name: 'Golem', type: 'Rock', type2: 'Ground', hp: 90, maxHp: 90, attack: 120, spAtk: 55, def: 130, spDef: 65, color: '🪨', moves: ['Earthquake', 'Rock Slide', 'Stone Edge', 'Explosion'], moveTypes: ['Ground', 'Rock', 'Rock', 'Normal'] },
         { name: 'Victreebel', type: 'Grass', type2: 'Poison', hp: 85, maxHp: 85, attack: 105, spAtk: 100, def: 65, spDef: 70, color: '🌿', moves: ['Razor Leaf', 'Sludge Bomb', 'Solar Beam', 'Leaf Blade'], moveTypes: ['Grass', 'Poison', 'Grass', 'Grass'] },
         { name: 'Dragonite', type: 'Dragon', type2: 'Flying', hp: 110, maxHp: 110, attack: 134, spAtk: 100, def: 95, spDef: 100, color: '🐉', moves: ['Dragon Claw', 'Wing Attack', 'Thunder', 'Outrage'], moveTypes: ['Dragon', 'Flying', 'Electric', 'Dragon'] },
-        { name: 'Gyarados', type: 'Water', type2: 'Flying', hp: 105, maxHp: 105, attack: 125, spAtk: 60, def: 79, spDef: 100, color: '🐉', moves: ['Hydro Pump', 'Bite', 'Ice Beam', 'Dragon Dance'], moveTypes: ['Water', 'Dark', 'Ice', 'Dragon'] }
+        { name: 'Gyarados', type: 'Water', type2: 'Flying', hp: 105, maxHp: 105, attack: 125, spAtk: 60, def: 79, spDef: 100, color: '🐉', moves: ['Hydro Pump', 'Bite', 'Return', 'Dragon Dance'], moveTypes: ['Water', 'Dark', 'Normal', 'Dragon'] }
       ];
 
       const wild = { ...finalEvolutionPokemon[Math.floor(Math.random() * finalEvolutionPokemon.length)] };
@@ -2502,6 +2512,7 @@ const PokemonGame = () => {
             <p className="text-lg font-bold text-purple-300">TYPE: PSYCHIC</p>
           </div>
           <button
+            data-continue-button
             onClick={() => {
               const mewtwo = {
                 name: 'Mewtwo',
@@ -2651,12 +2662,12 @@ const PokemonGame = () => {
                     key={index}
                     data-action-index={index}
                     onClick={() => playerAttack(index)}
-                    disabled={!isPlayerTurn}
+                    disabled={!isPlayerTurn || teleportSwitchPending}
                     className={`border-4 py-2 px-3 font-bold text-xs transition-all retro-text ${
-                      isPlayerTurn ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
-                    } ${selectedActionIndex === index && isPlayerTurn ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
+                      isPlayerTurn && !teleportSwitchPending ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
+                    } ${selectedActionIndex === index && isPlayerTurn && !teleportSwitchPending ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
                     style={{
-                      backgroundColor: isPlayerTurn ? '#fbbf24' : '#9ca3af',
+                      backgroundColor: isPlayerTurn && !teleportSwitchPending ? '#fbbf24' : '#9ca3af',
                       color: '#000',
                       boxShadow: selectedActionIndex === index && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none')
                     }}
@@ -2670,7 +2681,7 @@ const PokemonGame = () => {
                 <button
                   data-action-index={4}
                   onClick={usePotion}
-                  disabled={!isPlayerTurn || potionUsed}
+                  disabled={!isPlayerTurn || potionUsed || teleportSwitchPending}
                   className={`border-4 py-2 px-3 font-bold text-xs transition-all retro-text ${
                     isPlayerTurn && !potionUsed ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
                   } ${selectedActionIndex === 4 && isPlayerTurn ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
@@ -2686,7 +2697,7 @@ const PokemonGame = () => {
                 <button
                   data-action-index={5}
                   onClick={catchPokemon}
-                  disabled={!isPlayerTurn}
+                  disabled={!isPlayerTurn || teleportSwitchPending}
                   className={`border-4 py-2 px-3 font-bold text-xs transition-all retro-text ${
                     isPlayerTurn ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
                   } ${selectedActionIndex === 5 && isPlayerTurn ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
@@ -2701,21 +2712,23 @@ const PokemonGame = () => {
               </div>
             
               {availableTeam.length > 1 && (
-                <div className="border-t-4 border-black pt-2 mt-2">
-                  <p className="text-xs font-bold mb-2 retro-text" style={{color: '#000'}}>SWITCH:</p>
+                <div className={`border-t-4 pt-2 mt-2 ${teleportSwitchPending ? 'border-purple-500' : 'border-black'}`}>
+                  <p className="text-xs font-bold mb-2 retro-text" style={{color: teleportSwitchPending ? '#7c3aed' : '#000'}}>
+                    {teleportSwitchPending ? '✨ TELEPORT — PICK A POKEMON:' : 'SWITCH:'}
+                  </p>
                   <div className="grid grid-cols-4 gap-2">
                     {availableTeam.map((pokemon, index) => (
                       <button
                         key={index}
                         onClick={() => switchPokemon(pokemon)}
-                        disabled={!isPlayerTurn || pokemon.name === playerPokemon.name}
-                        className={`border-3 border-black py-1 px-1 transition-all ${
-                          pokemon.name === playerPokemon.name ? 'cursor-not-allowed opacity-50' :
-                          isPlayerTurn ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
-                        }`}
+                        disabled={((!isPlayerTurn && !teleportSwitchPending)) || pokemon.name === playerPokemon.name || pokemon.hp <= 0}
+                        className={`border-3 py-1 px-1 transition-all ${
+                          pokemon.name === playerPokemon.name || pokemon.hp <= 0 ? 'cursor-not-allowed opacity-50' :
+                          (isPlayerTurn || teleportSwitchPending) ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
+                        } ${teleportSwitchPending && pokemon.name !== playerPokemon.name && pokemon.hp > 0 ? 'border-purple-500' : 'border-black'}`}
                         style={{
-                          backgroundColor: pokemon.name === playerPokemon.name ? '#9ca3af' : '#fbbf24',
-                          boxShadow: isPlayerTurn && pokemon.name !== playerPokemon.name ? '2px 2px 0px #000' : 'none'
+                          backgroundColor: pokemon.name === playerPokemon.name || pokemon.hp <= 0 ? '#9ca3af' : (teleportSwitchPending ? '#e9d5ff' : '#fbbf24'),
+                          boxShadow: (isPlayerTurn || teleportSwitchPending) && pokemon.name !== playerPokemon.name && pokemon.hp > 0 ? '2px 2px 0px #000' : 'none'
                         }}
                       >
                         <div className="mb-1 flex justify-center bg-white border-2 border-black p-1">
