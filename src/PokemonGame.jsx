@@ -102,6 +102,21 @@ const PokemonGame = () => {
     };
   }, [gameState, introMusicPlaying, audioVolume]);
 
+  // Start Mewtwo battle — called by both button click and Enter key
+  const startMewtwoBattle = () => {
+    const mewtwo = {
+      name: 'Mewtwo', type: 'Psychic', type2: null,
+      hp: 106, maxHp: 106, attack: 110, spAtk: 154, def: 90, spDef: 90,
+      color: '🧬',
+      moves: ['Psychic', 'Shadow Ball', 'Ice Beam', 'Aura Sphere'],
+      moveTypes: ['Psychic', 'Ghost', 'Ice', 'Fighting']
+    };
+    setWildPokemon(mewtwo);
+    setIsPlayerTurn(true);
+    setGameState('battle');
+    setBattleLog([`A legendary Mewtwo appeared!`, `This is the ultimate challenge!`]);
+  };
+
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -302,8 +317,14 @@ const PokemonGame = () => {
         return;
       }
 
+      // Mewtwo intro - Enter to accept challenge directly
+      if (gameState === 'mewtwo-intro') {
+        if (e.key === 'Enter') startMewtwoBattle();
+        return;
+      }
+
       // Victory/Defeat/Catch/Rocket screens - Enter to continue/skip
-      if (['victory', 'defeat', 'catch', 'rocket', 'mewtwo-intro'].includes(gameState)) {
+      if (['victory', 'defeat', 'catch', 'rocket'].includes(gameState)) {
         if (e.key === 'Enter') {
           const continueButton = document.querySelector('[data-continue-button]');
           if (continueButton) {
@@ -2512,27 +2533,7 @@ const PokemonGame = () => {
             <p className="text-lg font-bold text-purple-300">TYPE: PSYCHIC</p>
           </div>
           <button
-            data-continue-button
-            onClick={() => {
-              const mewtwo = {
-                name: 'Mewtwo',
-                type: 'Psychic',
-                type2: null,
-                hp: 106,
-                maxHp: 106,
-                attack: 110,
-                spAtk: 154,
-                def: 90,
-                spDef: 90,
-                color: '🧬',
-                moves: ['Psychic', 'Shadow Ball', 'Ice Beam', 'Aura Sphere'],
-                moveTypes: ['Psychic', 'Ghost', 'Ice', 'Fighting']
-              };
-              setWildPokemon(mewtwo);
-              setIsPlayerTurn(true);
-              setGameState('battle');
-              setBattleLog([`A legendary Mewtwo appeared!`, `This is the ultimate challenge!`]);
-            }}
+            onClick={startMewtwoBattle}
             className="w-full border-4 border-purple-500 bg-purple-700 hover:bg-purple-600 text-white font-bold py-4 px-8 text-2xl transition-all"
             style={{boxShadow: '8px 8px 0px rgba(168, 85, 247, 0.5)'}}
           >
