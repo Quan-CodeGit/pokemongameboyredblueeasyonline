@@ -1213,6 +1213,8 @@ const PokemonGame = () => {
     encounterWildPokemon();
     setGameState('battle');
     setBattleLog([`You chose ${starter.name}!`]);
+    setIsPlayerTurn(false);
+    setTimeout(() => setIsPlayerTurn(true), 1800);
   };
 
   // Mew - mythical Pokemon, 1% encounter rate
@@ -1803,31 +1805,35 @@ const PokemonGame = () => {
           addLog(`You defeated the legendary Mewtwo!`);
         }
 
-        playSound('levelup');
-        addLog(`${playerPokemon.name} gained 1 EXP!`);
+        setTimeout(async () => {
+          playSound('levelup');
+          addLog(`${playerPokemon.name} gained 1 EXP!`);
 
-        // Show message if we reached 20 EXP
-        if (newExp >= 20 && !hasDefeatedMewtwo.current && wildPokemon.name !== 'Mewtwo') {
-          addLog(`A powerful presence stirs...`);
-        }
-
-        // Check for evolution
-        const updatedPokemon = await checkEvolution(playerPokemon);
-        if (updatedPokemon) {
-          // Only update if NOT evolving (evolution updates happen in setTimeout inside checkEvolution)
-          if (newExp % 3 !== 0) {
-            // Not evolving, just gaining EXP - update state
-            setPlayerPokemon(updatedPokemon);
-            setAvailableTeam(prev => prev.map(p =>
-              p.name === updatedPokemon.name ? updatedPokemon : p
-            ));
+          // Show message if we reached 20 EXP
+          if (newExp >= 20 && !hasDefeatedMewtwo.current && wildPokemon.name !== 'Mewtwo') {
+            addLog(`A powerful presence stirs...`);
           }
-        }
 
-        playSound('victory');
-        setBattlesWon(prev => prev + 1);
-        setTimeout(() => setGameState('victory'), 2500);
-      }, 500);
+          // Check for evolution
+          const updatedPokemon = await checkEvolution(playerPokemon);
+          if (updatedPokemon) {
+            // Only update if NOT evolving (evolution updates happen in setTimeout inside checkEvolution)
+            if (newExp % 3 !== 0) {
+              // Not evolving, just gaining EXP - update state
+              setPlayerPokemon(updatedPokemon);
+              setAvailableTeam(prev => prev.map(p =>
+                p.name === updatedPokemon.name ? updatedPokemon : p
+              ));
+            }
+          }
+
+          setTimeout(() => {
+            playSound('victory');
+            setBattlesWon(prev => prev + 1);
+            setTimeout(() => setGameState('victory'), 2500);
+          }, 1500);
+        }, 800);
+      }, 1000);
     } else {
       // Apply poison damage to enemy before enemy's turn
       if (isPoisoned.enemy) {
@@ -1847,7 +1853,7 @@ const PokemonGame = () => {
         }
       }
       setIsPlayerTurn(false);
-      setTimeout(enemyAttack, 1500);
+      setTimeout(enemyAttack, effectiveness > 1 ? 2500 : 1800);
     }
   };
 
@@ -1972,11 +1978,12 @@ const PokemonGame = () => {
         triggerHitFlash('player', effectiveness);
       }
 
+      const hitDelay = effectiveness > 1 ? 2000 : 1500;
       if (newPlayerHp <= 0) {
         setTimeout(() => {
           addLog(`${currentName} fainted!`);
           setGameState('defeat');
-        }, 500);
+        }, 800);
       } else {
         // Apply poison damage to player before their turn
         if (isPoisoned.player) {
@@ -1990,16 +1997,16 @@ const PokemonGame = () => {
             setTimeout(() => {
               addLog(`${currentName} fainted from poison!`);
               setGameState('defeat');
-            }, 500);
+            }, 800);
             return { ...prevPlayerPokemon, hp: 0 };
           }
           setAvailableTeam(prev => prev.map(p =>
             p.name === currentName ? { ...p, hp: poisonHp } : p
           ));
-          setIsPlayerTurn(true);
+          setTimeout(() => setIsPlayerTurn(true), hitDelay);
           return { ...prevPlayerPokemon, hp: poisonHp };
         }
-        setIsPlayerTurn(true);
+        setTimeout(() => setIsPlayerTurn(true), hitDelay);
       }
 
       return {
@@ -2114,7 +2121,7 @@ const PokemonGame = () => {
     addLog(`Come back, ${oldPokemonName}!`);
     addLog(`Go, ${switchedPokemon.name}!`);
     setIsPlayerTurn(false);
-    setTimeout(enemyAttack, 1500);
+    setTimeout(enemyAttack, 2000);
   };
 
   const nextBattle = () => {
