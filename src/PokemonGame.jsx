@@ -739,20 +739,6 @@ const PokemonGame = () => {
           oscillator.start(audioContext.currentTime);
           oscillator.stop(audioContext.currentTime + 0.4);
           break;
-        case 'victory':
-          // Victory jingle
-          [523, 587, 659, 784].forEach((freq, i) => {
-            const osc = audioContext.createOscillator();
-            const gain = audioContext.createGain();
-            osc.connect(gain);
-            gain.connect(audioContext.destination);
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.1, audioContext.currentTime + i * 0.15);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.15 + 0.2);
-            osc.start(audioContext.currentTime + i * 0.15);
-            osc.stop(audioContext.currentTime + i * 0.15 + 0.2);
-          });
-          break;
       }
     } catch (e) {
       // Silently fail if audio not supported
