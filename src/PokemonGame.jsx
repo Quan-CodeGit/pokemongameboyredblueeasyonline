@@ -77,31 +77,32 @@ const PokemonGame = () => {
     localStorage.setItem('pokemonGameTeamRocket', teamRocketEnabled.toString());
   }, [teamRocketEnabled]);
 
-  // Play intro music on start screen only, stop when choosing starter
+  // Play Pokemon Center theme from title screen until battle starts
   useEffect(() => {
-    if (gameState === 'start' && introMusicPlaying && audioVolume !== 'none') {
-      // Pokemon Red/Blue intro theme
+    const shouldPlay = introMusicPlaying && gameState !== 'battle' && audioVolume !== 'none';
+
+    if (shouldPlay) {
       if (!introMusicRef.current) {
-        const introMusic = new Audio('/sounds/intro.mp3');
+        const introMusic = new Audio('/sounds/pokemon-center.mp3');
         introMusic.loop = true;
-        introMusic.volume = audioVolume === 'low' ? 0.3 : 0.7;
+        introMusic.volume = 0;
         introMusic.play().catch(err => console.log('Intro music play failed:', err));
         introMusicRef.current = introMusic;
-      }
-    } else {
-      // Stop music when leaving start screen
-      if (introMusicRef.current) {
-        introMusicRef.current.pause();
-        introMusicRef.current = null;
-      }
-    }
 
-    return () => {
-      if (introMusicRef.current && gameState !== 'start') {
-        introMusicRef.current.pause();
-        introMusicRef.current = null;
+        // Fade in over 500ms
+        const targetVolume = audioVolume === 'low' ? 0.22 : 0.45;
+        let vol = 0;
+        const step = targetVolume / 25;
+        const interval = setInterval(() => {
+          vol = Math.min(vol + step, targetVolume);
+          if (introMusicRef.current) introMusicRef.current.volume = vol;
+          if (vol >= targetVolume) clearInterval(interval);
+        }, 20);
       }
-    };
+    } else if (introMusicRef.current) {
+      introMusicRef.current.pause();
+      introMusicRef.current = null;
+    }
   }, [gameState, introMusicPlaying, audioVolume]);
 
   // Start Mewtwo battle — called by both button click and Enter key
