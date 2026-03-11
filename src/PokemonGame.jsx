@@ -14,7 +14,6 @@ const PokemonGame = () => {
   const [spriteCache, setSpriteCache] = useState({});
   const [isPoisoned, setIsPoisoned] = useState({ player: false, enemy: false });
   const [isSleeping, setIsSleeping] = useState({ player: 0, enemy: 0 }); // turns remaining
-  const pendingMusicPlay = useRef(null);
   const [selectedStarterIndex, setSelectedStarterIndex] = useState(0);
   const [selectedMoveIndex, setSelectedMoveIndex] = useState(0);
   const [selectedActionIndex, setSelectedActionIndex] = useState(0); // 0-3: moves, 4: potion, 5: catch, 6: switch
@@ -77,16 +76,14 @@ const PokemonGame = () => {
     localStorage.setItem('pokemonGameTeamRocket', teamRocketEnabled.toString());
   }, [teamRocketEnabled]);
 
-  // Play Pokemon Center theme from title screen, loop until battle starts
+  // Play Pokemon Center theme only on difficulty + starter selection screens
   useEffect(() => {
-    if (audioVolume === 'none' || gameState === 'battle') {
+    const isGuideScreen = gameState === 'difficulty' || gameState === 'start';
+
+    if (!isGuideScreen || audioVolume === 'none') {
       if (introMusicRef.current) {
         introMusicRef.current.pause();
         introMusicRef.current = null;
-      }
-      if (pendingMusicPlay.current) {
-        document.removeEventListener('click', pendingMusicPlay.current);
-        pendingMusicPlay.current = null;
       }
       return;
     }
@@ -108,17 +105,8 @@ const PokemonGame = () => {
         }, 20);
       };
 
-      music.play().then(fadeIn).catch(() => {
-        // Autoplay blocked — start on first user interaction (e.g. START GAME click)
-        const tryPlay = () => {
-          pendingMusicPlay.current = null;
-          if (introMusicRef.current) {
-            introMusicRef.current.play().then(fadeIn).catch(() => {});
-          }
-        };
-        pendingMusicPlay.current = tryPlay;
-        document.addEventListener('click', tryPlay, { once: true });
-      });
+      // User has already clicked START GAME to reach here, so play() won't be blocked
+      music.play().then(fadeIn).catch(() => {});
     }
   }, [gameState, audioVolume]);
 
