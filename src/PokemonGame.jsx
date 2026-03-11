@@ -14,7 +14,7 @@ const PokemonGame = () => {
   const [spriteCache, setSpriteCache] = useState({});
   const [isPoisoned, setIsPoisoned] = useState({ player: false, enemy: false });
   const [isSleeping, setIsSleeping] = useState({ player: 0, enemy: 0 }); // turns remaining
-  const [introMusicPlaying, setIntroMusicPlaying] = useState(false);
+  const pendingMusicPlay = useRef(null);
   const [selectedStarterIndex, setSelectedStarterIndex] = useState(0);
   const [selectedMoveIndex, setSelectedMoveIndex] = useState(0);
   const [selectedActionIndex, setSelectedActionIndex] = useState(0); // 0-3: moves, 4: potion, 5: catch, 6: switch
@@ -77,20 +77,28 @@ const PokemonGame = () => {
     localStorage.setItem('pokemonGameTeamRocket', teamRocketEnabled.toString());
   }, [teamRocketEnabled]);
 
-  // Play Pokemon Center theme from title screen until battle starts
+  // Play Pokemon Center theme from title screen, loop until battle starts
   useEffect(() => {
-    const shouldPlay = introMusicPlaying && gameState !== 'battle' && audioVolume !== 'none';
+    if (audioVolume === 'none' || gameState === 'battle') {
+      if (introMusicRef.current) {
+        introMusicRef.current.pause();
+        introMusicRef.current = null;
+      }
+      if (pendingMusicPlay.current) {
+        document.removeEventListener('click', pendingMusicPlay.current);
+        pendingMusicPlay.current = null;
+      }
+      return;
+    }
 
-    if (shouldPlay) {
-      if (!introMusicRef.current) {
-        const introMusic = new Audio('/sounds/pokemon-center.mp3');
-        introMusic.loop = true;
-        introMusic.volume = 0;
-        introMusic.play().catch(err => console.log('Intro music play failed:', err));
-        introMusicRef.current = introMusic;
+    if (!introMusicRef.current) {
+      const targetVolume = audioVolume === 'low' ? 0.22 : 0.45;
+      const music = new Audio('/sounds/pokemon-center.mp3');
+      music.loop = true;
+      music.volume = 0;
+      introMusicRef.current = music;
 
-        // Fade in over 500ms
-        const targetVolume = audioVolume === 'low' ? 0.22 : 0.45;
+      const fadeIn = () => {
         let vol = 0;
         const step = targetVolume / 25;
         const interval = setInterval(() => {
@@ -98,12 +106,21 @@ const PokemonGame = () => {
           if (introMusicRef.current) introMusicRef.current.volume = vol;
           if (vol >= targetVolume) clearInterval(interval);
         }, 20);
-      }
-    } else if (introMusicRef.current) {
-      introMusicRef.current.pause();
-      introMusicRef.current = null;
+      };
+
+      music.play().then(fadeIn).catch(() => {
+        // Autoplay blocked — start on first user interaction (e.g. START GAME click)
+        const tryPlay = () => {
+          pendingMusicPlay.current = null;
+          if (introMusicRef.current) {
+            introMusicRef.current.play().then(fadeIn).catch(() => {});
+          }
+        };
+        pendingMusicPlay.current = tryPlay;
+        document.addEventListener('click', tryPlay, { once: true });
+      });
     }
-  }, [gameState, introMusicPlaying, audioVolume]);
+  }, [gameState, audioVolume]);
 
   // Start Mewtwo battle — called by both button click and Enter key
   const startMewtwoBattle = () => {
@@ -2358,14 +2375,7 @@ const PokemonGame = () => {
             {/* START Button */}
             <button
               onClick={() => {
-                if (!introMusicPlaying) {
-                  // First click: start music and go to difficulty selection
-                  setIntroMusicPlaying(true);
-                  setGameState('difficulty');
-                } else {
-                  // Second click: go to difficulty selection
-                  setGameState('difficulty');
-                }
+                setGameState('difficulty');
               }}
               className="border-3 border-black px-6 py-3 font-bold text-sm transition-all hover:scale-105 retro-text"
               style={{
