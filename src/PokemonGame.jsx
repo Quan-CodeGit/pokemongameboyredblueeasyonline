@@ -1214,7 +1214,7 @@ const PokemonGame = () => {
     setGameState('battle');
     setBattleLog([`You chose ${starter.name}!`]);
     setIsPlayerTurn(false);
-    setTimeout(() => setIsPlayerTurn(true), 1800);
+    setTimeout(() => setIsPlayerTurn(true), 1500);
   };
 
   // Mew - mythical Pokemon, 1% encounter rate
@@ -1830,10 +1830,10 @@ const PokemonGame = () => {
           setTimeout(() => {
             playSound('victory');
             setBattlesWon(prev => prev + 1);
-            setTimeout(() => setGameState('victory'), 2500);
-          }, 1500);
-        }, 800);
-      }, 1000);
+            setTimeout(() => setGameState('victory'), 1500);
+          }, 1200);
+        }, 300);
+      }, 600);
     } else {
       // Apply poison damage to enemy before enemy's turn
       if (isPoisoned.enemy) {
@@ -1853,7 +1853,7 @@ const PokemonGame = () => {
         }
       }
       setIsPlayerTurn(false);
-      setTimeout(enemyAttack, effectiveness > 1 ? 2500 : 1800);
+      setTimeout(enemyAttack, effectiveness > 1 ? 1800 : 1200);
     }
   };
 
@@ -1978,7 +1978,7 @@ const PokemonGame = () => {
         triggerHitFlash('player', effectiveness);
       }
 
-      const hitDelay = effectiveness > 1 ? 2000 : 1500;
+      const hitDelay = effectiveness > 1 ? 1800 : 1200;
       if (newPlayerHp <= 0) {
         setTimeout(() => {
           addLog(`${currentName} fainted!`);
@@ -2121,7 +2121,7 @@ const PokemonGame = () => {
     addLog(`Come back, ${oldPokemonName}!`);
     addLog(`Go, ${switchedPokemon.name}!`);
     setIsPlayerTurn(false);
-    setTimeout(enemyAttack, 2000);
+    setTimeout(enemyAttack, 1500);
   };
 
   const nextBattle = () => {
