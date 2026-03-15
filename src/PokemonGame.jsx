@@ -58,6 +58,10 @@ const PokemonGame = () => {
   const introMusicRef = useRef(null);
   const audioCtxRef = useRef(null);
   const sfxCacheRef = useRef({});
+  const eeveeResolveRef = useRef(null);
+  const [eeveeEvolveData, setEeveeEvolveData] = useState(null); // { pokemon, newExp }
+  const [eeveeSelectedStone, setEeveeSelectedStone] = useState(null); // null | 'water' | 'thunder' | 'fire'
+  const [eeveeEvolving, setEeveeEvolving] = useState(false);
   const nextRocketBattle = useRef(Math.floor(Math.random() * 4) + 7); // first rocket at battle 7-10
   const totalBattles = useRef(0);
 
@@ -1345,34 +1349,16 @@ const PokemonGame = () => {
       
       const lowerName = pokemon.name.toLowerCase();
 
-      // Special case: Eevee randomly evolves into Vaporeon, Jolteon, or Flareon
+      // Special case: Eevee — player chooses evolution via stone selection screen
       if (lowerName === 'eevee') {
-        const eeveelutions = [
-          { name: 'Vaporeon', type: 'Water', type2: null, hp: 130, maxHp: 130, attack: 65, spAtk: 110, def: 60, spDef: 95, color: '💧', moves: ['Water Gun', 'Aurora Beam', 'Hydro Pump', 'Ice Beam'], moveTypes: ['Water', 'Ice', 'Water', 'Ice'] },
-          { name: 'Jolteon', type: 'Electric', type2: null, hp: 65, maxHp: 65, attack: 65, spAtk: 110, def: 60, spDef: 95, color: '⚡', moves: ['Thundershock', 'Quick Attack', 'Thunder', 'Pin Missile'], moveTypes: ['Electric', 'Normal', 'Electric', 'Bug'] },
-          { name: 'Flareon', type: 'Fire', type2: null, hp: 65, maxHp: 65, attack: 130, spAtk: 95, def: 60, spDef: 110, color: '🔥', moves: ['Ember', 'Quick Attack', 'Fire Blast', 'Bite'], moveTypes: ['Fire', 'Normal', 'Fire', 'Dark'] },
-        ];
-
-        const chosen = eeveelutions[Math.floor(Math.random() * eeveelutions.length)];
-
-        const evolvedPokemon = {
-          ...chosen,
-          exp: newExp,
-          defeatedMewtwo: pokemon.defeatedMewtwo
-        };
-
-        addLog(`${pokemon.name} evolved into ${chosen.name}!`);
-
-        setTimeout(() => {
-          setPlayerPokemon(evolvedPokemon);
-          setAvailableTeam(prev => prev.map(p =>
-            p.name.toLowerCase() === lowerName ? evolvedPokemon : p
-          ));
-          setPokedex(prev => prev.find(p => p.name === chosen.name) ? prev : [...prev, evolvedPokemon]);
-          setIsEvolving(false);
-        }, 2000);
-
-        return evolvedPokemon;
+        setIsEvolving(false);
+        return new Promise((resolve) => {
+          eeveeResolveRef.current = resolve;
+          setEeveeEvolveData({ pokemon, newExp });
+          setEeveeSelectedStone(null);
+          setEeveeEvolving(false);
+          setGameState('eevee-evolution');
+        });
       }
 
       // Special case: Magikarp transforms into the mighty Gyarados
@@ -1483,6 +1469,52 @@ const PokemonGame = () => {
     'Rest': { effect: 'rest', message: ' went to sleep and restored HP!' },
     'Softboiled': { effect: 'heal_half', message: ' restored its HP!' },
     'Self-Destruct': { effect: 'self_destruct', message: '' },
+  };
+
+  const EEVEELUTIONS = {
+    water: { name: 'Vaporeon', type: 'Water', type2: null, hp: 130, maxHp: 130, attack: 65, spAtk: 110, def: 60, spDef: 95, color: '💧', moves: ['Water Gun', 'Aurora Beam', 'Hydro Pump', 'Ice Beam'], moveTypes: ['Water', 'Ice', 'Water', 'Ice'], id: 134 },
+    thunder: { name: 'Jolteon', type: 'Electric', type2: null, hp: 65, maxHp: 65, attack: 65, spAtk: 110, def: 60, spDef: 95, color: '⚡', moves: ['Thundershock', 'Quick Attack', 'Thunder', 'Pin Missile'], moveTypes: ['Electric', 'Normal', 'Electric', 'Bug'], id: 135 },
+    fire: { name: 'Flareon', type: 'Fire', type2: null, hp: 65, maxHp: 65, attack: 130, spAtk: 95, def: 60, spDef: 110, color: '🔥', moves: ['Ember', 'Quick Attack', 'Fire Blast', 'Bite'], moveTypes: ['Fire', 'Normal', 'Fire', 'Dark'], id: 136 },
+  };
+
+  const EEVEE_FLAVOR = {
+    water: "A Vaporeon? It lives close to water. Its long tail is ridged with a fin which is often mistaken for a mermaid's.",
+    thunder: "A Jolteon? It accumulates negative ions in the atmosphere to blast out 10000-volt lightning bolts.",
+    fire: "A Flareon? When storing thermal energy in its body, its temperature could soar to over 1600 degrees.",
+  };
+
+  const confirmEeveeEvolution = (stone) => {
+    if (!eeveeEvolveData) return;
+    const { pokemon, newExp } = eeveeEvolveData;
+    const chosen = EEVEELUTIONS[stone];
+
+    setEeveeEvolving(true);
+    playSound('evolve');
+
+    setTimeout(() => {
+      const evolvedPokemon = {
+        ...chosen,
+        exp: newExp,
+        defeatedMewtwo: pokemon.defeatedMewtwo
+      };
+      setPlayerPokemon(evolvedPokemon);
+      setAvailableTeam(prev => prev.map(p =>
+        p.name.toLowerCase() === 'eevee' ? evolvedPokemon : p
+      ));
+      setPokedex(prev => prev.find(p => p.name === chosen.name) ? prev : [...prev, evolvedPokemon]);
+      addLog(`${pokemon.name} evolved into ${chosen.name}!`);
+
+      // Clean up and return to battle flow
+      setEeveeEvolveData(null);
+      setEeveeSelectedStone(null);
+      setEeveeEvolving(false);
+      setGameState('battle');
+
+      if (eeveeResolveRef.current) {
+        eeveeResolveRef.current(evolvedPokemon);
+        eeveeResolveRef.current = null;
+      }
+    }, 2000);
   };
 
   const isStatusMove = (moveName) => statusMoves.hasOwnProperty(moveName);
@@ -3017,6 +3049,107 @@ const PokemonGame = () => {
           {/* Game Boy Controls */}
           <GameboyControlsComponent />
           <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'eevee-evolution') {
+    const stones = [
+      { key: 'water', label: 'Water Stone', img: '/stones/water-stone.webp', color: '#3b82f6', glow: '#93c5fd' },
+      { key: 'thunder', label: 'Thunder Stone', img: '/stones/thunder-stone.png', color: '#eab308', glow: '#fde68a' },
+      { key: 'fire', label: 'Fire Stone', img: '/stones/fire-stone.webp', color: '#ef4444', glow: '#fca5a5' },
+    ];
+    const preview = eeveeSelectedStone ? EEVEELUTIONS[eeveeSelectedStone] : null;
+    const eeveeId = getPokemonId('Eevee');
+
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+        <SettingsButton />
+        <SettingsModal />
+        <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
+          <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor: '#f0f0e8', padding: '16px'}}>
+
+            <h2 className="retro-text font-bold text-lg mb-1" style={{color: '#1a1a2e'}}>WHAT?!</h2>
+            <p className="retro-text text-xs mb-4 text-center" style={{color: '#374151'}}>
+              {eeveeEvolving ? `${eeveeEvolveData?.pokemon.name} is evolving!` : `${eeveeEvolveData?.pokemon.name} wants to evolve!`}
+            </p>
+
+            {/* Sprite area */}
+            <div className="flex justify-center mb-4" style={{
+              backgroundColor: '#fff',
+              border: '3px solid #000',
+              borderRadius: '50%',
+              width: '96px', height: '96px',
+              alignItems: 'center',
+              overflow: 'hidden',
+              boxShadow: eeveeSelectedStone ? `0 0 16px 4px ${stones.find(s => s.key === eeveeSelectedStone)?.glow}` : 'none',
+              transition: 'box-shadow 0.3s'
+            }}>
+              <img
+                src={eeveeEvolving && preview
+                  ? `/sprites/${preview.id}.png`
+                  : `/sprites/${eeveeId}.png`}
+                alt={eeveeEvolving && preview ? preview.name : 'Eevee'}
+                className={eeveeEvolving ? 'pokemon-evolving' : ''}
+                style={{ imageRendering: 'pixelated', width: '80px', height: '80px' }}
+              />
+            </div>
+
+            {/* Flavor text */}
+            {eeveeSelectedStone && !eeveeEvolving && (
+              <div className="mb-3 px-2 py-2 text-center retro-text text-xs"
+                style={{ backgroundColor: '#fff', border: '2px solid #000', maxWidth: '240px', lineHeight: '1.5' }}>
+                {EEVEE_FLAVOR[eeveeSelectedStone]}
+                <div className="mt-2 font-bold" style={{color: stones.find(s => s.key === eeveeSelectedStone)?.color}}>
+                  Tap stone again to confirm!
+                </div>
+              </div>
+            )}
+
+            {/* 3 Stones */}
+            {!eeveeEvolving && (
+              <div className="flex gap-4 mt-1">
+                {stones.map(stone => (
+                  <button
+                    key={stone.key}
+                    onClick={() => {
+                      if (eeveeSelectedStone === stone.key) {
+                        confirmEeveeEvolution(stone.key);
+                      } else {
+                        setEeveeSelectedStone(stone.key);
+                      }
+                    }}
+                    style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      background: eeveeSelectedStone === stone.key ? stone.glow : '#fff',
+                      border: `3px solid ${eeveeSelectedStone === stone.key ? stone.color : '#000'}`,
+                      borderRadius: '8px', padding: '8px',
+                      cursor: 'pointer',
+                      boxShadow: eeveeSelectedStone === stone.key ? `0 0 10px ${stone.glow}` : 'none',
+                      transition: 'all 0.2s',
+                      minWidth: '60px'
+                    }}
+                  >
+                    <img
+                      src={stone.img}
+                      alt={stone.label}
+                      style={{ imageRendering: 'pixelated', width: '40px', height: '40px', objectFit: 'contain' }}
+                    />
+                    <span className="retro-text mt-1" style={{ fontSize: '9px', color: '#111', textAlign: 'center' }}>
+                      {stone.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {eeveeEvolving && (
+              <p className="retro-text text-xs mt-4 text-center" style={{color: '#6b7280'}}>
+                Congratulations! {preview?.name}!
+              </p>
+            )}
+          </div>
         </div>
       </div>
     );

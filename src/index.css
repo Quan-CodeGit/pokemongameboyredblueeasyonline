@@ -221,6 +221,17 @@ img[style*="pixelated"] {
   animation: spriteHit 0.2s ease-in-out 3;
 }
 
+@keyframes evolveFlash {
+  0%, 100% { filter: brightness(1) saturate(1); }
+  25% { filter: brightness(10) saturate(0); }
+  50% { filter: brightness(1) saturate(1); }
+  75% { filter: brightness(10) saturate(0); }
+}
+
+.pokemon-evolving {
+  animation: evolveFlash 0.5s ease-in-out 4;
+}
+
 .meowth-walk-in {
   animation: meowthWalkIn 3s linear forwards;
 }
