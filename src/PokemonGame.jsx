@@ -56,6 +56,8 @@ const PokemonGame = () => {
   const shouldSpawnMewtwo = useRef(false);
   const hasDefeatedMewtwo = useRef(false);
   const introMusicRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const sfxCacheRef = useRef({});
   const nextRocketBattle = useRef(Math.floor(Math.random() * 4) + 7); // first rocket at battle 7-10
   const totalBattles = useRef(0);
 
@@ -682,7 +684,6 @@ const PokemonGame = () => {
   // Pokemon sound effects using real audio files
   const playSound = (type) => {
     try {
-      // Check audio volume setting
       if (audioVolume === 'none') return;
 
       const soundUrls = {
@@ -695,51 +696,63 @@ const PokemonGame = () => {
         'not-very-effective': '/sounds/not-very-effective.mp3'
       };
 
-      const volumeLevels = {
-        'low': 0.3,
-        'high': 0.7
-      };
+      const volumeLevels = { 'low': 0.3, 'high': 0.7 };
+      const vol = volumeLevels[audioVolume] || 0.5;
 
-      // If it's a real Pokemon sound, use Audio API
+      // MP3 sounds: use pre-cached Audio objects, clone to allow overlapping plays
       if (soundUrls[type]) {
-        const audio = new Audio(soundUrls[type]);
-        audio.volume = volumeLevels[audioVolume] || 0.5;
-        audio.play().catch(err => console.log('Sound play failed:', err));
+        if (!sfxCacheRef.current[type]) {
+          sfxCacheRef.current[type] = new Audio(soundUrls[type]);
+        }
+        const sound = sfxCacheRef.current[type].cloneNode();
+        sound.volume = vol;
+        sound.play().catch(() => {});
         return;
       }
 
-      // Fallback to Web Audio API for other sounds
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
+      // Oscillator sounds: reuse single shared AudioContext — never create multiple
+      const getCtx = () => {
+        if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+          audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+        }
+        return audioCtxRef.current;
+      };
 
+      const ctx = getCtx();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
       oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
+      gainNode.connect(ctx.destination);
 
+      let duration = 0.2;
       switch(type) {
         case 'attack':
           oscillator.frequency.value = 400;
-          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-          oscillator.start(audioContext.currentTime);
-          oscillator.stop(audioContext.currentTime + 0.2);
+          gainNode.gain.setValueAtTime(0.3, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+          duration = 0.2;
           break;
         case 'damage':
           oscillator.frequency.value = 200;
-          gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-          oscillator.start(audioContext.currentTime);
-          oscillator.stop(audioContext.currentTime + 0.3);
+          gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+          duration = 0.3;
           break;
         case 'heal':
-          oscillator.frequency.value = 600;
           oscillator.type = 'sine';
-          gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-          oscillator.start(audioContext.currentTime);
-          oscillator.stop(audioContext.currentTime + 0.4);
+          oscillator.frequency.value = 600;
+          gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+          duration = 0.4;
           break;
+        default:
+          return;
       }
+      oscillator.start(ctx.currentTime);
+      oscillator.stop(ctx.currentTime + duration);
     } catch (e) {
       // Silently fail if audio not supported
     }
