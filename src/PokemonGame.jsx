@@ -2996,7 +2996,7 @@ const PokemonGame = () => {
                   className={rocketPhase === 'walking' ? 'meowth-walk-in' : rocketPhase === 'grabbing' ? 'meowth-grab' : 'meowth-leave'}
                   style={{
                     position: 'absolute',
-                    top: `${Math.floor(stolenPokemonIndex / 4) * 86 + 22}px`,
+                    top: `${Math.floor(stolenPokemonIndex / 4) * 88 + 44}px`,
                     left: `${(stolenPokemonIndex % 4) * 25 + 5}%`,
                     zIndex: 10,
                     pointerEvents: 'none',
