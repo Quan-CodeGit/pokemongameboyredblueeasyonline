@@ -2262,9 +2262,10 @@ const PokemonGame = () => {
     if (benchPokemon.length === 0) return false; // Skip if only 1 Pokemon
 
     const randomBenchIndex = Math.floor(Math.random() * benchPokemon.length);
-    const stolenName = benchPokemon[randomBenchIndex].name;
-    stolenNameRef.current = stolenName;
-    const teamIndex = availableTeam.findIndex(p => p.name === stolenName);
+    const selectedBenchPokemon = benchPokemon[randomBenchIndex];
+    stolenNameRef.current = selectedBenchPokemon.name;
+    // Use object reference (not name) to correctly identify among duplicates
+    const teamIndex = availableTeam.indexOf(selectedBenchPokemon);
     setStolenPokemonIndex(teamIndex);
     setGameState('rocket');
     setRocketPhase('video');
@@ -2296,9 +2297,8 @@ const PokemonGame = () => {
   };
 
   const continueAfterRocket = () => {
-    // Remove stolen Pokemon from team now (kept in array during animation for correct indexing)
-    const stolenName = stolenNameRef.current;
-    setAvailableTeam(prev => prev.filter(p => p.name !== stolenName));
+    // Remove stolen Pokemon by index (not name) to avoid removing duplicates with same name
+    setAvailableTeam(prev => prev.filter((_, i) => i !== stolenPokemonIndex));
     setRocketPhase('');
     setStolenPokemonIndex(-1);
     // Start next normal battle
@@ -2996,7 +2996,7 @@ const PokemonGame = () => {
                   className={rocketPhase === 'walking' ? 'meowth-walk-in' : rocketPhase === 'grabbing' ? 'meowth-grab' : 'meowth-leave'}
                   style={{
                     position: 'absolute',
-                    bottom: '10px',
+                    top: `${Math.floor(stolenPokemonIndex / 4) * 86 + 22}px`,
                     left: `${(stolenPokemonIndex % 4) * 25 + 5}%`,
                     zIndex: 10,
                     pointerEvents: 'none',
