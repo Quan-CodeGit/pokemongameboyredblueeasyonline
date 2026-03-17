@@ -62,6 +62,7 @@ const PokemonGame = () => {
   const [eeveeEvolveData, setEeveeEvolveData] = useState(null); // { pokemon, newExp }
   const [eeveeSelectedStone, setEeveeSelectedStone] = useState(null); // null | 'water' | 'thunder' | 'fire'
   const [eeveeEvolving, setEeveeEvolving] = useState(false);
+  const [eeveeEvolved, setEeveeEvolved] = useState(false);
   const nextRocketBattle = useRef(Math.floor(Math.random() * 4) + 7); // first rocket at battle 7-10
   const totalBattles = useRef(0);
 
@@ -1491,6 +1492,7 @@ const PokemonGame = () => {
     setEeveeEvolving(true);
     playSound('evolve');
 
+    // After flash animation → show success screen
     setTimeout(() => {
       const evolvedPokemon = {
         ...chosen,
@@ -1502,18 +1504,21 @@ const PokemonGame = () => {
         p.name.toLowerCase() === 'eevee' ? evolvedPokemon : p
       ));
       setPokedex(prev => prev.find(p => p.name === chosen.name) ? prev : [...prev, evolvedPokemon]);
-      addLog(`${pokemon.name} evolved into ${chosen.name}!`);
 
-      // Clean up and return to battle flow
-      setEeveeEvolveData(null);
-      setEeveeSelectedStone(null);
       setEeveeEvolving(false);
-      setGameState('battle');
+      setEeveeEvolved(true); // Show success screen
 
-      if (eeveeResolveRef.current) {
-        eeveeResolveRef.current(evolvedPokemon);
-        eeveeResolveRef.current = null;
-      }
+      // After success screen → resolve promise → victory
+      setTimeout(() => {
+        setEeveeEvolveData(null);
+        setEeveeSelectedStone(null);
+        setEeveeEvolved(false);
+
+        if (eeveeResolveRef.current) {
+          eeveeResolveRef.current(evolvedPokemon);
+          eeveeResolveRef.current = null;
+        }
+      }, 2500);
     }, 2000);
   };
 
@@ -3057,11 +3062,47 @@ const PokemonGame = () => {
   if (gameState === 'eevee-evolution') {
     const stones = [
       { key: 'water', label: 'Water Stone', img: '/stones/water-stone.webp', color: '#3b82f6', glow: '#93c5fd' },
-      { key: 'thunder', label: 'Thunder Stone', img: '/stones/thunder-stone.png', color: '#eab308', glow: '#fde68a' },
+      { key: 'thunder', label: 'Thunder Stone', img: '/stones/thunder-stone.jpg', color: '#eab308', glow: '#fde68a' },
       { key: 'fire', label: 'Fire Stone', img: '/stones/fire-stone.webp', color: '#ef4444', glow: '#fca5a5' },
     ];
-    const preview = eeveeSelectedStone ? EEVEELUTIONS[eeveeSelectedStone] : null;
-    const eeveeId = getPokemonId('Eevee');
+    const selectedEvolution = eeveeSelectedStone ? EEVEELUTIONS[eeveeSelectedStone] : null;
+    // Bug fix #1: use getPokemonSprite (lowercases name) instead of getPokemonId directly
+    // Bug fix #2: show evolution sprite on first stone click (preview), not just during animation
+    const displaySprite = selectedEvolution
+      ? getPokemonSprite(selectedEvolution.name)
+      : getPokemonSprite(eeveeEvolveData?.pokemon.name || 'Eevee');
+    const displayName = selectedEvolution ? selectedEvolution.name : 'Eevee';
+    const selectedStoneData = stones.find(s => s.key === eeveeSelectedStone);
+
+    // Success screen after evolution animation
+    if (eeveeEvolved && selectedEvolution) {
+      return (
+        <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+          <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
+            <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor: '#f0f0e8', padding: '20px'}}>
+              <h2 className="retro-text font-bold text-lg mb-2" style={{color: '#1a1a2e'}}>Congratulations!</h2>
+              <div className="flex justify-center mb-3" style={{
+                backgroundColor: '#fff', border: '3px solid #000', borderRadius: '50%',
+                width: '96px', height: '96px', alignItems: 'center', overflow: 'hidden',
+                boxShadow: `0 0 20px 6px ${selectedStoneData?.glow}`
+              }}>
+                <img src={displaySprite} alt={selectedEvolution.name}
+                  style={{ imageRendering: 'pixelated', width: '80px', height: '80px' }} />
+              </div>
+              <p className="retro-text text-sm font-bold mb-1" style={{color: '#374151'}}>
+                {eeveeEvolveData?.pokemon.name} evolved into
+              </p>
+              <p className="retro-text text-lg font-bold mb-3" style={{color: selectedStoneData?.color}}>
+                {selectedEvolution.name}!
+              </p>
+              <p className="retro-text text-xs text-center" style={{color: '#6b7280'}}>
+                Continuing to next battle...
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
@@ -3072,10 +3113,12 @@ const PokemonGame = () => {
 
             <h2 className="retro-text font-bold text-lg mb-1" style={{color: '#1a1a2e'}}>WHAT?!</h2>
             <p className="retro-text text-xs mb-4 text-center" style={{color: '#374151'}}>
-              {eeveeEvolving ? `${eeveeEvolveData?.pokemon.name} is evolving!` : `${eeveeEvolveData?.pokemon.name} wants to evolve!`}
+              {eeveeEvolving
+                ? `${eeveeEvolveData?.pokemon.name} is evolving into ${selectedEvolution?.name}!`
+                : `${eeveeEvolveData?.pokemon.name} wants to evolve!`}
             </p>
 
-            {/* Sprite area */}
+            {/* Sprite bubble — shows evolution sprite on first stone click */}
             <div className="flex justify-center mb-4" style={{
               backgroundColor: '#fff',
               border: '3px solid #000',
@@ -3083,25 +3126,23 @@ const PokemonGame = () => {
               width: '96px', height: '96px',
               alignItems: 'center',
               overflow: 'hidden',
-              boxShadow: eeveeSelectedStone ? `0 0 16px 4px ${stones.find(s => s.key === eeveeSelectedStone)?.glow}` : 'none',
+              boxShadow: eeveeSelectedStone ? `0 0 16px 4px ${selectedStoneData?.glow}` : 'none',
               transition: 'box-shadow 0.3s'
             }}>
               <img
-                src={eeveeEvolving && preview
-                  ? `/sprites/${preview.id}.png`
-                  : `/sprites/${eeveeId}.png`}
-                alt={eeveeEvolving && preview ? preview.name : 'Eevee'}
+                src={displaySprite}
+                alt={displayName}
                 className={eeveeEvolving ? 'pokemon-evolving' : ''}
                 style={{ imageRendering: 'pixelated', width: '80px', height: '80px' }}
               />
             </div>
 
-            {/* Flavor text */}
+            {/* Flavor text shown on first stone click */}
             {eeveeSelectedStone && !eeveeEvolving && (
               <div className="mb-3 px-2 py-2 text-center retro-text text-xs"
                 style={{ backgroundColor: '#fff', border: '2px solid #000', maxWidth: '240px', lineHeight: '1.5' }}>
                 {EEVEE_FLAVOR[eeveeSelectedStone]}
-                <div className="mt-2 font-bold" style={{color: stones.find(s => s.key === eeveeSelectedStone)?.color}}>
+                <div className="mt-2 font-bold" style={{color: selectedStoneData?.color}}>
                   Tap stone again to confirm!
                 </div>
               </div>
@@ -3134,7 +3175,11 @@ const PokemonGame = () => {
                     <img
                       src={stone.img}
                       alt={stone.label}
-                      style={{ imageRendering: 'pixelated', width: '40px', height: '40px', objectFit: 'contain' }}
+                      style={{
+                        imageRendering: 'pixelated', width: '40px', height: '40px', objectFit: 'contain',
+                        // Remove white bg visually for thunder stone (JPEG with white bg)
+                        mixBlendMode: stone.key === 'thunder' ? 'multiply' : 'normal'
+                      }}
                     />
                     <span className="retro-text mt-1" style={{ fontSize: '9px', color: '#111', textAlign: 'center' }}>
                       {stone.label}
@@ -3142,12 +3187,6 @@ const PokemonGame = () => {
                   </button>
                 ))}
               </div>
-            )}
-
-            {eeveeEvolving && (
-              <p className="retro-text text-xs mt-4 text-center" style={{color: '#6b7280'}}>
-                Congratulations! {preview?.name}!
-              </p>
             )}
           </div>
         </div>
