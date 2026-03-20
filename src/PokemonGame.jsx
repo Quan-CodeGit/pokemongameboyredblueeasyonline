@@ -868,6 +868,9 @@ const PokemonGame = () => {
       v: 1,
       team: availableTeam,
       active: playerPokemon?.name || null,
+      wild: wildPokemon || null,
+      turn: isPlayerTurn,
+      log: battleLog.slice(-3), // last 3 log lines
       dex: pokedex,
       won: battlesWon,
       diff: difficulty,
@@ -898,11 +901,15 @@ const PokemonGame = () => {
       const active = data.team.find(p => p.name === data.active) || data.team[0];
       setPlayerPokemon(active);
 
-      // Start a new battle with loaded team
-      encounterWildPokemon();
+      // Restore exact wild pokemon if saved, else encounter a new one
+      if (data.wild) {
+        setWildPokemon(data.wild);
+      } else {
+        encounterWildPokemon();
+      }
       setGameState('battle');
-      setIsPlayerTurn(true);
-      setBattleLog([`Welcome back! Go, ${active.name}!`]);
+      setIsPlayerTurn(data.turn !== undefined ? data.turn : true);
+      setBattleLog([`Welcome back! Go, ${active.name}!`, ...(data.log || [])]);
       setShowSaveLoad(false);
       setSaveCodeMsg('');
     } catch {
