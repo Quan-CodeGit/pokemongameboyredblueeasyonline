@@ -41,6 +41,9 @@ const PokemonGame = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [showPokedex, setShowPokedex] = useState(false);
+  const [showSaveLoad, setShowSaveLoad] = useState(false);
+  const [loadCodeInput, setLoadCodeInput] = useState('');
+  const [saveCodeMsg, setSaveCodeMsg] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [quickMenuFocused, setQuickMenuFocused] = useState(false);
   const [quickMenuIndex, setQuickMenuIndex] = useState(0); // 0: Settings, 1: How to Play, 2: Pokedex, 3: Debug
@@ -150,7 +153,7 @@ const PokemonGame = () => {
 
       // Quick menu navigation when focused
       if (quickMenuFocused) {
-        const maxIndex = debugMode ? 3 : 2; // 0: Settings, 1: How to Play, 2: Pokedex, 3: Debug (if enabled)
+        const maxIndex = debugMode ? 4 : 3; // 0: Settings, 1: How to Play, 2: Pokedex, 3: Save Code, 4: Debug (if enabled)
         if (e.key === 'ArrowUp') {
           setQuickMenuIndex(prev => (prev - 1 + maxIndex + 1) % (maxIndex + 1));
         } else if (e.key === 'ArrowDown') {
@@ -168,7 +171,11 @@ const PokemonGame = () => {
             setShowPokedex(true);
             setQuickMenuFocused(false);
             setMenuOpen(false);
-          } else if (quickMenuIndex === 3 && debugMode) {
+          } else if (quickMenuIndex === 3) {
+            setShowSaveLoad(true);
+            setQuickMenuFocused(false);
+            setMenuOpen(false);
+          } else if (quickMenuIndex === 4 && debugMode) {
             const debugBtn = document.querySelector('[data-debug-button]');
             if (debugBtn) debugBtn.click();
             setQuickMenuFocused(false);
@@ -430,6 +437,18 @@ const PokemonGame = () => {
           >
             POKEDEX
           </button>
+          <button
+            onClick={() => { setShowSaveLoad(true); setSaveCodeMsg(''); setLoadCodeInput(''); setMenuOpen(false); }}
+            className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
+              quickMenuFocused && quickMenuIndex === 3 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+            }`}
+            style={{
+              backgroundColor: '#7c3aed', color: '#fff',
+              boxShadow: quickMenuFocused && quickMenuIndex === 3 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
+            }}
+          >
+            SAVE CODE
+          </button>
           {debugMode && (
             <button
               data-debug-button
@@ -444,11 +463,11 @@ const PokemonGame = () => {
                 setMenuOpen(false);
               }}
               className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
-                quickMenuFocused && quickMenuIndex === 3 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+                quickMenuFocused && quickMenuIndex === 4 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
               }`}
               style={{
                 backgroundColor: '#dc2626', color: '#fff',
-                boxShadow: quickMenuFocused && quickMenuIndex === 3 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
+                boxShadow: quickMenuFocused && quickMenuIndex === 4 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
               }}
             >
               DEBUG: EXP→19
@@ -843,6 +862,127 @@ const PokemonGame = () => {
   ];
 
   // Pokedex modal component
+  // ── Save / Load ────────────────────────────────────────────────────────────
+  const generateSaveCode = () => {
+    const saveData = {
+      v: 1,
+      team: availableTeam,
+      active: playerPokemon?.name || null,
+      dex: pokedex,
+      won: battlesWon,
+      diff: difficulty,
+      potion: potionUsed,
+    };
+    try {
+      return btoa(unescape(encodeURIComponent(JSON.stringify(saveData))));
+    } catch {
+      return null;
+    }
+  };
+
+  const loadFromCode = (code) => {
+    try {
+      const raw = decodeURIComponent(escape(atob(code.trim())));
+      const data = JSON.parse(raw);
+      if (!data.v || !data.team || !Array.isArray(data.team)) {
+        setSaveCodeMsg('❌ Invalid save code.');
+        return;
+      }
+      setAvailableTeam(data.team);
+      setPokedex(data.dex || []);
+      setBattlesWon(data.won || 0);
+      setDifficulty(data.diff || 'medium');
+      setPotionUsed(data.potion || false);
+
+      // Set active pokemon (prefer saved active, fallback to first)
+      const active = data.team.find(p => p.name === data.active) || data.team[0];
+      setPlayerPokemon(active);
+
+      // Start a new battle with loaded team
+      encounterWildPokemon();
+      setGameState('battle');
+      setIsPlayerTurn(true);
+      setBattleLog([`Welcome back! Go, ${active.name}!`]);
+      setShowSaveLoad(false);
+      setSaveCodeMsg('');
+    } catch {
+      setSaveCodeMsg('❌ Could not read save code. Make sure it is copied correctly.');
+    }
+  };
+
+  const SaveLoadModal = () => {
+    if (!showSaveLoad) return null;
+    const code = generateSaveCode();
+    const hasGame = availableTeam.length > 0;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{backgroundColor: 'rgba(0,0,0,0.85)'}}>
+        <div className="border-8 border-black bg-white p-5 max-w-sm w-full mx-4 max-h-[90vh] overflow-y-auto" style={{boxShadow: '12px 12px 0px #000'}}>
+          <div className="border-b-4 border-black pb-2 mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold retro-text" style={{color: '#7c3aed'}}>💾 SAVE / LOAD</h2>
+            <button onClick={() => setShowSaveLoad(false)} className="font-bold text-lg border-2 border-black px-2 retro-text hover:bg-gray-200">✕</button>
+          </div>
+
+          {/* SAVE section */}
+          <div className="mb-5">
+            <h3 className="font-bold retro-text text-sm mb-2 border-b-2 border-black pb-1">📋 YOUR SAVE CODE</h3>
+            {hasGame ? (
+              <>
+                <p className="text-xs retro-text mb-2 text-gray-600">Copy this code to a sticky note. Paste it next time to restore your progress.</p>
+                <textarea
+                  readOnly
+                  value={code || ''}
+                  className="w-full border-4 border-black p-2 text-xs font-mono bg-gray-100 resize-none"
+                  rows={4}
+                  onClick={e => e.target.select()}
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard?.writeText(code).then(() => setSaveCodeMsg('✅ Copied to clipboard!')).catch(() => setSaveCodeMsg('Select the text above and copy manually.'));
+                  }}
+                  className="mt-2 w-full border-4 border-black py-2 font-bold text-sm retro-text hover:scale-105 transition-all"
+                  style={{backgroundColor: '#7c3aed', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+                >
+                  COPY CODE
+                </button>
+              </>
+            ) : (
+              <p className="text-xs retro-text text-gray-500 italic">No active game to save. Start a game first!</p>
+            )}
+          </div>
+
+          {/* LOAD section */}
+          <div>
+            <h3 className="font-bold retro-text text-sm mb-2 border-b-2 border-black pb-1">📥 LOAD SAVE CODE</h3>
+            <p className="text-xs retro-text mb-2 text-gray-600">Paste your save code below to restore your Pokémon and progress.</p>
+            <textarea
+              value={loadCodeInput}
+              onChange={e => { setLoadCodeInput(e.target.value); setSaveCodeMsg(''); }}
+              placeholder="Paste save code here..."
+              className="w-full border-4 border-black p-2 text-xs font-mono resize-none"
+              rows={4}
+            />
+            <button
+              onClick={() => loadFromCode(loadCodeInput)}
+              disabled={!loadCodeInput.trim()}
+              className="mt-2 w-full border-4 border-black py-2 font-bold text-sm retro-text hover:scale-105 transition-all disabled:opacity-40"
+              style={{backgroundColor: '#16a34a', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+            >
+              LOAD GAME
+            </button>
+          </div>
+
+          {saveCodeMsg && (
+            <p className="mt-3 text-xs retro-text text-center font-bold" style={{color: saveCodeMsg.startsWith('❌') ? '#dc2626' : '#16a34a'}}>
+              {saveCodeMsg}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  };
+  // ──────────────────────────────────────────────────────────────────────────
+
   const PokedexModal = () => {
     if (!showPokedex) return null;
 
@@ -2343,6 +2483,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <SettingsModal />
+        <SaveLoadModal />
         <HowToPlayModal />
         <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
@@ -2444,6 +2585,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <SettingsModal />
+        <SaveLoadModal />
         <HowToPlayModal />
         <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
@@ -2501,6 +2643,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <SettingsModal />
+        <SaveLoadModal />
         <HowToPlayModal />
         <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
@@ -2562,6 +2705,7 @@ const PokemonGame = () => {
       <div className="min-h-screen bg-black p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <SettingsModal />
+        <SaveLoadModal />
         <HowToPlayModal />
         <PokedexModal />
         <div className={`border-8 border-purple-500 bg-black p-8 ${getContainerClass()} w-full text-center`} style={{boxShadow: '0 0 50px rgba(168, 85, 247, 0.8)'}}>
@@ -2617,6 +2761,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-4" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <SettingsModal />
+        <SaveLoadModal />
         <HowToPlayModal />
         <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
@@ -2832,6 +2977,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <SettingsModal />
+        <SaveLoadModal />
         <HowToPlayModal />
         <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
@@ -2887,6 +3033,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <SettingsModal />
+        <SaveLoadModal />
         <HowToPlayModal />
         <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`} style={{overflow: 'hidden', position: 'relative'}}>
@@ -3108,6 +3255,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <SettingsModal />
+        <SaveLoadModal />
         <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
           <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor: '#f0f0e8', padding: '16px'}}>
 
@@ -3199,6 +3347,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <SettingsModal />
+        <SaveLoadModal />
         <HowToPlayModal />
         <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
@@ -3255,6 +3404,7 @@ const PokemonGame = () => {
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
         <SettingsModal />
+        <SaveLoadModal />
         <HowToPlayModal />
         <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
