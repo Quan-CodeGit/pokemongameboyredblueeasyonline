@@ -1363,7 +1363,7 @@ const PokemonGame = () => {
 
   const chooseStarter = (starter) => {
     playSound('sendout');
-    const newPokemon = { ...starter };
+    const newPokemon = { ...starter, uid: `${Date.now()}-${Math.random()}` };
     setPlayerPokemon(newPokemon);
     setAvailableTeam([newPokemon]);
     setPokedex([newPokemon]); // Add starter to pokedex
@@ -1516,7 +1516,7 @@ const PokemonGame = () => {
           hp: 95, maxHp: 95, attack: 125, spAtk: 60, def: 79, spDef: 100,
           color: '🐉', moves: ['Hydro Pump', 'Bite', 'Return', 'Thrash'],
           moveTypes: ['Water', 'Dark', 'Normal', 'Normal'],
-          exp: newExp, defeatedMewtwo: pokemon.defeatedMewtwo
+          exp: newExp, defeatedMewtwo: pokemon.defeatedMewtwo, uid: pokemon.uid
         };
 
         addLog(`${pokemon.name} evolved into Gyarados!`);
@@ -1524,7 +1524,7 @@ const PokemonGame = () => {
         setTimeout(() => {
           setPlayerPokemon(gyarados);
           setAvailableTeam(prev => prev.map(p =>
-            p.name.toLowerCase() === lowerName ? gyarados : p
+            p.uid === pokemon.uid ? gyarados : p
           ));
           setPokedex(prev => prev.find(p => p.name === 'Gyarados') ? prev : [...prev, gyarados]);
           setIsEvolving(false);
@@ -1556,7 +1556,7 @@ const PokemonGame = () => {
         setTimeout(() => {
           setPlayerPokemon(evolvedPokemon);
           setAvailableTeam(prev => prev.map(p =>
-            p.name.toLowerCase() === lowerName ? evolvedPokemon : p
+            p.uid === pokemon.uid ? evolvedPokemon : p
           ));
           setPokedex(prev => prev.find(p => p.name === nextEvolution.name) ? prev : [...prev, evolvedPokemon]);
           setIsEvolving(false);
@@ -1581,8 +1581,8 @@ const PokemonGame = () => {
         
         setTimeout(() => {
           setPlayerPokemon(strengthenedPokemon);
-          setAvailableTeam(prev => prev.map(p => 
-            p.name.toLowerCase() === lowerName ? strengthenedPokemon : p
+          setAvailableTeam(prev => prev.map(p =>
+            p.uid === pokemon.uid ? strengthenedPokemon : p
           ));
           setIsEvolving(false);
         }, 2000);
@@ -1644,11 +1644,12 @@ const PokemonGame = () => {
       const evolvedPokemon = {
         ...chosen,
         exp: newExp,
-        defeatedMewtwo: pokemon.defeatedMewtwo
+        defeatedMewtwo: pokemon.defeatedMewtwo,
+        uid: pokemon.uid
       };
       setPlayerPokemon(evolvedPokemon);
       setAvailableTeam(prev => prev.map(p =>
-        p.name.toLowerCase() === 'eevee' ? evolvedPokemon : p
+        p.uid === pokemon.uid ? evolvedPokemon : p
       ));
       setPokedex(prev => prev.find(p => p.name === chosen.name) ? prev : [...prev, evolvedPokemon]);
 
@@ -2254,7 +2255,7 @@ const PokemonGame = () => {
         delete caughtPokemon.spriteName;
         delete caughtPokemon.originalForm;
       }
-      const newPokemon = { ...caughtPokemon, hp: caughtPokemon.maxHp };
+      const newPokemon = { ...caughtPokemon, hp: caughtPokemon.maxHp, uid: `${Date.now()}-${Math.random()}` };
       
       // Mark Mewtwo as defeated for ALL team members if caught
       if (wildPokemon.name === 'Mewtwo') {
@@ -2286,7 +2287,7 @@ const PokemonGame = () => {
   };
 
   const switchPokemon = (newPoke) => {
-    if ((!isPlayerTurn && !teleportSwitchPending) || newPoke.name === playerPokemon.name) return;
+    if ((!isPlayerTurn && !teleportSwitchPending) || newPoke.uid === playerPokemon?.uid) return;
     setTeleportSwitchPending(false);
     
     const oldPokemonName = playerPokemon.name;
@@ -2410,7 +2411,8 @@ const PokemonGame = () => {
   // Team Rocket steal event
   const triggerRocketEvent = () => {
     // Only steal from bench (not active Pokemon), need at least 2 Pokemon
-    const benchPokemon = availableTeam.filter(p => p.name !== playerPokemon.name);
+    // Use uid so duplicate-named pokemon are treated as separate individuals
+    const benchPokemon = availableTeam.filter(p => p.uid !== playerPokemon?.uid);
     if (benchPokemon.length === 0) return false; // Skip if only 1 Pokemon
 
     const randomBenchIndex = Math.floor(Math.random() * benchPokemon.length);
