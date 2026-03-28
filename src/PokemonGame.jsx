@@ -1,4 +1,120 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+
+// ─────────────────────────────────────────────────────
+// BADGE DATA  (pixel art 16×16, palette keyed by number)
+// ─────────────────────────────────────────────────────
+const BADGE_DATA = [
+  {
+    id: 'catcher', name: 'CATCHER', description: 'Catch 5+ Pokémon',
+    pixels: [
+      [0,0,0,0,0,3,3,3,3,3,3,0,0,0,0,0],
+      [0,0,0,3,1,1,1,1,1,1,1,1,3,0,0,0],
+      [0,0,3,1,1,1,4,1,1,1,1,1,1,3,0,0],
+      [0,3,1,1,1,1,1,1,1,1,1,1,1,1,3,0],
+      [0,3,1,1,1,1,1,1,1,1,1,1,1,1,3,0],
+      [3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3],
+      [3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,3],
+      [3,3,3,3,3,3,3,5,5,3,3,3,3,3,3,3],
+      [3,3,3,3,3,3,3,5,5,3,3,3,3,3,3,3],
+      [3,2,2,2,2,2,2,3,3,2,2,2,2,2,2,3],
+      [3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3],
+      [3,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3],
+      [0,3,2,2,2,2,2,2,2,2,2,2,2,2,3,0],
+      [0,3,2,2,2,2,2,2,2,2,2,2,2,2,3,0],
+      [0,0,3,2,2,2,2,2,2,2,2,2,2,3,0,0],
+      [0,0,0,3,3,3,3,3,3,3,3,3,3,0,0,0],
+    ],
+    palette: { 1:'#e63030', 2:'#f0f0f0', 3:'#1a1a1a', 4:'#ff7070', 5:'#888888' },
+  },
+  {
+    id: 'explorer', name: 'EXPLORER', description: 'Collect 8+ Pokémon types',
+    pixels: [
+      [0,0,0,0,0,1,1,9,9,2,2,0,0,0,0,0],
+      [0,0,0,0,1,1,1,9,9,2,2,2,0,0,0,0],
+      [0,0,0,1,1,1,9,8,8,9,2,2,2,0,0,0],
+      [0,0,1,1,1,9,8,8,8,8,9,2,2,2,0,0],
+      [0,7,7,1,9,8,8,9,9,8,8,9,3,3,3,0],
+      [7,7,7,9,8,8,9,8,8,9,8,8,9,3,3,3],
+      [7,7,9,8,8,9,8,8,8,8,9,8,8,9,3,3],
+      [9,9,8,8,8,9,8,8,8,8,9,8,8,8,9,9],
+      [9,9,8,8,8,9,8,8,8,8,9,8,8,8,9,9],
+      [6,6,9,8,8,9,8,8,8,8,9,8,8,9,4,4],
+      [6,6,6,9,8,8,9,8,8,9,8,8,9,4,4,4],
+      [0,6,6,6,9,8,8,9,9,8,8,9,4,4,4,0],
+      [0,0,6,6,6,9,8,8,8,8,9,4,4,4,0,0],
+      [0,0,0,6,6,6,9,8,8,9,4,4,4,0,0,0],
+      [0,0,0,0,6,6,6,9,9,4,4,4,0,0,0,0],
+      [0,0,0,0,0,6,6,9,9,4,4,0,0,0,0,0],
+    ],
+    palette: { 1:'#e82020', 2:'#f07828', 3:'#e8d000', 4:'#18c040', 6:'#2050e0', 7:'#c020b0', 8:'#ffffff', 9:'#080810' },
+  },
+  {
+    id: 'evolution', name: 'EVOLUTION', description: 'Evolve a Magikarp',
+    pixels: [
+      [0,0,0,0,4,0,4,3,6,3,0,0,0,0,0,0],
+      [0,0,0,0,4,4,6,4,6,3,6,0,0,0,0,0],
+      [0,0,0,0,4,4,6,6,6,6,5,0,0,0,0,0],
+      [0,0,0,0,1,1,1,6,6,6,1,0,0,3,1,4],
+      [0,0,0,1,7,7,7,1,1,1,1,1,3,1,7,4],
+      [0,0,0,1,7,4,7,1,1,1,1,1,1,7,7,4],
+      [0,5,5,5,7,7,7,1,7,7,1,1,1,7,0,0],
+      [0,5,0,5,1,1,1,7,7,7,7,1,1,7,0,0],
+      [0,5,1,5,1,1,1,7,7,1,1,1,1,7,0,0],
+      [0,5,5,5,1,5,5,1,7,7,1,1,1,1,7,0],
+      [0,0,0,3,1,1,5,5,1,1,1,1,3,1,7,0],
+      [0,0,0,3,5,1,1,5,5,5,5,3,3,3,1,0],
+      [0,0,0,0,4,5,3,6,6,6,0,5,3,3,4,4],
+      [0,0,0,0,0,3,5,3,6,6,0,0,4,3,4,0],
+      [0,0,0,0,0,0,0,5,3,3,3,3,4,4,0,0],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ],
+    palette: { 1:'#e84010', 2:'#2850b0', 3:'#150800', 4:'#0a0a00', 5:'#f0d890', 6:'#e8b800', 7:'#f0f0f0' },
+  },
+  {
+    id: 'legend', name: 'LEGEND', description: 'Defeat or catch Mewtwo',
+    pixels: [
+      [0,0,0,1,1,3,0,0,0,0,3,2,2,0,0,0],
+      [0,0,0,3,1,1,3,0,0,3,2,2,3,0,0,0],
+      [0,0,0,0,3,1,4,4,4,4,2,3,0,0,0,0],
+      [0,0,0,0,0,3,4,4,4,4,3,0,0,0,0,0],
+      [0,0,0,0,3,2,2,3,3,1,1,3,0,0,0,0],
+      [0,0,0,3,2,2,3,0,0,3,1,1,3,0,0,0],
+      [0,0,0,0,3,2,4,4,4,4,1,3,0,0,0,0],
+      [0,0,0,0,0,3,4,4,4,4,3,0,0,0,0,0],
+      [0,0,0,1,1,3,0,0,0,0,3,2,2,0,0,0],
+      [0,0,0,3,1,1,3,0,0,3,2,2,3,0,0,0],
+      [0,0,0,0,3,1,4,4,4,4,2,3,0,0,0,0],
+      [0,0,0,0,0,3,4,4,4,4,3,0,0,0,0,0],
+      [0,0,0,0,3,2,2,3,3,1,1,3,0,0,0,0],
+      [0,0,0,3,2,2,3,0,0,3,1,1,3,0,0,0],
+      [0,0,0,0,3,2,4,4,4,4,1,3,0,0,0,0],
+      [0,0,0,0,0,3,3,3,3,3,3,0,0,0,0,0],
+    ],
+    palette: { 1:'#9030d0', 2:'#d0c0f8', 3:'#1e0040', 4:'#c060f0' },
+  },
+  {
+    id: 'master', name: 'MASTER', description: 'Catch 30+ species',
+    pixels: [
+      [0,3,3,3,3,3,3,3,3,3,3,3,3,3,0,0],
+      [3,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0],
+      [3,1,1,4,4,4,4,3,1,1,6,3,1,1,3,0],
+      [3,1,1,4,5,5,4,3,1,1,1,1,1,1,3,0],
+      [3,1,1,4,5,4,4,3,1,1,1,1,1,1,3,0],
+      [3,1,1,4,4,4,4,3,1,1,1,1,1,1,3,0],
+      [3,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0],
+      [3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,0],
+      [3,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0],
+      [3,1,2,2,2,2,2,2,2,2,2,2,2,1,3,0],
+      [3,1,2,2,2,2,2,2,2,2,2,2,2,1,3,0],
+      [3,1,2,2,2,2,2,2,2,2,2,2,2,1,3,0],
+      [3,1,2,2,2,2,2,2,2,2,2,2,2,1,3,0],
+      [3,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0],
+      [3,1,6,3,1,3,1,3,3,1,3,1,3,1,3,0],
+      [0,3,3,3,3,3,3,3,3,3,3,3,3,3,0,0],
+    ],
+    palette: { 1:'#e02020', 2:'#0a0a14', 3:'#1a0000', 4:'#2060d8', 5:'#90c0ff', 6:'#30cc30' },
+  },
+];
 
 const PokemonGame = () => {
   const [gameState, setGameState] = useState('intro');
@@ -46,10 +162,23 @@ const PokemonGame = () => {
   const [saveCodeMsg, setSaveCodeMsg] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [quickMenuFocused, setQuickMenuFocused] = useState(false);
-  const [quickMenuIndex, setQuickMenuIndex] = useState(0); // 0: Settings, 1: How to Play, 2: Pokedex, 3: Debug
-  const [settingsIndex, setSettingsIndex] = useState(0); // 0-1: Display, 2-4: Audio, 5-6: Team Rocket, 7-8: Debug, 9: Close
+  const [quickMenuIndex, setQuickMenuIndex] = useState(0); // 0: Settings, 1: How to Play, 2: Pokedex, 3: Save, 4: Badges, 5: Debug
+  const [settingsIndex, setSettingsIndex] = useState(0); // 0-1: Display, 2-4: Audio, 5-6: Rocket, 7-8: Debug, 9: Badges, 10: Close
   const [difficulty, setDifficulty] = useState('medium'); // 'easy', 'medium', 'hard'
   const [selectedDifficultyIndex, setSelectedDifficultyIndex] = useState(1); // 0: Easy, 1: Medium, 2: Hard
+
+  // ── Badge system ──────────────────────────────────
+  const [earnedBadges, setEarnedBadges] = useState([]);         // array of earned badge IDs
+  const [badgePopupQueue, setBadgePopupQueue] = useState([]);   // badges waiting to be shown
+  const [showBadgeCase, setShowBadgeCase] = useState(false);
+  const earnedBadgeSetRef = useRef(new Set());                  // fast dedup across renders
+
+  const awardBadge = useCallback((id) => {
+    if (earnedBadgeSetRef.current.has(id)) return;
+    earnedBadgeSetRef.current.add(id);
+    setEarnedBadges(prev => [...prev, id]);
+    setBadgePopupQueue(prev => [...prev, id]);
+  }, []);
 
   const [rocketPhase, setRocketPhase] = useState(''); // '', 'video', 'intro', 'walking', 'grabbing', 'leaving', 'done'
   const [stolenPokemonIndex, setStolenPokemonIndex] = useState(-1);
@@ -85,6 +214,33 @@ const PokemonGame = () => {
   useEffect(() => {
     localStorage.setItem('pokemonGameTeamRocket', teamRocketEnabled.toString());
   }, [teamRocketEnabled]);
+
+  // ── Badge checks ─────────────────────────────────
+  // CATCHER: have 5+ Pokémon on the team
+  useEffect(() => {
+    if (availableTeam.length >= 5) awardBadge('catcher');
+  }, [availableTeam.length, awardBadge]);
+
+  // EXPLORER: 8+ unique types across all caught Pokémon
+  useEffect(() => {
+    const types = new Set(pokedex.map(p => p.type).filter(Boolean));
+    if (types.size >= 8) awardBadge('explorer');
+  }, [pokedex, awardBadge]);
+
+  // EVOLUTION: Gyarados in the pokédex means Magikarp evolved
+  useEffect(() => {
+    if (pokedex.some(p => p.name === 'Gyarados')) awardBadge('evolution');
+  }, [pokedex, awardBadge]);
+
+  // LEGEND: any team member has the defeatedMewtwo flag
+  useEffect(() => {
+    if (availableTeam.some(p => p.defeatedMewtwo)) awardBadge('legend');
+  }, [availableTeam, awardBadge]);
+
+  // MASTER: 30+ unique species caught
+  useEffect(() => {
+    if (pokedex.length >= 30) awardBadge('master');
+  }, [pokedex.length, awardBadge]);
 
   // Play Pokemon Center theme only on difficulty + starter selection screens
   useEffect(() => {
@@ -143,6 +299,20 @@ const PokemonGame = () => {
         e.preventDefault();
       }
 
+      // Badge popup: highest priority — dismiss with any confirm key
+      if (badgePopupQueue.length > 0) {
+        if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') {
+          setBadgePopupQueue(prev => prev.slice(1));
+        }
+        return;
+      }
+
+      // Badge case modal
+      if (showBadgeCase) {
+        if (e.key === 'Escape' || e.key === 'Enter') setShowBadgeCase(false);
+        return;
+      }
+
       // Space key - toggle 3-dot menu and quick menu focus
       if (e.key === ' ') {
         setMenuOpen(prev => !prev);
@@ -153,33 +323,32 @@ const PokemonGame = () => {
 
       // Quick menu navigation when focused
       if (quickMenuFocused) {
-        const maxIndex = debugMode ? 4 : 3; // 0: Settings, 1: How to Play, 2: Pokedex, 3: Save Code, 4: Debug (if enabled)
+        // 0: Settings, 1: How to Play, 2: Pokedex, 3: Save, 4: Badges, 5: Debug (if on)
+        const maxIndex = debugMode ? 5 : 4;
         if (e.key === 'ArrowUp') {
           setQuickMenuIndex(prev => (prev - 1 + maxIndex + 1) % (maxIndex + 1));
         } else if (e.key === 'ArrowDown') {
           setQuickMenuIndex(prev => (prev + 1) % (maxIndex + 1));
         } else if (e.key === 'Enter') {
           if (quickMenuIndex === 0) {
-            setShowSettings(true);
-            setQuickMenuFocused(false);
-            setMenuOpen(false);
+            setShowSettings(true); setSettingsIndex(0);
+            setQuickMenuFocused(false); setMenuOpen(false);
           } else if (quickMenuIndex === 1) {
             setShowHowToPlay(true);
-            setQuickMenuFocused(false);
-            setMenuOpen(false);
+            setQuickMenuFocused(false); setMenuOpen(false);
           } else if (quickMenuIndex === 2) {
             setShowPokedex(true);
-            setQuickMenuFocused(false);
-            setMenuOpen(false);
+            setQuickMenuFocused(false); setMenuOpen(false);
           } else if (quickMenuIndex === 3) {
             setShowSaveLoad(true);
-            setQuickMenuFocused(false);
-            setMenuOpen(false);
-          } else if (quickMenuIndex === 4 && debugMode) {
+            setQuickMenuFocused(false); setMenuOpen(false);
+          } else if (quickMenuIndex === 4) {
+            setShowBadgeCase(true);
+            setQuickMenuFocused(false); setMenuOpen(false);
+          } else if (quickMenuIndex === 5 && debugMode) {
             const debugBtn = document.querySelector('[data-debug-button]');
             if (debugBtn) debugBtn.click();
-            setQuickMenuFocused(false);
-            setMenuOpen(false);
+            setQuickMenuFocused(false); setMenuOpen(false);
           }
         } else if (e.key === 'Escape' || e.key === ' ') {
           e.preventDefault();
@@ -198,46 +367,43 @@ const PokemonGame = () => {
       }
 
       // Settings modal navigation
+      // Layout: Display(0,1) | Audio(2,3,4) | Rocket(5,6) | Debug(7,8) | BadgeCase(9) | Close(10)
       if (showSettings) {
-        // Settings layout: Row 0: PC(0), Mobile(1) | Row 1: None(2), Low(3), High(4) | Row 2: Rocket Off(5), On(6) | Row 3: Debug Off(7), On(8) | Row 4: Close(9)
         if (e.key === 'ArrowUp') {
           setSettingsIndex(prev => {
-            if (prev === 0 || prev === 1) return 9; // Display to Close (wrap)
-            if (prev === 2 || prev === 3 || prev === 4) return prev - 2; // Audio to Display
-            if (prev === 5 || prev === 6) return prev - 2; // Rocket to Audio
-            if (prev === 7 || prev === 8) return prev - 2; // Debug to Rocket
-            if (prev === 9) return 7; // Close to Debug
+            if (prev === 0 || prev === 1) return 10; // Display → Close (wrap)
+            if (prev === 2 || prev === 3 || prev === 4) return prev - 2;
+            if (prev === 5 || prev === 6) return prev - 2;
+            if (prev === 7 || prev === 8) return prev - 2;
+            if (prev === 9) return 7; // Badges → Debug
+            if (prev === 10) return 9; // Close → Badges
             return prev;
           });
         } else if (e.key === 'ArrowDown') {
           setSettingsIndex(prev => {
-            if (prev === 0 || prev === 1) return prev + 2; // Display to Audio
-            if (prev === 2 || prev === 3 || prev === 4) return prev <= 3 ? 5 : 6; // Audio to Rocket
-            if (prev === 5 || prev === 6) return prev + 2; // Rocket to Debug
-            if (prev === 7 || prev === 8) return 9; // Debug to Close
-            if (prev === 9) return 0; // Close to Display (wrap)
+            if (prev === 0 || prev === 1) return prev + 2;
+            if (prev === 2 || prev === 3 || prev === 4) return prev <= 3 ? 5 : 6;
+            if (prev === 5 || prev === 6) return prev + 2;
+            if (prev === 7 || prev === 8) return 9; // Debug → Badges
+            if (prev === 9) return 10; // Badges → Close
+            if (prev === 10) return 0; // Close → Display (wrap)
             return prev;
           });
         } else if (e.key === 'ArrowLeft') {
           setSettingsIndex(prev => {
-            if (prev === 1) return 0;
-            if (prev === 3) return 2;
-            if (prev === 4) return 3;
-            if (prev === 6) return 5;
+            if (prev === 1) return 0; if (prev === 3) return 2;
+            if (prev === 4) return 3; if (prev === 6) return 5;
             if (prev === 8) return 7;
             return prev;
           });
         } else if (e.key === 'ArrowRight') {
           setSettingsIndex(prev => {
-            if (prev === 0) return 1;
-            if (prev === 2) return 3;
-            if (prev === 3) return 4;
-            if (prev === 5) return 6;
+            if (prev === 0) return 1; if (prev === 2) return 3;
+            if (prev === 3) return 4; if (prev === 5) return 6;
             if (prev === 7) return 8;
             return prev;
           });
         } else if (e.key === 'Enter') {
-          // Trigger the selected setting
           if (settingsIndex === 0) setDisplayMode('pc');
           else if (settingsIndex === 1) setDisplayMode('mobile');
           else if (settingsIndex === 2) setAudioVolume('none');
@@ -247,7 +413,8 @@ const PokemonGame = () => {
           else if (settingsIndex === 6) setTeamRocketEnabled(true);
           else if (settingsIndex === 7) setDebugMode(false);
           else if (settingsIndex === 8) setDebugMode(true);
-          else if (settingsIndex === 9) setShowSettings(false);
+          else if (settingsIndex === 9) { setShowSettings(false); setShowBadgeCase(true); }
+          else if (settingsIndex === 10) setShowSettings(false);
         } else if (e.key === 'Escape') {
           setShowSettings(false);
         }
@@ -359,7 +526,7 @@ const PokemonGame = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay, showSettings, quickMenuFocused, quickMenuIndex, debugMode, settingsIndex]);
+  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay, showSettings, showBadgeCase, badgePopupQueue, quickMenuFocused, quickMenuIndex, debugMode, settingsIndex]);
 
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
@@ -449,6 +616,18 @@ const PokemonGame = () => {
           >
             SAVE CODE
           </button>
+          <button
+            onClick={() => { setShowBadgeCase(true); setMenuOpen(false); }}
+            className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
+              quickMenuFocused && quickMenuIndex === 4 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+            }`}
+            style={{
+              backgroundColor: '#b45309', color: '#fff',
+              boxShadow: quickMenuFocused && quickMenuIndex === 4 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
+            }}
+          >
+            🏅 BADGES ({earnedBadges.length}/{BADGE_DATA.length})
+          </button>
           {debugMode && (
             <button
               data-debug-button
@@ -463,11 +642,11 @@ const PokemonGame = () => {
                 setMenuOpen(false);
               }}
               className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
-                quickMenuFocused && quickMenuIndex === 4 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+                quickMenuFocused && quickMenuIndex === 5 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
               }`}
               style={{
                 backgroundColor: '#dc2626', color: '#fff',
-                boxShadow: quickMenuFocused && quickMenuIndex === 4 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
+                boxShadow: quickMenuFocused && quickMenuIndex === 5 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
               }}
             >
               DEBUG: EXP→19
@@ -550,6 +729,165 @@ const PokemonGame = () => {
   };
 
   // Settings modal component
+  // ── Badge canvas renderer (pixel-art, 16×16 grid) ──────────────────────────
+  const BadgeCanvas = ({ badge, size = 48, earned = true }) => {
+    const canvasRef = useRef(null);
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      if (!canvas || !badge?.pixels) return;
+      const ctx = canvas.getContext('2d');
+      const px = size / 16;
+      ctx.clearRect(0, 0, size, size);
+      for (let r = 0; r < 16; r++) {
+        for (let c = 0; c < 16; c++) {
+          const val = badge.pixels[r][c];
+          if (!val) continue;
+          ctx.fillStyle = earned ? (badge.palette[val] || '#fff') : '#2a2a3a';
+          ctx.fillRect(c * px, r * px, px, px);
+        }
+      }
+      if (earned) {
+        ctx.fillStyle = 'rgba(255,255,255,0.13)';
+        ctx.fillRect(0, 0, size, size / 3);
+      }
+    }, [badge, size, earned]);
+    return (
+      <canvas
+        ref={canvasRef}
+        width={size} height={size}
+        style={{ width: size, height: size, imageRendering: 'pixelated' }}
+      />
+    );
+  };
+
+  // ── Badge acquired popup ────────────────────────────────────────────────────
+  const BadgeAcquiredPopup = () => {
+    if (!badgePopupQueue.length) return null;
+    const badge = BADGE_DATA.find(b => b.id === badgePopupQueue[0]);
+    if (!badge) return null;
+    const dismiss = () => setBadgePopupQueue(prev => prev.slice(1));
+    return (
+      <div
+        className="fixed inset-0 z-[200] flex items-center justify-center"
+        style={{ backgroundColor: 'rgba(0,0,0,0.92)' }}
+        onClick={dismiss}
+      >
+        <div
+          className="badge-popup-glow border-8 border-yellow-400 bg-white p-6 text-center mx-4"
+          style={{ maxWidth: 300 }}
+          onClick={e => e.stopPropagation()}
+        >
+          {/* Title */}
+          <div className="retro-text font-bold mb-3" style={{ color: '#d97706', fontSize: 10 }}>
+            ★ BADGE ACQUIRED! ★
+          </div>
+          {/* Glowing badge circle */}
+          <div
+            className="badge-slide-in badge-circle-glow"
+            style={{
+              width: 96, height: 96,
+              background: '#1a1a2e',
+              borderRadius: '50%',
+              border: '4px solid #f8e71c',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 12px',
+            }}
+          >
+            <BadgeCanvas badge={badge} size={72} earned />
+          </div>
+          {/* Badge name */}
+          <div className="retro-text font-bold mb-1" style={{ fontSize: 13 }}>
+            {badge.name} BADGE
+          </div>
+          <div className="retro-text mb-4" style={{ fontSize: 7, color: '#555' }}>
+            {badge.description}
+          </div>
+          <button
+            onClick={dismiss}
+            className="border-4 border-black font-bold py-2 px-6 retro-text hover:scale-105 transition-all"
+            style={{ backgroundColor: '#f8e71c', color: '#000', boxShadow: '4px 4px 0 #000', fontSize: 8 }}
+          >
+            PRESS ENTER
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // ── Badge case modal ────────────────────────────────────────────────────────
+  const BadgeCaseModal = () => {
+    if (!showBadgeCase) return null;
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.85)' }}>
+        <div className="border-8 border-black bg-yellow-100 p-5 w-full mx-4" style={{ maxWidth: 380, boxShadow: '12px 12px 0px #000' }}>
+          {/* Header */}
+          <div className="border-4 border-black p-3 mb-3 flex items-center justify-between" style={{ background: '#b45309' }}>
+            <h2 className="text-lg font-bold retro-text text-white">🏅 BADGE CASE</h2>
+            <button
+              onClick={() => setShowBadgeCase(false)}
+              className="font-bold text-lg border-2 border-black px-2 retro-text hover:bg-yellow-200 bg-yellow-100"
+            >✕</button>
+          </div>
+          <div className="text-center retro-text mb-3" style={{ fontSize: 6, color: '#555' }}>
+            ↑↓←→ Navigate badges • Esc / Enter to close
+          </div>
+          {/* Velvet tray */}
+          <div
+            className="border-4 border-black p-4 mb-4"
+            style={{ background: '#1e0a3c', boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.7)' }}
+          >
+            <div className="flex flex-wrap gap-4 justify-center">
+              {BADGE_DATA.map(badge => {
+                const isEarned = earnedBadges.includes(badge.id);
+                return (
+                  <div key={badge.id} className="flex flex-col items-center gap-1">
+                    <div style={{
+                      width: 64, height: 64,
+                      background: '#0d0d1a',
+                      borderRadius: '50%',
+                      border: isEarned ? '3px solid #f8e71c' : '3px solid #333',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      overflow: 'hidden',
+                      boxShadow: isEarned ? '0 0 10px rgba(248,231,28,0.6)' : 'none',
+                      filter: isEarned ? 'none' : 'brightness(0.3) saturate(0)',
+                    }}>
+                      <BadgeCanvas badge={badge} size={48} earned={isEarned} />
+                    </div>
+                    <div className="retro-text text-center" style={{ color: isEarned ? '#f8e71c' : '#444', fontSize: 5, maxWidth: 64 }}>
+                      {badge.name}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="retro-text text-center mt-3" style={{ fontSize: 7, color: '#aaa' }}>
+              {earnedBadges.length} / {BADGE_DATA.length} BADGES EARNED
+            </div>
+          </div>
+          {/* Requirement list */}
+          <div className="border-4 border-black bg-white p-3 mb-4">
+            <div className="retro-text font-bold mb-2" style={{ fontSize: 7 }}>REQUIREMENTS:</div>
+            {BADGE_DATA.map(badge => (
+              <div key={badge.id} className="flex items-center gap-2 mb-1">
+                <span style={{ fontSize: 10 }}>{earnedBadges.includes(badge.id) ? '✅' : '⬜'}</span>
+                <span className="retro-text" style={{ fontSize: 6, color: earnedBadges.includes(badge.id) ? '#16a34a' : '#555' }}>
+                  {badge.name}: {badge.description}
+                </span>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setShowBadgeCase(false)}
+            className="w-full border-4 border-black font-bold py-3 retro-text hover:scale-105 transition-all"
+            style={{ backgroundColor: '#1d4ed8', color: '#fff', boxShadow: '4px 4px 0 #000', fontSize: 8 }}
+          >
+            CLOSE
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   const SettingsModal = () => {
     if (!showSettings) return null;
 
@@ -658,11 +996,22 @@ const PokemonGame = () => {
             </div>
           </div>
 
+          {/* Badge Case Button */}
+          <button
+            onClick={() => { setShowSettings(false); setShowBadgeCase(true); }}
+            className={`w-full border-4 font-bold py-3 px-4 retro-text transition-all mb-3 ${
+              settingsIndex === 9 ? 'border-yellow-400 ring-2 ring-yellow-400 scale-105' : 'border-black'
+            }`}
+            style={{ backgroundColor: '#b45309', color: '#fff', boxShadow: '4px 4px 0px #000' }}
+          >
+            🏅 BADGE CASE ({earnedBadges.length}/{BADGE_DATA.length})
+          </button>
+
           {/* Close Button */}
           <button
             onClick={() => setShowSettings(false)}
             className={`w-full border-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 retro-text transition-all ${
-              settingsIndex === 9 ? 'border-yellow-400 ring-2 ring-yellow-400 scale-105' : 'border-black'
+              settingsIndex === 10 ? 'border-yellow-400 ring-2 ring-yellow-400 scale-105' : 'border-black'
             }`}
             style={{boxShadow: '4px 4px 0px #000'}}
           >
@@ -870,11 +1219,12 @@ const PokemonGame = () => {
       active: playerPokemon?.name || null,
       wild: wildPokemon || null,
       turn: isPlayerTurn,
-      log: battleLog.slice(-3), // last 3 log lines
+      log: battleLog.slice(-3),
       dex: pokedex,
       won: battlesWon,
       diff: difficulty,
       potion: potionUsed,
+      badges: earnedBadges,
     };
     try {
       return btoa(unescape(encodeURIComponent(JSON.stringify(saveData))));
@@ -896,6 +1246,10 @@ const PokemonGame = () => {
       setBattlesWon(data.won || 0);
       setDifficulty(data.diff || 'medium');
       setPotionUsed(data.potion || false);
+      // Restore badges — rebuild ref so awardBadge dedup still works
+      const loadedBadges = data.badges || [];
+      earnedBadgeSetRef.current = new Set(loadedBadges);
+      setEarnedBadges(loadedBadges);
 
       // Set active pokemon (prefer saved active, fallback to first)
       const active = data.team.find(p => p.name === data.active) || data.team[0];
@@ -2491,6 +2845,8 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
         <SettingsModal />
         <SaveLoadModal />
         <HowToPlayModal />
@@ -2593,6 +2949,8 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
         <SettingsModal />
         <SaveLoadModal />
         <HowToPlayModal />
@@ -2651,6 +3009,8 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
         <SettingsModal />
         <SaveLoadModal />
         <HowToPlayModal />
@@ -2713,6 +3073,8 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen bg-black p-8 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
         <SettingsModal />
         <SaveLoadModal />
         <HowToPlayModal />
@@ -2769,6 +3131,8 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
         <SettingsModal />
         <SaveLoadModal />
         <HowToPlayModal />
@@ -2985,6 +3349,8 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
         <SettingsModal />
         <SaveLoadModal />
         <HowToPlayModal />
@@ -3041,6 +3407,8 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
         <SettingsModal />
         <SaveLoadModal />
         <HowToPlayModal />
@@ -3355,6 +3723,8 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
         <SettingsModal />
         <SaveLoadModal />
         <HowToPlayModal />
@@ -3412,6 +3782,8 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
         <SettingsModal />
         <SaveLoadModal />
         <HowToPlayModal />

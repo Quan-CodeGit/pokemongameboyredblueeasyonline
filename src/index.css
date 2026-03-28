@@ -251,3 +251,34 @@ img[style*="pixelated"] {
 .rocket-flash {
   animation: rocketFlash 0.5s ease-in-out 3;
 }
+
+/* ── Badge System ────────────────────────────────── */
+@keyframes badgeGlow {
+  0%   { box-shadow: 0 0 16px #f8e71c, 0 0 32px #f8a71c, 12px 12px 0px #000; }
+  50%  { box-shadow: 0 0 32px #f8e71c, 0 0 64px #f8a71c, 0 0 96px #fff8, 12px 12px 0px #000; }
+  100% { box-shadow: 0 0 16px #f8e71c, 0 0 32px #f8a71c, 12px 12px 0px #000; }
+}
+
+@keyframes badgeCircleGlow {
+  0%   { box-shadow: 0 0 10px #f8e71c, 0 0 20px #f8e71c44; }
+  50%  { box-shadow: 0 0 24px #f8e71c, 0 0 48px #f8e71c88, 0 0 72px #f8e71c44; }
+  100% { box-shadow: 0 0 10px #f8e71c, 0 0 20px #f8e71c44; }
+}
+
+@keyframes badgeSlideIn {
+  0%   { transform: scale(0.4) rotate(-15deg); opacity: 0; }
+  70%  { transform: scale(1.1) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.badge-popup-glow {
+  animation: badgeGlow 1.6s ease-in-out infinite;
+}
+
+.badge-circle-glow {
+  animation: badgeCircleGlow 1.6s ease-in-out infinite;
+}
+
+.badge-slide-in {
+  animation: badgeSlideIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
