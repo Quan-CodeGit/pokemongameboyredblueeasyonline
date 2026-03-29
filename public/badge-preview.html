@@ -188,8 +188,8 @@
 
   /* Color palette */
   .palette {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(2, 26px);
     gap: 5px;
   }
 
@@ -198,6 +198,7 @@
     font-size: 5px;
     letter-spacing: 1px;
     margin-bottom: 2px;
+    grid-column: 1 / -1;
   }
 
   .palette-swatch {
@@ -316,7 +317,7 @@
 
 <!-- ── Pixel Editor ─────────────────────────────────────── -->
 <div class="pixel-editor">
-  <div class="editor-title">✏ PIXEL EDITOR — EVOLUTION BADGE</div>
+  <div class="editor-title" id="editorTitle">✏ PIXEL EDITOR — EVOLUTION BADGE</div>
 
   <div class="editor-row">
     <!-- Palette -->
@@ -636,28 +637,11 @@ BADGES.forEach(badge => {
   slot.appendChild(req);
   container.appendChild(slot);
 
-  // Open editor when clicking the evolution badge
-  if (badge.id === 'evolution') {
-    slot.addEventListener('click', (e) => {
-      e.stopPropagation();
-      document.getElementById('pixelGrid').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-    return; // skip toggle for evolution badge
-  }
-
-  // Click to toggle
-  slot.addEventListener('click', () => {
-    const id = slot.dataset.id;
-    if (earned.has(id)) {
-      earned.delete(id);
-      slot.classList.remove('earned');
-      slot.classList.add('locked');
-    } else {
-      earned.add(id);
-      slot.classList.add('earned');
-      slot.classList.remove('locked');
-    }
-    renderBadge(canvas, badge, earned.has(id));
+  // Click to open in editor
+  slot.addEventListener('click', (e) => {
+    e.stopPropagation();
+    loadBadgeIntoEditor(badge.id);
+    document.getElementById('pixelGrid').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 });
 
@@ -666,27 +650,39 @@ BADGES.forEach(badge => {
 // ─────────────────────────────────────────────────────
 
 const EDITOR_PALETTE = [
-  { val: 0,  hex: null,      label: '⌫',          title: 'Erase (transparent)' },
-  { val: 1,  hex: '#e84010', label: '',            title: 'Orange-red body'    },
-  { val: 2,  hex: '#2850b0', label: '',            title: 'Blue fins / tail'   },
-  { val: 3,  hex: '#150800', label: '',            title: 'Dark outline'       },
-  { val: 4,  hex: '#0a0a00', label: '',            title: 'Black eye'          },
-  { val: 5,  hex: '#f0d890', label: '',            title: 'Cream belly'        },
-  { val: 6,  hex: '#e8b800', label: '',            title: 'Yellow whisker'     },
-  { val: 7,  hex: '#f0f0f0', label: '',            title: 'Eye highlight'      },
+  { val: 0,  hex: null,      label: '⌫', title: 'Erase (transparent)' },
+  { val: 1,  hex: '#e84010', label: '',   title: 'Orange-red'  },
+  { val: 2,  hex: '#2850b0', label: '',   title: 'Blue'        },
+  { val: 3,  hex: '#150800', label: '',   title: 'Dark brown'  },
+  { val: 4,  hex: '#0a0a00', label: '',   title: 'Black'       },
+  { val: 5,  hex: '#f0d890', label: '',   title: 'Cream'       },
+  { val: 6,  hex: '#e8b800', label: '',   title: 'Yellow'      },
+  { val: 7,  hex: '#f0f0f0', label: '',   title: 'White'       },
+  { val: 8,  hex: '#20a840', label: '',   title: 'Green'       },
+  { val: 9,  hex: '#9040c8', label: '',   title: 'Purple'      },
+  { val: 10, hex: '#f870a0', label: '',   title: 'Pink'        },
+  { val: 11, hex: '#50d0f0', label: '',   title: 'Light blue'  },
+  { val: 12, hex: '#f87820', label: '',   title: 'Orange'      },
+  { val: 13, hex: '#888888', label: '',   title: 'Gray'        },
+  { val: 14, hex: '#186030', label: '',   title: 'Dark green'  },
+  { val: 15, hex: '#c04000', label: '',   title: 'Dark orange' },
 ];
 
 const EDITOR_BADGE_PALETTE = {};
 EDITOR_PALETTE.forEach(p => { if (p.hex) EDITOR_BADGE_PALETTE[p.val] = p.hex; });
 
-// 16×16 grid state — start blank
-let editorGrid = Array.from({ length: 16 }, () => new Array(16).fill(0));
+// Per-badge pixel storage — seed from existing badge data if available
+const badgeGrids = {};
+BADGES.forEach(b => {
+  if (b.pixels) {
+    badgeGrids[b.id] = b.pixels.map(row => [...row]);
+  } else {
+    badgeGrids[b.id] = Array.from({ length: 16 }, () => new Array(16).fill(0));
+  }
+});
 
-// Try to seed from existing evolution badge pixels if available
-const evoBadge = BADGES.find(b => b.id === 'evolution');
-if (evoBadge && evoBadge.pixels) {
-  editorGrid = evoBadge.pixels.map(row => [...row]);
-}
+let activeBadgeId = 'evolution';
+let editorGrid = badgeGrids[activeBadgeId];
 
 let activeColor = 1;   // currently selected palette value
 let isPainting  = false;
@@ -744,7 +740,7 @@ function paint(r, c) {
   editorGrid[r][c] = activeColor;
   cells[r][c].style.background = cellColor(activeColor);
   refreshEditorPreview();
-  refreshEvoBadge();
+  refreshActiveBadge();
 }
 
 // ── Live preview canvas ───────────────────────────────
@@ -767,27 +763,38 @@ function refreshEditorPreview() {
   previewCtx.fillRect(0, 0, 48, 16);
 }
 
-// ── Sync back to the badge in the case ───────────────
-function refreshEvoBadge() {
-  const slot   = document.querySelector('[data-id="evolution"]');
+// ── Sync back to the active badge in the case ────────
+function refreshActiveBadge() {
+  const slot = document.querySelector('[data-id="' + activeBadgeId + '"]');
   if (!slot) return;
   const canvas = slot.querySelector('canvas');
   if (!canvas) return;
-  const fakeBadge = {
-    pixels:  editorGrid,
-    palette: EDITOR_BADGE_PALETTE,
-  };
-  renderBadge(canvas, fakeBadge, earned.has('evolution'));
+  const fakeBadge = { pixels: editorGrid, palette: EDITOR_BADGE_PALETTE };
+  renderBadge(canvas, fakeBadge, true);
+}
+
+// ── Load a badge into the editor ─────────────────────
+function loadBadgeIntoEditor(id) {
+  activeBadgeId = id;
+  editorGrid = badgeGrids[id];
+  const badge = BADGES.find(b => b.id === id);
+  document.getElementById('editorTitle').textContent =
+    '✏ PIXEL EDITOR — ' + (badge ? badge.name.toUpperCase() : id.toUpperCase()) + ' BADGE';
+  for (let r = 0; r < 16; r++)
+    for (let c = 0; c < 16; c++)
+      cells[r][c].style.background = cellColor(editorGrid[r][c]);
+  refreshEditorPreview();
 }
 
 // ── Clear ─────────────────────────────────────────────
 function clearGrid() {
-  editorGrid = Array.from({ length: 16 }, () => new Array(16).fill(0));
+  badgeGrids[activeBadgeId] = Array.from({ length: 16 }, () => new Array(16).fill(0));
+  editorGrid = badgeGrids[activeBadgeId];
   for (let r = 0; r < 16; r++)
     for (let c = 0; c < 16; c++)
       cells[r][c].style.background = cellColor(0);
   refreshEditorPreview();
-  refreshEvoBadge();
+  refreshActiveBadge();
 }
 
 // ── Copy pixel data ───────────────────────────────────
@@ -803,7 +810,7 @@ function copyPixelData() {
 
 // Initial render
 refreshEditorPreview();
-refreshEvoBadge();
+refreshActiveBadge();
 </script>
 </body>
 </html>
