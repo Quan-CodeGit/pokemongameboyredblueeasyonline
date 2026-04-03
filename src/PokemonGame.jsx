@@ -302,7 +302,7 @@ const PokemonGame = () => {
         e.preventDefault();
       }
       // Play confirm sound on Enter or Space
-      if (e.key === 'Enter' || e.key === ' ') {
+      if (e.key === ' ') {
         if (!confirmSoundRef.current) {
           confirmSoundRef.current = new Audio('/sfx-confirm.mp3');
         }
