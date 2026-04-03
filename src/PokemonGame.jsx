@@ -27,7 +27,7 @@ const BADGE_DATA = [
     palette: { 1:'#e84010', 3:'#150800', 4:'#0a0a00', 7:'#f0f0f0' },
   },
   {
-    id: 'explorer', name: 'EXPLORER', description: 'Collect 8+ Pokémon types',
+    id: 'explorer', name: 'RAINBOW', description: 'Discover 6+ Pokémon types',
     pixels: [
       [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
       [4,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0],
@@ -190,6 +190,7 @@ const PokemonGame = () => {
   const introMusicRef = useRef(null);
   const audioCtxRef = useRef(null);
   const sfxCacheRef = useRef({});
+  const confirmSoundRef = useRef(null);
   const eeveeResolveRef = useRef(null);
   const [eeveeEvolveData, setEeveeEvolveData] = useState(null); // { pokemon, newExp }
   const [eeveeSelectedStone, setEeveeSelectedStone] = useState(null); // null | 'water' | 'thunder' | 'fire'
@@ -221,10 +222,12 @@ const PokemonGame = () => {
     if (availableTeam.length >= 5) awardBadge('catcher');
   }, [availableTeam.length, awardBadge]);
 
-  // EXPLORER: 8+ unique types across all caught Pokémon
+  // EXPLORER: 6+ unique types across all caught Pokémon (dual-type Pokémon count both types)
   useEffect(() => {
-    const types = new Set(pokedex.map(p => p.type).filter(Boolean));
-    if (types.size >= 8) awardBadge('explorer');
+    const types = new Set(
+      pokedex.flatMap(p => p.type ? p.type.split('/').map(t => t.trim()) : [])
+    );
+    if (types.size >= 6) awardBadge('explorer');
   }, [pokedex, awardBadge]);
 
   // EVOLUTION: Gyarados in the pokédex means Magikarp evolved
@@ -297,6 +300,15 @@ const PokemonGame = () => {
       // Prevent default for arrow keys and enter to avoid page scrolling
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(e.key)) {
         e.preventDefault();
+      }
+      // Play confirm sound on Enter or Space
+      if (e.key === 'Enter' || e.key === ' ') {
+        if (!confirmSoundRef.current) {
+          confirmSoundRef.current = new Audio('/sfx-confirm.mp3');
+        }
+        const snd = confirmSoundRef.current.cloneNode();
+        snd.volume = 0.5;
+        snd.play().catch(() => {});
       }
 
       // Badge popup: highest priority — dismiss with any confirm key
@@ -766,6 +778,11 @@ const PokemonGame = () => {
     const badge = BADGE_DATA.find(b => b.id === badgePopupQueue[0]);
     if (!badge) return null;
     const dismiss = () => setBadgePopupQueue(prev => prev.slice(1));
+    useEffect(() => {
+      const snd = new Audio('/sfx-badge.mp3');
+      snd.volume = 0.7;
+      snd.play().catch(() => {});
+    }, [badgePopupQueue[0]]);
     return (
       <div
         className="fixed inset-0 z-[200] flex items-center justify-center"
