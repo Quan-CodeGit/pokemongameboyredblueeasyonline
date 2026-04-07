@@ -3751,7 +3751,7 @@ const PokemonGame = () => {
     if (eeveeEvolved && selectedEvolution) {
       return (
         <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
-          <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
+          <div className={`gameboy-console ${getContainerClass()} w-full mx-auto`}>
             <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor: '#f0f0e8', padding: '20px'}}>
               <h2 className="retro-text font-bold text-lg mb-2" style={{color: '#1a1a2e'}}>Congratulations!</h2>
               <div className="flex justify-center mb-3" style={{
@@ -3782,7 +3782,7 @@ const PokemonGame = () => {
         <SettingsButton />
         <SettingsModal />
         <SaveLoadModal />
-        <div className={`gameboy-console ${getContainerClass()} mx-auto`}>
+        <div className={`gameboy-console ${getContainerClass()} w-full mx-auto`}>
           <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor: '#f0f0e8', padding: '16px'}}>
 
             <h2 className="retro-text font-bold text-lg mb-1" style={{color: '#1a1a2e'}}>WHAT?!</h2>
@@ -3851,8 +3851,8 @@ const PokemonGame = () => {
                       alt={stone.label}
                       style={{
                         imageRendering: 'pixelated', width: '40px', height: '40px', objectFit: 'contain',
-                        // Remove white bg visually for thunder stone (JPEG with white bg)
-                        mixBlendMode: stone.key === 'thunder' ? 'multiply' : 'normal'
+                        // Remove dark bg visually for thunder stone (JPEG with dark bg)
+                        mixBlendMode: stone.key === 'thunder' ? 'screen' : 'normal'
                       }}
                     />
                     <span className="retro-text mt-1" style={{ fontSize: '9px', color: '#111', textAlign: 'center' }}>
