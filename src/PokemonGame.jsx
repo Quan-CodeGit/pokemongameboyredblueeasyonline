@@ -199,9 +199,10 @@ const PokemonGame = () => {
 
   // ── Pokémart / Bag ──────────────────────────────────
   const [playerMoney, setPlayerMoney] = useState(0);
-  const [bag, setBag] = useState({ greatBalls: 0 });
+  const [bag, setBag] = useState({ greatBalls: 0, potions: 0 });
   const [showPokemart, setShowPokemart] = useState(false);
   const [pokemartQty, setPokemartQty] = useState(1);
+  const [pokemartPotionQty, setPokemartPotionQty] = useState(1);
   const [showBag, setShowBag] = useState(false);
   const [bagSelectedIndex, setBagSelectedIndex] = useState(0);
 
@@ -486,21 +487,24 @@ const PokemonGame = () => {
 
       // Bag open — arrow nav + Esc to close
       if (showBag) {
-        const bagItems = [
-          { label: 'Potion', disabled: potionUsed },
-          ...(bag.greatBalls > 0 ? [{ label: 'Great Ball' }] : []),
+        const bagSlots = [
+          { id: 'free-potion' },
+          ...(bag.potions > 0 ? [{ id: 'bag-potion' }] : []),
+          ...(bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
         ];
         if (e.key === 'Escape') { setShowBag(false); return; }
         if (e.key === 'ArrowUp') {
           setBagSelectedIndex(prev => Math.max(0, prev - 1)); return;
         }
         if (e.key === 'ArrowDown') {
-          setBagSelectedIndex(prev => Math.min(bagItems.length - 1, prev + 1)); return;
+          setBagSelectedIndex(prev => Math.min(bagSlots.length - 1, prev + 1)); return;
         }
         if (e.key === 'Enter') {
-          const idx = bagSelectedIndex;
-          if (idx === 0 && !potionUsed) { usePotion(); setShowBag(false); }
-          else if (bag.greatBalls > 0 && idx === (potionUsed ? 0 : 1)) { catchPokemon(true); }
+          const slot = bagSlots[bagSelectedIndex];
+          if (!slot) return;
+          if (slot.id === 'free-potion' && !potionUsed) { usePotion(); setShowBag(false); }
+          else if (slot.id === 'bag-potion') { useBagPotion(); }
+          else if (slot.id === 'great-ball') { catchPokemon(true); }
           return;
         }
         return;
@@ -809,59 +813,81 @@ const PokemonGame = () => {
   // ── Pokémart modal ──────────────────────────────────────────────────────────
   const PokemartModal = () => {
     if (!showPokemart) return null;
-    const price = 200;
-    const total = pokemartQty * price;
-    const canAfford = playerMoney >= total;
-    const handleBuy = () => {
-      if (!canAfford) return;
-      setPlayerMoney(prev => prev - total);
+    const gbPrice = 200;
+    const potPrice = 100;
+    const gbTotal = pokemartQty * gbPrice;
+    const potTotal = pokemartPotionQty * potPrice;
+    const canAffordGb = playerMoney >= gbTotal;
+    const canAffordPot = playerMoney >= potTotal;
+    const handleBuyGb = () => {
+      if (!canAffordGb) return;
+      setPlayerMoney(prev => prev - gbTotal);
       setBag(prev => ({ ...prev, greatBalls: prev.greatBalls + pokemartQty }));
       setPokemartQty(1);
     };
+    const handleBuyPot = () => {
+      if (!canAffordPot) return;
+      setPlayerMoney(prev => prev - potTotal);
+      setBag(prev => ({ ...prev, potions: prev.potions + pokemartPotionQty }));
+      setPokemartPotionQty(1);
+    };
+
+    const MartItem = ({ img, name, desc, price, qty, setQty, canAfford, onBuy, total }) => (
+      <div className="border-4 border-black mb-3" style={{ backgroundColor: '#fff' }}>
+        <div className="flex gap-3 items-center p-3 border-b-2 border-black">
+          <img src={img} alt={name} style={{ width: 40, height: 40, imageRendering: 'pixelated' }} />
+          <div className="flex-1">
+            <div className="retro-text font-bold text-xs" style={{ color: '#000' }}>{name}</div>
+            <div className="retro-text" style={{ fontSize: 8, color: '#555' }}>{desc}</div>
+          </div>
+          <div className="retro-text font-bold text-xs" style={{ color: '#dc2626' }}>${price}</div>
+        </div>
+        <div className="flex items-center gap-2 p-2 justify-between">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setQty(q => Math.max(1, q - 1))}
+              className="border-2 border-black w-7 h-7 font-bold retro-text hover:scale-105 transition-all"
+              style={{ backgroundColor: '#fbbf24', fontSize: 14 }}>−</button>
+            <span className="retro-text font-bold w-6 text-center" style={{ color: '#000', fontSize: 12 }}>{qty}</span>
+            <button onClick={() => setQty(q => Math.min(99, q + 1))}
+              className="border-2 border-black w-7 h-7 font-bold retro-text hover:scale-105 transition-all"
+              style={{ backgroundColor: '#fbbf24', fontSize: 14 }}>+</button>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="retro-text font-bold" style={{ fontSize: 9, color: canAfford ? '#15803d' : '#dc2626' }}>${total}</span>
+            <button onClick={onBuy} disabled={!canAfford}
+              className="border-2 border-black px-3 py-1 font-bold retro-text transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ backgroundColor: canAfford ? '#22c55e' : '#9ca3af', color: '#fff', fontSize: 9, boxShadow: canAfford ? '2px 2px 0px #000' : 'none' }}>
+              BUY
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
     return (
       <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.92)' }}>
-        <div className="border-4 border-black p-6 w-80" style={{ backgroundColor: '#fff', boxShadow: '6px 6px 0px #000', maxWidth: '90vw' }}>
+        <div className="border-4 border-black p-5 w-80" style={{ backgroundColor: '#f9fafb', boxShadow: '6px 6px 0px #000', maxWidth: '90vw' }}>
           {/* Header */}
           <div className="text-center mb-4 border-b-4 border-black pb-3">
             <div className="retro-text font-bold text-lg" style={{ color: '#2563eb' }}>🏪 POKE MART</div>
             <div className="retro-text text-xs mt-1" style={{ color: '#555' }}>Welcome, trainer!</div>
-            <div className="retro-text text-xs font-bold mt-1" style={{ color: '#15803d' }}>💰 ${playerMoney}</div>
+            <div className="retro-text text-xs font-bold mt-1" style={{ color: '#15803d' }}>Balance: ${playerMoney}</div>
           </div>
-          {/* Great Ball item */}
-          <div className="border-4 border-black p-3 mb-4 flex gap-3 items-center" style={{ backgroundColor: '#eff6ff' }}>
-            <img src="/great-ball.png" alt="Great Ball" style={{ width: 48, height: 48, imageRendering: 'pixelated' }} />
-            <div className="flex-1">
-              <div className="retro-text font-bold text-sm" style={{ color: '#000' }}>GREAT BALL</div>
-              <div className="retro-text text-xs" style={{ color: '#555' }}>1.5× catch rate</div>
-              <div className="retro-text text-xs font-bold mt-1" style={{ color: '#dc2626' }}>${price} each</div>
-            </div>
-          </div>
-          {/* Quantity */}
-          <div className="flex items-center gap-3 mb-3 justify-center">
-            <button onClick={() => setPokemartQty(q => Math.max(1, q - 1))}
-              className="border-4 border-black w-8 h-8 font-bold retro-text hover:scale-105 transition-all"
-              style={{ backgroundColor: '#fbbf24' }}>−</button>
-            <span className="retro-text font-bold text-lg w-8 text-center" style={{ color: '#000' }}>{pokemartQty}</span>
-            <button onClick={() => setPokemartQty(q => Math.min(99, q + 1))}
-              className="border-4 border-black w-8 h-8 font-bold retro-text hover:scale-105 transition-all"
-              style={{ backgroundColor: '#fbbf24' }}>+</button>
-          </div>
-          <div className="retro-text text-xs text-center mb-4 font-bold" style={{ color: canAfford ? '#15803d' : '#dc2626' }}>
-            Total: ${total} {!canAfford && '— Not enough money!'}
-          </div>
-          {/* Buttons */}
-          <div className="flex flex-col gap-2">
-            <button onClick={handleBuy} disabled={!canAfford}
-              className="w-full border-4 border-black py-2 font-bold retro-text transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ backgroundColor: canAfford ? '#22c55e' : '#9ca3af', color: '#000', boxShadow: canAfford ? '3px 3px 0px #000' : 'none' }}>
-              BUY ×{pokemartQty}
-            </button>
-            <button onClick={startNewBattle}
-              className="w-full border-4 border-black py-2 font-bold retro-text hover:scale-105 transition-all"
-              style={{ backgroundColor: '#fbbf24', color: '#000', boxShadow: '3px 3px 0px #000' }}>
-              LEAVE MART
-            </button>
-          </div>
+          <MartItem
+            img="/potion.png" name="POTION" desc="Full heal (extra use)"
+            price={potPrice} qty={pokemartPotionQty} setQty={setPokemartPotionQty}
+            canAfford={canAffordPot} onBuy={handleBuyPot} total={potTotal}
+          />
+          <MartItem
+            img="/great-ball.png" name="GREAT BALL" desc="1.5× catch rate"
+            price={gbPrice} qty={pokemartQty} setQty={setPokemartQty}
+            canAfford={canAffordGb} onBuy={handleBuyGb} total={gbTotal}
+          />
+          <button onClick={startNewBattle}
+            className="w-full border-4 border-black py-2 font-bold retro-text hover:scale-105 transition-all"
+            style={{ backgroundColor: '#fbbf24', color: '#000', boxShadow: '3px 3px 0px #000' }}>
+            LEAVE MART
+          </button>
         </div>
       </div>
     );
@@ -1366,7 +1392,7 @@ const PokemonGame = () => {
       setDifficulty(data.diff || 'medium');
       setPotionUsed(data.potion || false);
       setPlayerMoney(data.money || 0);
-      setBag(data.bag || { greatBalls: 0 });
+      setBag(data.bag ? { greatBalls: 0, potions: 0, ...data.bag } : { greatBalls: 0, potions: 0 });
       // Restore badges — rebuild ref so awardBadge dedup still works
       const loadedBadges = data.badges || [];
       earnedBadgeSetRef.current = new Set(loadedBadges);
@@ -2714,6 +2740,21 @@ const PokemonGame = () => {
     setTimeout(enemyAttack, 1500);
   };
 
+  const useBagPotion = () => {
+    if (!isPlayerTurn || gameState !== 'battle' || bag.potions <= 0) return;
+    const healAmount = playerPokemon.maxHp - playerPokemon.hp;
+    setPlayerPokemon(prev => ({ ...prev, hp: prev.maxHp }));
+    setAvailableTeam(prev => prev.map(p =>
+      p.name === playerPokemon.name ? { ...p, hp: p.maxHp } : p
+    ));
+    setBag(prev => ({ ...prev, potions: prev.potions - 1 }));
+    setShowBag(false);
+    addLog(`Used Bag Potion! Restored ${healAmount} HP!`);
+    playSound('heal');
+    setIsPlayerTurn(false);
+    setTimeout(enemyAttack, 1500);
+  };
+
   const catchPokemon = (useGreatBall = false) => {
     if (!isPlayerTurn || gameState !== 'battle') return;
     if (useGreatBall && bag.greatBalls <= 0) return;
@@ -3428,44 +3469,69 @@ const PokemonGame = () => {
                       boxShadow: selectedActionIndex === 4 && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none')
                     }}
                   >
-                    BAG {bag.greatBalls > 0 && `(${bag.greatBalls})`}
+                    BAG {(bag.greatBalls + bag.potions) > 0 && `(${bag.greatBalls + bag.potions})`}
                   </button>
                   {/* Bag dropdown — z-[30] so modals (z-50) still appear on top */}
-                  {showBag && isPlayerTurn && (
-                    <div className="absolute bottom-full left-0 mb-1 w-48 border-4 border-black z-[30]"
+                  {showBag && isPlayerTurn && (() => {
+                    // Build ordered item list for keyboard nav
+                    const bagSlots = [
+                      { id: 'free-potion' },
+                      ...(bag.potions > 0 ? [{ id: 'bag-potion' }] : []),
+                      ...(bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
+                    ];
+                    return (
+                    <div className="absolute bottom-full left-0 mb-1 w-52 border-4 border-black z-[30]"
                       style={{ backgroundColor: '#fff', boxShadow: '4px 4px 0px #000' }}>
                       <div className="retro-text text-xs font-bold p-1 border-b-2 border-black flex justify-between items-center" style={{ backgroundColor: '#22c55e', color: '#000' }}>
                         <span>BAG ITEMS</span>
                         <span style={{ fontSize: 7, opacity: 0.7 }}>↑↓ ESC</span>
                       </div>
-                      {/* Potion — highlighted when bagSelectedIndex === 0 */}
-                      <button onClick={() => { usePotion(); setShowBag(false); }}
-                        disabled={potionUsed}
-                        className={`w-full text-left p-2 border-b-2 border-black retro-text text-xs font-bold transition-all ${potionUsed ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-80'}`}
-                        style={{
-                          backgroundColor: bagSelectedIndex === 0 ? '#16a34a' : (potionUsed ? '#9ca3af' : '#22c55e'),
-                          color: '#000',
-                          outline: bagSelectedIndex === 0 ? '2px solid #000' : 'none',
-                        }}>
-                        {bagSelectedIndex === 0 ? '▶ ' : ''}💊 POTION {potionUsed ? '(USED)' : '(×∞)'}
-                      </button>
-                      {/* Great Ball — highlighted when bagSelectedIndex === 1 (or 0 if potion is only item) */}
-                      {bag.greatBalls > 0 ? (
-                        <button onClick={() => catchPokemon(true)}
-                          className="w-full text-left p-2 retro-text text-xs font-bold hover:opacity-80 transition-all flex items-center gap-2"
+                      {/* Free Potion */}
+                      {(() => { const idx = bagSlots.findIndex(s => s.id === 'free-potion'); return (
+                        <button onClick={() => { usePotion(); setShowBag(false); }}
+                          disabled={potionUsed}
+                          className={`w-full text-left p-2 border-b-2 border-black retro-text text-xs font-bold transition-all ${potionUsed ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-80'}`}
                           style={{
-                            backgroundColor: bagSelectedIndex === 1 ? '#bfdbfe' : '#eff6ff',
-                            color: '#000',
-                            outline: bagSelectedIndex === 1 ? '2px solid #000' : 'none',
+                            backgroundColor: bagSelectedIndex === idx ? '#16a34a' : (potionUsed ? '#9ca3af' : '#22c55e'),
+                            color: '#000', outline: bagSelectedIndex === idx ? '2px solid #000' : 'none',
                           }}>
-                          {bagSelectedIndex === 1 ? '▶ ' : ''}<img src="/great-ball.png" alt="Great Ball" style={{ width: 20, height: 20, imageRendering: 'pixelated' }} />
+                          {bagSelectedIndex === idx ? '▶ ' : ''}
+                          <img src="/potion.png" alt="Potion" style={{ width: 16, height: 16, imageRendering: 'pixelated', display: 'inline', marginRight: 4 }} />
+                          POTION {potionUsed ? '(USED)' : '(×∞)'}
+                        </button>
+                      );})()}
+                      {/* Bag Potions (from mart) */}
+                      {bag.potions > 0 && (() => { const idx = bagSlots.findIndex(s => s.id === 'bag-potion'); return (
+                        <button onClick={() => useBagPotion()}
+                          className="w-full text-left p-2 border-b-2 border-black retro-text text-xs font-bold hover:opacity-80 transition-all flex items-center gap-1"
+                          style={{
+                            backgroundColor: bagSelectedIndex === idx ? '#bbf7d0' : '#f0fdf4',
+                            color: '#000', outline: bagSelectedIndex === idx ? '2px solid #000' : 'none',
+                          }}>
+                          {bagSelectedIndex === idx ? '▶ ' : ''}
+                          <img src="/potion.png" alt="Potion" style={{ width: 16, height: 16, imageRendering: 'pixelated' }} />
+                          POTION ×{bag.potions}
+                        </button>
+                      );})()}
+                      {/* Great Ball */}
+                      {bag.greatBalls > 0 && (() => { const idx = bagSlots.findIndex(s => s.id === 'great-ball'); return (
+                        <button onClick={() => catchPokemon(true)}
+                          className="w-full text-left p-2 retro-text text-xs font-bold hover:opacity-80 transition-all flex items-center gap-1"
+                          style={{
+                            backgroundColor: bagSelectedIndex === idx ? '#bfdbfe' : '#eff6ff',
+                            color: '#000', outline: bagSelectedIndex === idx ? '2px solid #000' : 'none',
+                          }}>
+                          {bagSelectedIndex === idx ? '▶ ' : ''}
+                          <img src="/great-ball.png" alt="Great Ball" style={{ width: 20, height: 20, imageRendering: 'pixelated' }} />
                           GREAT BALL ×{bag.greatBalls}
                         </button>
-                      ) : (
-                        <div className="p-2 retro-text text-xs opacity-40" style={{ color: '#000' }}>No Great Balls</div>
+                      );})()}
+                      {bag.potions === 0 && bag.greatBalls === 0 && (
+                        <div className="p-2 retro-text text-xs opacity-40" style={{ color: '#000' }}>No items in bag</div>
                       )}
                     </div>
-                  )}
+                    );
+                  })()}
                 </div>
 
                 <button
