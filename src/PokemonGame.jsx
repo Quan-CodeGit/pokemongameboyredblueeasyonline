@@ -3395,11 +3395,11 @@ const PokemonGame = () => {
                     } ${selectedActionIndex === 4 && isPlayerTurn ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
                     style={{
                       backgroundColor: isPlayerTurn && !teleportSwitchPending ? '#22c55e' : '#9ca3af',
-                      color: '#000',
+                      color: '#fff',
                       boxShadow: selectedActionIndex === 4 && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none')
                     }}
                   >
-                    🎒 BAG {bag.greatBalls > 0 && `(${bag.greatBalls})`}
+                    BAG {bag.greatBalls > 0 && `(${bag.greatBalls})`}
                   </button>
                   {/* Bag dropdown */}
                   {showBag && isPlayerTurn && (
@@ -3430,7 +3430,7 @@ const PokemonGame = () => {
 
                 <button
                   data-action-index={5}
-                  onClick={catchPokemon}
+                  onClick={() => catchPokemon()}
                   disabled={!isPlayerTurn || teleportSwitchPending}
                   className={`border-4 py-2 px-3 font-bold text-xs transition-all retro-text ${
                     isPlayerTurn ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
@@ -3903,9 +3903,9 @@ const PokemonGame = () => {
                 WINS: {battlesWon}
               </p>
             </div>
-            <div className="border-4 border-black p-3 mb-6 flex justify-between items-center" style={{backgroundColor: '#dcfce7'}}>
+            <div className="border-4 border-black p-3 mb-6 flex flex-col items-center gap-1" style={{backgroundColor: '#dcfce7'}}>
               <p className="text-sm font-bold retro-text" style={{color: '#15803d'}}>
-                💰 ${playerMoney}
+                Balance: ${playerMoney}
               </p>
               <p className="text-xs retro-text" style={{color: '#15803d'}}>
                 +${getMoneyReward(wildPokemon)} earned!
