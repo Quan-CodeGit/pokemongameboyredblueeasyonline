@@ -196,6 +196,14 @@ const PokemonGame = () => {
   const [eeveeSelectedStone, setEeveeSelectedStone] = useState(null); // null | 'water' | 'thunder' | 'fire'
   const [eeveeEvolving, setEeveeEvolving] = useState(false);
   const [eeveeEvolved, setEeveeEvolved] = useState(false);
+
+  // ── Pokémart / Bag ──────────────────────────────────
+  const [playerMoney, setPlayerMoney] = useState(0);
+  const [bag, setBag] = useState({ greatBalls: 0 });
+  const [showPokemart, setShowPokemart] = useState(false);
+  const [pokemartQty, setPokemartQty] = useState(1);
+  const [showBag, setShowBag] = useState(false);
+
   const nextRocketBattle = useRef(Math.floor(Math.random() * 4) + 7); // first rocket at battle 7-10
   const totalBattles = useRef(0);
 
@@ -310,6 +318,9 @@ const PokemonGame = () => {
         snd.volume = 0.5;
         snd.play().catch(() => {});
       }
+
+      // Pokémart open — block all keys (player uses buttons)
+      if (showPokemart) return;
 
       // Badge popup: highest priority — dismiss with any confirm key
       if (badgePopupQueue.length > 0) {
@@ -769,6 +780,67 @@ const PokemonGame = () => {
         width={size} height={size}
         style={{ width: size, height: size, imageRendering: 'pixelated' }}
       />
+    );
+  };
+
+  // ── Pokémart modal ──────────────────────────────────────────────────────────
+  const PokemartModal = () => {
+    if (!showPokemart) return null;
+    const price = 200;
+    const total = pokemartQty * price;
+    const canAfford = playerMoney >= total;
+    const handleBuy = () => {
+      if (!canAfford) return;
+      setPlayerMoney(prev => prev - total);
+      setBag(prev => ({ ...prev, greatBalls: prev.greatBalls + pokemartQty }));
+      setPokemartQty(1);
+    };
+    return (
+      <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.92)' }}>
+        <div className="border-4 border-black p-6 w-80" style={{ backgroundColor: '#fff', boxShadow: '6px 6px 0px #000', maxWidth: '90vw' }}>
+          {/* Header */}
+          <div className="text-center mb-4 border-b-4 border-black pb-3">
+            <div className="retro-text font-bold text-lg" style={{ color: '#2563eb' }}>🏪 POKE MART</div>
+            <div className="retro-text text-xs mt-1" style={{ color: '#555' }}>Welcome, trainer!</div>
+            <div className="retro-text text-xs font-bold mt-1" style={{ color: '#15803d' }}>💰 ${playerMoney}</div>
+          </div>
+          {/* Great Ball item */}
+          <div className="border-4 border-black p-3 mb-4 flex gap-3 items-center" style={{ backgroundColor: '#eff6ff' }}>
+            <img src="/great-ball.png" alt="Great Ball" style={{ width: 48, height: 48, imageRendering: 'pixelated' }} />
+            <div className="flex-1">
+              <div className="retro-text font-bold text-sm" style={{ color: '#000' }}>GREAT BALL</div>
+              <div className="retro-text text-xs" style={{ color: '#555' }}>1.5× catch rate</div>
+              <div className="retro-text text-xs font-bold mt-1" style={{ color: '#dc2626' }}>${price} each</div>
+            </div>
+          </div>
+          {/* Quantity */}
+          <div className="flex items-center gap-3 mb-3 justify-center">
+            <button onClick={() => setPokemartQty(q => Math.max(1, q - 1))}
+              className="border-4 border-black w-8 h-8 font-bold retro-text hover:scale-105 transition-all"
+              style={{ backgroundColor: '#fbbf24' }}>−</button>
+            <span className="retro-text font-bold text-lg w-8 text-center" style={{ color: '#000' }}>{pokemartQty}</span>
+            <button onClick={() => setPokemartQty(q => Math.min(99, q + 1))}
+              className="border-4 border-black w-8 h-8 font-bold retro-text hover:scale-105 transition-all"
+              style={{ backgroundColor: '#fbbf24' }}>+</button>
+          </div>
+          <div className="retro-text text-xs text-center mb-4 font-bold" style={{ color: canAfford ? '#15803d' : '#dc2626' }}>
+            Total: ${total} {!canAfford && '— Not enough money!'}
+          </div>
+          {/* Buttons */}
+          <div className="flex flex-col gap-2">
+            <button onClick={handleBuy} disabled={!canAfford}
+              className="w-full border-4 border-black py-2 font-bold retro-text transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ backgroundColor: canAfford ? '#22c55e' : '#9ca3af', color: '#000', boxShadow: canAfford ? '3px 3px 0px #000' : 'none' }}>
+              BUY ×{pokemartQty}
+            </button>
+            <button onClick={startNewBattle}
+              className="w-full border-4 border-black py-2 font-bold retro-text hover:scale-105 transition-all"
+              style={{ backgroundColor: '#fbbf24', color: '#000', boxShadow: '3px 3px 0px #000' }}>
+              LEAVE MART
+            </button>
+          </div>
+        </div>
+      </div>
     );
   };
 
@@ -1242,6 +1314,8 @@ const PokemonGame = () => {
       diff: difficulty,
       potion: potionUsed,
       badges: earnedBadges,
+      money: playerMoney,
+      bag: bag,
     };
     try {
       return btoa(unescape(encodeURIComponent(JSON.stringify(saveData))));
@@ -1263,6 +1337,8 @@ const PokemonGame = () => {
       setBattlesWon(data.won || 0);
       setDifficulty(data.diff || 'medium');
       setPotionUsed(data.potion || false);
+      setPlayerMoney(data.money || 0);
+      setBag(data.bag || { greatBalls: 0 });
       // Restore badges — rebuild ref so awardBadge dedup still works
       const loadedBadges = data.badges || [];
       earnedBadgeSetRef.current = new Set(loadedBadges);
@@ -1642,6 +1718,16 @@ const PokemonGame = () => {
       default: // medium
         return { veryCommon: 35, common: 30, uncommon: 20, rare: 10, veryRare: 5 };
     }
+  };
+
+  // Money reward based on defeated Pokemon rarity (attack-stat tiers)
+  const getMoneyReward = (pokemon) => {
+    if (!pokemon) return 50;
+    const atk = pokemon.attack;
+    if (atk <= 50) return 50;   // Very Common + Common
+    if (atk <= 70) return 75;   // Uncommon
+    if (atk <= 85) return 100;  // Rare
+    return 200;                  // Very Rare
   };
 
   // Difficulty-based catch rate multiplier
@@ -2391,6 +2477,7 @@ const PokemonGame = () => {
           setTimeout(() => {
             playSound('victory');
             setBattlesWon(prev => prev + 1);
+            setPlayerMoney(prev => prev + getMoneyReward(wildPokemon));
             setTimeout(() => setGameState('victory'), 1500);
           }, 1200);
         }, 300);
@@ -2408,6 +2495,7 @@ const PokemonGame = () => {
             addLog(`${wildPokemon.name} fainted from poison!`);
             playSound('victory');
             setBattlesWon(prev => prev + 1);
+            setPlayerMoney(prev => prev + getMoneyReward(wildPokemon));
             setTimeout(() => setGameState('victory'), 1500);
           }, 500);
           return;
@@ -2597,12 +2685,18 @@ const PokemonGame = () => {
     setTimeout(enemyAttack, 1500);
   };
 
-  const catchPokemon = () => {
+  const catchPokemon = (useGreatBall = false) => {
     if (!isPlayerTurn || gameState !== 'battle') return;
+    if (useGreatBall && bag.greatBalls <= 0) return;
+
+    if (useGreatBall) {
+      setBag(prev => ({ ...prev, greatBalls: prev.greatBalls - 1 }));
+      setShowBag(false);
+    }
 
     const catchRate = wildPokemon.hp / wildPokemon.maxHp;
     const catchChance = Math.random();
-    const catchMultiplier = getCatchRateMultiplier();
+    const catchMultiplier = getCatchRateMultiplier() * (useGreatBall ? 1.5 : 1.0);
 
     // Lower HP = easier to catch. Difficulty affects the threshold.
     // Base: catchChance > catchRate * 0.7 means ~30% base catch at full HP
@@ -2685,9 +2779,9 @@ const PokemonGame = () => {
     setTimeout(enemyAttack, 1500);
   };
 
-  const nextBattle = () => {
-    totalBattles.current += 1;
-
+  const startNewBattle = () => {
+    setShowPokemart(false);
+    setShowBag(false);
     // Check if Team Rocket should appear (every 7-10 battles, only if player has bench Pokemon and enabled)
     if (teamRocketEnabled && totalBattles.current >= nextRocketBattle.current && availableTeam.length > 1) {
       // Restore/heal before rocket event
@@ -2730,7 +2824,7 @@ const PokemonGame = () => {
     if (shouldSpawnMewtwo.current) {
       playSound('mewtwo-warning');
       setGameState('mewtwo-intro');
-      setPotionUsed(false);
+      setPotionUsed(false); setShowBag(false);
       setBattleLog([]);
       return;
     }
@@ -2755,7 +2849,7 @@ const PokemonGame = () => {
       setBattleLog([`A wild ${wild.name} appeared!`]);
       setGameState('battle');
       setIsPlayerTurn(true);
-      setPotionUsed(false);
+      setPotionUsed(false); setShowBag(false);
       return;
     }
 
@@ -2767,7 +2861,7 @@ const PokemonGame = () => {
       setBattleLog([`A wild Mew appeared!`]);
       setGameState('battle');
       setIsPlayerTurn(true);
-      setPotionUsed(false);
+      setPotionUsed(false); setShowBag(false);
       return;
     }
     // Uses weighted random: weaker Pokemon appear more often, stronger Pokemon are rare
@@ -2776,7 +2870,16 @@ const PokemonGame = () => {
     setBattleLog([`A wild ${wild.name} appeared!`]);
     setGameState('battle');
     setIsPlayerTurn(true);
-    setPotionUsed(false);
+    setPotionUsed(false); setShowBag(false);
+  };
+
+  const nextBattle = () => {
+    totalBattles.current += 1;
+    if (totalBattles.current % 5 === 0) {
+      setShowPokemart(true);
+      return; // startNewBattle() called by mart Continue button
+    }
+    startNewBattle();
   };
 
   // Team Rocket steal event
@@ -3148,6 +3251,7 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
+        <PokemartModal />
         <BadgeAcquiredPopup />
         <BadgeCaseModal />
         <SettingsModal />
@@ -3280,21 +3384,49 @@ const PokemonGame = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <button
-                  data-action-index={4}
-                  onClick={usePotion}
-                  disabled={!isPlayerTurn || potionUsed || teleportSwitchPending}
-                  className={`border-4 py-2 px-3 font-bold text-xs transition-all retro-text ${
-                    isPlayerTurn && !potionUsed ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
-                  } ${selectedActionIndex === 4 && isPlayerTurn ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
-                  style={{
-                    backgroundColor: isPlayerTurn && !potionUsed ? '#22c55e' : '#9ca3af',
-                    color: '#000',
-                    boxShadow: selectedActionIndex === 4 && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn && !potionUsed ? '3px 3px 0px #000' : 'none')
-                  }}
-                >
-                  POTION {potionUsed && '(X)'}
-                </button>
+                {/* BAG button with dropdown */}
+                <div className="relative">
+                  <button
+                    data-action-index={4}
+                    onClick={() => isPlayerTurn && !teleportSwitchPending && setShowBag(b => !b)}
+                    disabled={!isPlayerTurn || teleportSwitchPending}
+                    className={`w-full border-4 py-2 px-3 font-bold text-xs transition-all retro-text ${
+                      isPlayerTurn && !teleportSwitchPending ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
+                    } ${selectedActionIndex === 4 && isPlayerTurn ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
+                    style={{
+                      backgroundColor: isPlayerTurn && !teleportSwitchPending ? '#a855f7' : '#9ca3af',
+                      color: '#fff',
+                      boxShadow: selectedActionIndex === 4 && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none')
+                    }}
+                  >
+                    🎒 BAG {bag.greatBalls > 0 && `(${bag.greatBalls})`}
+                  </button>
+                  {/* Bag dropdown */}
+                  {showBag && isPlayerTurn && (
+                    <div className="absolute bottom-full left-0 mb-1 w-48 border-4 border-black z-50"
+                      style={{ backgroundColor: '#fff', boxShadow: '4px 4px 0px #000' }}>
+                      <div className="retro-text text-xs font-bold p-1 border-b-2 border-black" style={{ backgroundColor: '#a855f7', color: '#fff' }}>BAG ITEMS</div>
+                      {/* Potion */}
+                      <button onClick={() => { usePotion(); setShowBag(false); }}
+                        disabled={potionUsed}
+                        className={`w-full text-left p-2 border-b-2 border-black retro-text text-xs font-bold transition-all ${potionUsed ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-80'}`}
+                        style={{ backgroundColor: potionUsed ? '#9ca3af' : '#22c55e', color: '#000' }}>
+                        💊 POTION {potionUsed ? '(USED)' : '(×∞)'}
+                      </button>
+                      {/* Great Ball */}
+                      {bag.greatBalls > 0 ? (
+                        <button onClick={() => catchPokemon(true)}
+                          className="w-full text-left p-2 retro-text text-xs font-bold hover:opacity-80 transition-all flex items-center gap-2"
+                          style={{ backgroundColor: '#eff6ff', color: '#000' }}>
+                          <img src="/great-ball.png" alt="Great Ball" style={{ width: 20, height: 20, imageRendering: 'pixelated' }} />
+                          GREAT BALL ×{bag.greatBalls}
+                        </button>
+                      ) : (
+                        <div className="p-2 retro-text text-xs opacity-40" style={{ color: '#000' }}>No Great Balls</div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 <button
                   data-action-index={5}
@@ -3740,6 +3872,7 @@ const PokemonGame = () => {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
+        <PokemartModal />
         <BadgeAcquiredPopup />
         <BadgeCaseModal />
         <SettingsModal />
@@ -3765,9 +3898,17 @@ const PokemonGame = () => {
                 EXP: {playerPokemon.exp || 0}
               </p>
             </div>
-            <div className="border-4 border-black p-3 mb-6" style={{backgroundColor: '#fecaca'}}>
+            <div className="border-4 border-black p-3 mb-2" style={{backgroundColor: '#fecaca'}}>
               <p className="text-sm font-bold retro-text" style={{color: '#000'}}>
                 WINS: {battlesWon}
+              </p>
+            </div>
+            <div className="border-4 border-black p-3 mb-6 flex justify-between items-center" style={{backgroundColor: '#dcfce7'}}>
+              <p className="text-sm font-bold retro-text" style={{color: '#15803d'}}>
+                💰 ${playerMoney}
+              </p>
+              <p className="text-xs retro-text" style={{color: '#15803d'}}>
+                +${getMoneyReward(wildPokemon)} earned!
               </p>
             </div>
             <button
