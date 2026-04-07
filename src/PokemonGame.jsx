@@ -203,6 +203,7 @@ const PokemonGame = () => {
   const [showPokemart, setShowPokemart] = useState(false);
   const [pokemartQty, setPokemartQty] = useState(1);
   const [showBag, setShowBag] = useState(false);
+  const [bagSelectedIndex, setBagSelectedIndex] = useState(0);
 
   const nextRocketBattle = useRef(Math.floor(Math.random() * 4) + 7); // first rocket at battle 7-10
   const totalBattles = useRef(0);
@@ -483,6 +484,28 @@ const PokemonGame = () => {
         return;
       }
 
+      // Bag open — arrow nav + Esc to close
+      if (showBag) {
+        const bagItems = [
+          { label: 'Potion', disabled: potionUsed },
+          ...(bag.greatBalls > 0 ? [{ label: 'Great Ball' }] : []),
+        ];
+        if (e.key === 'Escape') { setShowBag(false); return; }
+        if (e.key === 'ArrowUp') {
+          setBagSelectedIndex(prev => Math.max(0, prev - 1)); return;
+        }
+        if (e.key === 'ArrowDown') {
+          setBagSelectedIndex(prev => Math.min(bagItems.length - 1, prev + 1)); return;
+        }
+        if (e.key === 'Enter') {
+          const idx = bagSelectedIndex;
+          if (idx === 0 && !potionUsed) { usePotion(); setShowBag(false); }
+          else if (bag.greatBalls > 0 && idx === (potionUsed ? 0 : 1)) { catchPokemon(true); }
+          return;
+        }
+        return;
+      }
+
       // Battle screen
       if (gameState === 'battle' && isPlayerTurn && !isEvolving) {
         // Grid navigation: 0-3 moves (2x2), 4 potion, 5 catch, 6 switch
@@ -549,7 +572,7 @@ const PokemonGame = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay, showSettings, showBadgeCase, badgePopupQueue, quickMenuFocused, quickMenuIndex, debugMode, settingsIndex]);
+  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay, showSettings, showBadgeCase, badgePopupQueue, quickMenuFocused, quickMenuIndex, debugMode, settingsIndex, showBag, bagSelectedIndex, bag, potionUsed]);
 
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
@@ -844,17 +867,22 @@ const PokemonGame = () => {
     );
   };
 
+  // ── Badge sound — lives in parent so it doesn't double-fire on every re-render ──
+  useEffect(() => {
+    if (badgePopupQueue.length > 0) {
+      const snd = new Audio('/sfx-badge.mp3');
+      snd.volume = 0.7;
+      snd.play().catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [badgePopupQueue[0]]);
+
   // ── Badge acquired popup ────────────────────────────────────────────────────
   const BadgeAcquiredPopup = () => {
     if (!badgePopupQueue.length) return null;
     const badge = BADGE_DATA.find(b => b.id === badgePopupQueue[0]);
     if (!badge) return null;
     const dismiss = () => setBadgePopupQueue(prev => prev.slice(1));
-    useEffect(() => {
-      const snd = new Audio('/sfx-badge.mp3');
-      snd.volume = 0.7;
-      snd.play().catch(() => {});
-    }, [badgePopupQueue[0]]);
     return (
       <div
         className="fixed inset-0 z-[200] flex items-center justify-center"
@@ -2118,6 +2146,7 @@ const PokemonGame = () => {
         setEeveeEvolveData(null);
         setEeveeSelectedStone(null);
         setEeveeEvolved(false);
+        setGameState('victory'); // prevent "undefined wants to evolve" glitch while awaiting
 
         if (eeveeResolveRef.current) {
           eeveeResolveRef.current(evolvedPokemon);
@@ -3388,7 +3417,7 @@ const PokemonGame = () => {
                 <div className="relative">
                   <button
                     data-action-index={4}
-                    onClick={() => isPlayerTurn && !teleportSwitchPending && setShowBag(b => !b)}
+                    onClick={() => { if (isPlayerTurn && !teleportSwitchPending) { setShowBag(b => !b); setBagSelectedIndex(0); } }}
                     disabled={!isPlayerTurn || teleportSwitchPending}
                     className={`w-full border-4 py-2 px-3 font-bold text-xs transition-all retro-text ${
                       isPlayerTurn && !teleportSwitchPending ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
@@ -3401,24 +3430,35 @@ const PokemonGame = () => {
                   >
                     BAG {bag.greatBalls > 0 && `(${bag.greatBalls})`}
                   </button>
-                  {/* Bag dropdown */}
+                  {/* Bag dropdown — z-[30] so modals (z-50) still appear on top */}
                   {showBag && isPlayerTurn && (
-                    <div className="absolute bottom-full left-0 mb-1 w-48 border-4 border-black z-50"
+                    <div className="absolute bottom-full left-0 mb-1 w-48 border-4 border-black z-[30]"
                       style={{ backgroundColor: '#fff', boxShadow: '4px 4px 0px #000' }}>
-                      <div className="retro-text text-xs font-bold p-1 border-b-2 border-black" style={{ backgroundColor: '#22c55e', color: '#000' }}>BAG ITEMS</div>
-                      {/* Potion */}
+                      <div className="retro-text text-xs font-bold p-1 border-b-2 border-black flex justify-between items-center" style={{ backgroundColor: '#22c55e', color: '#000' }}>
+                        <span>BAG ITEMS</span>
+                        <span style={{ fontSize: 7, opacity: 0.7 }}>↑↓ ESC</span>
+                      </div>
+                      {/* Potion — highlighted when bagSelectedIndex === 0 */}
                       <button onClick={() => { usePotion(); setShowBag(false); }}
                         disabled={potionUsed}
                         className={`w-full text-left p-2 border-b-2 border-black retro-text text-xs font-bold transition-all ${potionUsed ? 'opacity-40 cursor-not-allowed' : 'hover:opacity-80'}`}
-                        style={{ backgroundColor: potionUsed ? '#9ca3af' : '#22c55e', color: '#000' }}>
-                        💊 POTION {potionUsed ? '(USED)' : '(×∞)'}
+                        style={{
+                          backgroundColor: bagSelectedIndex === 0 ? '#16a34a' : (potionUsed ? '#9ca3af' : '#22c55e'),
+                          color: '#000',
+                          outline: bagSelectedIndex === 0 ? '2px solid #000' : 'none',
+                        }}>
+                        {bagSelectedIndex === 0 ? '▶ ' : ''}💊 POTION {potionUsed ? '(USED)' : '(×∞)'}
                       </button>
-                      {/* Great Ball */}
+                      {/* Great Ball — highlighted when bagSelectedIndex === 1 (or 0 if potion is only item) */}
                       {bag.greatBalls > 0 ? (
                         <button onClick={() => catchPokemon(true)}
                           className="w-full text-left p-2 retro-text text-xs font-bold hover:opacity-80 transition-all flex items-center gap-2"
-                          style={{ backgroundColor: '#eff6ff', color: '#000' }}>
-                          <img src="/great-ball.png" alt="Great Ball" style={{ width: 20, height: 20, imageRendering: 'pixelated' }} />
+                          style={{
+                            backgroundColor: bagSelectedIndex === 1 ? '#bfdbfe' : '#eff6ff',
+                            color: '#000',
+                            outline: bagSelectedIndex === 1 ? '2px solid #000' : 'none',
+                          }}>
+                          {bagSelectedIndex === 1 ? '▶ ' : ''}<img src="/great-ball.png" alt="Great Ball" style={{ width: 20, height: 20, imageRendering: 'pixelated' }} />
                           GREAT BALL ×{bag.greatBalls}
                         </button>
                       ) : (
