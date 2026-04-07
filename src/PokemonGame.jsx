@@ -3394,8 +3394,8 @@ const PokemonGame = () => {
                       isPlayerTurn && !teleportSwitchPending ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
                     } ${selectedActionIndex === 4 && isPlayerTurn ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
                     style={{
-                      backgroundColor: isPlayerTurn && !teleportSwitchPending ? '#a855f7' : '#9ca3af',
-                      color: '#fff',
+                      backgroundColor: isPlayerTurn && !teleportSwitchPending ? '#22c55e' : '#9ca3af',
+                      color: '#000',
                       boxShadow: selectedActionIndex === 4 && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none')
                     }}
                   >
@@ -3405,7 +3405,7 @@ const PokemonGame = () => {
                   {showBag && isPlayerTurn && (
                     <div className="absolute bottom-full left-0 mb-1 w-48 border-4 border-black z-50"
                       style={{ backgroundColor: '#fff', boxShadow: '4px 4px 0px #000' }}>
-                      <div className="retro-text text-xs font-bold p-1 border-b-2 border-black" style={{ backgroundColor: '#a855f7', color: '#fff' }}>BAG ITEMS</div>
+                      <div className="retro-text text-xs font-bold p-1 border-b-2 border-black" style={{ backgroundColor: '#22c55e', color: '#000' }}>BAG ITEMS</div>
                       {/* Potion */}
                       <button onClick={() => { usePotion(); setShowBag(false); }}
                         disabled={potionUsed}
