@@ -2012,7 +2012,8 @@ const PokemonGame = () => {
       if (lowerName === 'eevee') {
         setIsEvolving(false);
         return new Promise((resolve) => {
-          eeveeResolveRef.current = resolve;
+          // Resolve with _eeveeHandled flag so the caller skips the normal victory flow
+          eeveeResolveRef.current = (p) => resolve({ ...p, _eeveeHandled: true });
           setEeveeEvolveData({ pokemon, newExp });
           setEeveeSelectedStone(null);
           setEeveeEvolving(false);
@@ -2167,12 +2168,15 @@ const PokemonGame = () => {
       setEeveeEvolving(false);
       setEeveeEvolved(true); // Show success screen
 
-      // After success screen → resolve promise → victory
+      // After success screen → count the win, add money, go to victory
       setTimeout(() => {
         setEeveeEvolveData(null);
         setEeveeSelectedStone(null);
         setEeveeEvolved(false);
-        setGameState('victory'); // prevent "undefined wants to evolve" glitch while awaiting
+        playSound('victory');
+        setBattlesWon(prev => prev + 1);
+        setPlayerMoney(prev => prev + getMoneyReward(pokemon));
+        setGameState('victory'); // prevent "undefined wants to evolve" glitch
 
         if (eeveeResolveRef.current) {
           eeveeResolveRef.current(evolvedPokemon);
@@ -2518,13 +2522,17 @@ const PokemonGame = () => {
 
           // Check for evolution
           const updatedPokemon = await checkEvolution(playerPokemon);
+
+          // Eevee stone evolution handles its own victory/money/battlesWon internally — skip here
+          if (updatedPokemon?._eeveeHandled) return;
+
           if (updatedPokemon) {
             // Only update if NOT evolving (evolution updates happen in setTimeout inside checkEvolution)
             if (newExp % 3 !== 0) {
               // Not evolving, just gaining EXP - update state
               setPlayerPokemon(updatedPokemon);
               setAvailableTeam(prev => prev.map(p =>
-                p.name === updatedPokemon.name ? updatedPokemon : p
+                p.uid === updatedPokemon.uid ? updatedPokemon : p
               ));
             }
           }
@@ -2609,7 +2617,7 @@ const PokemonGame = () => {
           addLog(`${wildPokemon.name} fainted from the explosion!`);
           setWildPokemon(prev => ({ ...prev, hp: 0 }));
           setAvailableTeam(prev => prev.map(p =>
-            p.name === prevPlayerPokemon.name ? { ...p, hp: newHp } : p
+            p.uid === prevPlayerPokemon.uid ? { ...p, hp: newHp } : p
           ));
           setTimeout(() => setGameState('victory'), 1500);
           return { ...prevPlayerPokemon, hp: newHp };
@@ -2670,9 +2678,10 @@ const PokemonGame = () => {
       const newPlayerHp = Math.max(0, prevPlayerPokemon.hp - damage);
       const currentName = prevPlayerPokemon.name;
 
-      // Update team HP as well
+      // Update team HP as well (use uid so two same-name pokemon don't both update)
+      const currentUid = prevPlayerPokemon.uid;
       setAvailableTeam(prev => prev.map(p =>
-        p.name === currentName ? { ...p, hp: newPlayerHp } : p
+        p.uid === currentUid ? { ...p, hp: newPlayerHp } : p
       ));
 
       const displayDamage = Math.min(damage, prevPlayerPokemon.hp);
@@ -2726,11 +2735,11 @@ const PokemonGame = () => {
     const healAmount = playerPokemon.maxHp - playerPokemon.hp;
     setPlayerPokemon(prev => ({ ...prev, hp: prev.maxHp }));
     
-    // Update team HP
-    setAvailableTeam(prev => prev.map(p => 
-      p.name === playerPokemon.name ? { ...p, hp: p.maxHp } : p
+    // Update team HP (uid so two same-name pokemon don't both get healed)
+    setAvailableTeam(prev => prev.map(p =>
+      p.uid === playerPokemon.uid ? { ...p, hp: p.maxHp } : p
     ));
-    
+
     setPotionUsed(true);
     addLog(`Used Potion! Restored ${healAmount} HP!`);
     
@@ -2745,7 +2754,7 @@ const PokemonGame = () => {
     const healAmount = playerPokemon.maxHp - playerPokemon.hp;
     setPlayerPokemon(prev => ({ ...prev, hp: prev.maxHp }));
     setAvailableTeam(prev => prev.map(p =>
-      p.name === playerPokemon.name ? { ...p, hp: p.maxHp } : p
+      p.uid === playerPokemon.uid ? { ...p, hp: p.maxHp } : p
     ));
     setBag(prev => ({ ...prev, potions: prev.potions - 1 }));
     setShowBag(false);
@@ -2855,7 +2864,7 @@ const PokemonGame = () => {
     // Check if Team Rocket should appear (every 7-10 battles, only if player has bench Pokemon and enabled)
     if (teamRocketEnabled && totalBattles.current >= nextRocketBattle.current && availableTeam.length > 1) {
       // Restore/heal before rocket event
-      const basePokemon = availableTeam.find(p => p.name === playerPokemon.name);
+      const basePokemon = availableTeam.find(p => p.uid === playerPokemon.uid);
       let healedPokemon = basePokemon
         ? { ...basePokemon, hp: basePokemon.maxHp, exp: playerPokemon.exp, defeatedMewtwo: playerPokemon.defeatedMewtwo }
         : { ...playerPokemon, hp: playerPokemon.maxHp };
@@ -2872,7 +2881,7 @@ const PokemonGame = () => {
 
     // Restore base stats from availableTeam (undo Withdraw/Growl/Dragon Dance etc.)
     // then heal HP to max
-    const basePokemon = availableTeam.find(p => p.name === playerPokemon.name);
+    const basePokemon = availableTeam.find(p => p.uid === playerPokemon.uid);
     let healedPokemon = basePokemon
       ? { ...basePokemon, hp: basePokemon.maxHp, exp: playerPokemon.exp, defeatedMewtwo: playerPokemon.defeatedMewtwo }
       : { ...playerPokemon, hp: playerPokemon.maxHp };
@@ -3841,7 +3850,7 @@ const PokemonGame = () => {
   if (gameState === 'eevee-evolution') {
     const stones = [
       { key: 'water', label: 'Water Stone', img: '/stones/water-stone.webp', color: '#3b82f6', glow: '#93c5fd' },
-      { key: 'thunder', label: 'Thunder Stone', img: '/stones/thunder-stone.jpg', color: '#eab308', glow: '#fde68a' },
+      { key: 'thunder', label: 'Thunder Stone', img: '/stones/thunder-stone.png', color: '#eab308', glow: '#fde68a' },
       { key: 'fire', label: 'Fire Stone', img: '/stones/fire-stone.webp', color: '#ef4444', glow: '#fca5a5' },
     ];
     const selectedEvolution = eeveeSelectedStone ? EEVEELUTIONS[eeveeSelectedStone] : null;
@@ -3956,9 +3965,7 @@ const PokemonGame = () => {
                       src={stone.img}
                       alt={stone.label}
                       style={{
-                        imageRendering: 'pixelated', width: '40px', height: '40px', objectFit: 'contain',
-                        // Remove dark bg visually for thunder stone (JPEG with dark bg)
-                        mixBlendMode: stone.key === 'thunder' ? 'screen' : 'normal'
+                        imageRendering: 'pixelated', width: '40px', height: '40px', objectFit: 'contain'
                       }}
                     />
                     <span className="retro-text mt-1" style={{ fontSize: '9px', color: '#111', textAlign: 'center' }}>
