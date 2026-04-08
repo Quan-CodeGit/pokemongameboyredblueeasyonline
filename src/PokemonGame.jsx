@@ -199,10 +199,11 @@ const PokemonGame = () => {
 
   // ── Pokémart / Bag ──────────────────────────────────
   const [playerMoney, setPlayerMoney] = useState(0);
-  const [bag, setBag] = useState({ greatBalls: 0, potions: 0 });
+  const [bag, setBag] = useState({ greatBalls: 0, potions: 0, repels: 0 });
   const [showPokemart, setShowPokemart] = useState(false);
   const [pokemartQty, setPokemartQty] = useState(1);
   const [pokemartPotionQty, setPokemartPotionQty] = useState(1);
+  const [pokemartRepelQty, setPokemartRepelQty] = useState(1);
   const [showBag, setShowBag] = useState(false);
   const [bagSelectedIndex, setBagSelectedIndex] = useState(0);
 
@@ -490,6 +491,7 @@ const PokemonGame = () => {
         const bagSlots = [
           { id: 'free-potion' },
           ...(bag.potions > 0 ? [{ id: 'bag-potion' }] : []),
+          ...(bag.repels > 0 ? [{ id: 'repel' }] : []),
           ...(bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
         ];
         if (e.key === 'Escape') { setShowBag(false); return; }
@@ -504,6 +506,7 @@ const PokemonGame = () => {
           if (!slot) return;
           if (slot.id === 'free-potion' && !potionUsed) { usePotion(); setShowBag(false); }
           else if (slot.id === 'bag-potion') { useBagPotion(); }
+          else if (slot.id === 'repel') { useRepel(); }
           else if (slot.id === 'great-ball') { catchPokemon(true); }
           return;
         }
@@ -815,10 +818,13 @@ const PokemonGame = () => {
     if (!showPokemart) return null;
     const gbPrice = 200;
     const potPrice = 100;
+    const repelPrice = 300;
     const gbTotal = pokemartQty * gbPrice;
     const potTotal = pokemartPotionQty * potPrice;
+    const repelTotal = pokemartRepelQty * repelPrice;
     const canAffordGb = playerMoney >= gbTotal;
     const canAffordPot = playerMoney >= potTotal;
+    const canAffordRepel = playerMoney >= repelTotal;
     const handleBuyGb = () => {
       if (!canAffordGb) return;
       setPlayerMoney(prev => prev - gbTotal);
@@ -830,6 +836,12 @@ const PokemonGame = () => {
       setPlayerMoney(prev => prev - potTotal);
       setBag(prev => ({ ...prev, potions: prev.potions + pokemartPotionQty }));
       setPokemartPotionQty(1);
+    };
+    const handleBuyRepel = () => {
+      if (!canAffordRepel) return;
+      setPlayerMoney(prev => prev - repelTotal);
+      setBag(prev => ({ ...prev, repels: prev.repels + pokemartRepelQty }));
+      setPokemartRepelQty(1);
     };
 
     const MartItem = ({ img, name, desc, price, qty, setQty, canAfford, onBuy, total }) => (
@@ -882,6 +894,11 @@ const PokemonGame = () => {
             img="/great-ball.png" name="GREAT BALL" desc="1.5× catch rate"
             price={gbPrice} qty={pokemartQty} setQty={setPokemartQty}
             canAfford={canAffordGb} onBuy={handleBuyGb} total={gbTotal}
+          />
+          <MartItem
+            img="/repel.png" name="REPEL" desc="Repel foe, new wild appears"
+            price={repelPrice} qty={pokemartRepelQty} setQty={setPokemartRepelQty}
+            canAfford={canAffordRepel} onBuy={handleBuyRepel} total={repelTotal}
           />
           <button onClick={startNewBattle}
             className="w-full border-4 border-black py-2 font-bold retro-text hover:scale-105 transition-all"
@@ -1392,7 +1409,7 @@ const PokemonGame = () => {
       setDifficulty(data.diff || 'medium');
       setPotionUsed(data.potion || false);
       setPlayerMoney(data.money || 0);
-      setBag(data.bag ? { greatBalls: 0, potions: 0, ...data.bag } : { greatBalls: 0, potions: 0 });
+      setBag(data.bag ? { greatBalls: 0, potions: 0, repels: 0, ...data.bag } : { greatBalls: 0, potions: 0, repels: 0 });
       // Restore badges — rebuild ref so awardBadge dedup still works
       const loadedBadges = data.badges || [];
       earnedBadgeSetRef.current = new Set(loadedBadges);
@@ -2764,6 +2781,33 @@ const PokemonGame = () => {
     setTimeout(enemyAttack, 1500);
   };
 
+  const useRepel = () => {
+    if (!isPlayerTurn || gameState !== 'battle' || bag.repels <= 0) return;
+    const fledName = wildPokemon.name;
+    setBag(prev => ({ ...prev, repels: prev.repels - 1 }));
+    setShowBag(false);
+    setIsPlayerTurn(false);
+    setBattleLog([`Used Repel!`, `Wild ${fledName} fled!`]);
+
+    setTimeout(() => {
+      // Spawn new wild pokemon respecting game stage (no Mewtwo trigger on repel)
+      let newWild;
+      if (hasDefeatedMewtwo.current) {
+        newWild = getWeightedRandomPokemon(wildPokemons);
+      } else if (Math.random() < 0.01) {
+        newWild = { ...mewData };
+      } else {
+        newWild = getWeightedRandomPokemon(wildPokemons);
+      }
+      setWildPokemon(newWild);
+      setBattleLog([`Wild ${fledName} fled!`, `A wild ${newWild.name} appeared!`]);
+      setPotionUsed(false);
+      setIsPoisoned({ player: false, enemy: false });
+      setIsSleeping({ player: 0, enemy: 0 });
+      setIsPlayerTurn(true);
+    }, 1200);
+  };
+
   const catchPokemon = (useGreatBall = false) => {
     if (!isPlayerTurn || gameState !== 'battle') return;
     if (useGreatBall && bag.greatBalls <= 0) return;
@@ -3478,7 +3522,7 @@ const PokemonGame = () => {
                       boxShadow: selectedActionIndex === 4 && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none')
                     }}
                   >
-                    BAG {(bag.greatBalls + bag.potions) > 0 && `(${bag.greatBalls + bag.potions})`}
+                    BAG {(bag.greatBalls + bag.potions + bag.repels) > 0 && `(${bag.greatBalls + bag.potions + bag.repels})`}
                   </button>
                   {/* Bag dropdown — z-[30] so modals (z-50) still appear on top */}
                   {showBag && isPlayerTurn && (() => {
@@ -3486,6 +3530,7 @@ const PokemonGame = () => {
                     const bagSlots = [
                       { id: 'free-potion' },
                       ...(bag.potions > 0 ? [{ id: 'bag-potion' }] : []),
+                      ...(bag.repels > 0 ? [{ id: 'repel' }] : []),
                       ...(bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
                     ];
                     return (
@@ -3535,7 +3580,20 @@ const PokemonGame = () => {
                           GREAT BALL ×{bag.greatBalls}
                         </button>
                       );})()}
-                      {bag.potions === 0 && bag.greatBalls === 0 && (
+                      {/* Repel */}
+                      {bag.repels > 0 && (() => { const idx = bagSlots.findIndex(s => s.id === 'repel'); return (
+                        <button onClick={() => useRepel()}
+                          className="w-full text-left p-2 border-b-2 border-black retro-text text-xs font-bold hover:opacity-80 transition-all flex items-center gap-1"
+                          style={{
+                            backgroundColor: bagSelectedIndex === idx ? '#fef9c3' : '#fefce8',
+                            color: '#000', outline: bagSelectedIndex === idx ? '2px solid #000' : 'none',
+                          }}>
+                          {bagSelectedIndex === idx ? '▶ ' : ''}
+                          <img src="/repel.png" alt="Repel" style={{ width: 16, height: 16, imageRendering: 'pixelated' }} />
+                          REPEL ×{bag.repels}
+                        </button>
+                      );})()}
+                      {bag.potions === 0 && bag.greatBalls === 0 && bag.repels === 0 && (
                         <div className="p-2 retro-text text-xs opacity-40" style={{ color: '#000' }}>No items in bag</div>
                       )}
                     </div>
