@@ -190,7 +190,7 @@ const PokemonGame = () => {
   const introMusicRef = useRef(null);
   const audioCtxRef = useRef(null);
   const sfxCacheRef = useRef({});
-  const confirmSoundRef = useRef(null);
+
   const eeveeResolveRef = useRef(null);
   const [eeveeEvolveData, setEeveeEvolveData] = useState(null); // { pokemon, newExp }
   const [eeveeSelectedStone, setEeveeSelectedStone] = useState(null); // null | 'water' | 'thunder' | 'fire'
@@ -312,14 +312,9 @@ const PokemonGame = () => {
       if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(e.key)) {
         e.preventDefault();
       }
-      // Play confirm sound on Enter or Space
+      // Play confirm sound on Space (routed through playSound so volume setting applies)
       if (e.key === ' ') {
-        if (!confirmSoundRef.current) {
-          confirmSoundRef.current = new Audio('/sfx-confirm.mp3');
-        }
-        const snd = confirmSoundRef.current.cloneNode();
-        snd.volume = 0.5;
-        snd.play().catch(() => {});
+        playSound('confirm');
       }
 
       // Pokémart open — block all keys (player uses buttons)
@@ -913,9 +908,7 @@ const PokemonGame = () => {
   // ── Badge sound — lives in parent so it doesn't double-fire on every re-render ──
   useEffect(() => {
     if (badgePopupQueue.length > 0) {
-      const snd = new Audio('/sfx-badge.mp3');
-      snd.volume = 0.7;
-      snd.play().catch(() => {});
+      playSound('badge');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [badgePopupQueue[0]]);
@@ -1226,7 +1219,9 @@ const PokemonGame = () => {
         'catch': '/sounds/catch.mp3',
         'levelup': '/sounds/levelup.mp3',
         'super-effective': '/sounds/super-effective.mp3',
-        'not-very-effective': '/sounds/not-very-effective.mp3'
+        'not-very-effective': '/sounds/not-very-effective.mp3',
+        'badge': '/sfx-badge.mp3',
+        'confirm': '/sfx-confirm.mp3',
       };
 
       const volumeLevels = { 'low': 0.3, 'high': 0.7 };
