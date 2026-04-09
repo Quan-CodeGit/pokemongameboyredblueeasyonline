@@ -204,6 +204,11 @@ const PokemonGame = () => {
   const [pokemartQty, setPokemartQty] = useState(1);
   const [pokemartPotionQty, setPokemartPotionQty] = useState(1);
   const [pokemartRepelQty, setPokemartRepelQty] = useState(1);
+  const [pokemartOffers, setPokemartOffers] = useState({
+    potion:    { soldOut: false, discount: false },
+    greatBall: { soldOut: false, discount: false },
+    repel:     { soldOut: false, discount: false },
+  });
   const [showBag, setShowBag] = useState(false);
   const [bagSelectedIndex, setBagSelectedIndex] = useState(0);
 
@@ -811,26 +816,38 @@ const PokemonGame = () => {
   // ── Pokémart modal ──────────────────────────────────────────────────────────
   const PokemartModal = () => {
     if (!showPokemart) return null;
-    const gbPrice = 200;
-    const potPrice = 100;
-    const repelPrice = 300;
-    const gbTotal = pokemartQty * gbPrice;
-    const potTotal = pokemartPotionQty * potPrice;
-    const repelTotal = pokemartRepelQty * repelPrice;
-    const canAffordGb = playerMoney >= gbTotal;
-    const canAffordPot = playerMoney >= potTotal;
-    const canAffordRepel = playerMoney >= repelTotal;
-    const handleBuyGb = () => {
-      if (!canAffordGb) return;
-      setPlayerMoney(prev => prev - gbTotal);
-      setBag(prev => ({ ...prev, greatBalls: prev.greatBalls + pokemartQty }));
-      setPokemartQty(1);
+    const DISCOUNT_OFF = 50;
+    const basePrices = { potion: 100, greatBall: 200, repel: 300 };
+
+    // Effective price per item (discount applies only if not sold out)
+    const effectivePrice = (key) => {
+      const o = pokemartOffers[key];
+      return (!o.soldOut && o.discount) ? basePrices[key] - DISCOUNT_OFF : basePrices[key];
     };
+
+    const potPrice  = effectivePrice('potion');
+    const gbPrice   = effectivePrice('greatBall');
+    const repelPrice = effectivePrice('repel');
+
+    const potTotal   = pokemartPotionQty * potPrice;
+    const gbTotal    = pokemartQty       * gbPrice;
+    const repelTotal = pokemartRepelQty  * repelPrice;
+
+    const canAffordPot   = !pokemartOffers.potion.soldOut    && playerMoney >= potTotal;
+    const canAffordGb    = !pokemartOffers.greatBall.soldOut && playerMoney >= gbTotal;
+    const canAffordRepel = !pokemartOffers.repel.soldOut     && playerMoney >= repelTotal;
+
     const handleBuyPot = () => {
       if (!canAffordPot) return;
       setPlayerMoney(prev => prev - potTotal);
       setBag(prev => ({ ...prev, potions: prev.potions + pokemartPotionQty }));
       setPokemartPotionQty(1);
+    };
+    const handleBuyGb = () => {
+      if (!canAffordGb) return;
+      setPlayerMoney(prev => prev - gbTotal);
+      setBag(prev => ({ ...prev, greatBalls: prev.greatBalls + pokemartQty }));
+      setPokemartQty(1);
     };
     const handleBuyRepel = () => {
       if (!canAffordRepel) return;
@@ -839,35 +856,53 @@ const PokemonGame = () => {
       setPokemartRepelQty(1);
     };
 
-    const MartItem = ({ img, name, desc, price, qty, setQty, canAfford, onBuy, total }) => (
-      <div className="border-4 border-black mb-3" style={{ backgroundColor: '#fff' }}>
+    const MartItem = ({ img, name, desc, basePrice, effectPrice, qty, setQty, canAfford, onBuy, total, soldOut, discount }) => (
+      <div className="border-4 border-black mb-3" style={{ backgroundColor: soldOut ? '#f3f4f6' : '#fff', opacity: soldOut ? 0.75 : 1 }}>
         <div className="flex gap-3 items-center p-3 border-b-2 border-black">
-          <img src={img} alt={name} style={{ width: 40, height: 40, imageRendering: 'pixelated' }} />
+          <img src={img} alt={name} style={{ width: 40, height: 40, imageRendering: 'pixelated', filter: soldOut ? 'grayscale(1)' : 'none' }} />
           <div className="flex-1">
             <div className="retro-text font-bold text-xs" style={{ color: '#000' }}>{name}</div>
             <div className="retro-text" style={{ fontSize: 8, color: '#555' }}>{desc}</div>
+            {discount && !soldOut && (
+              <div className="retro-text" style={{ fontSize: 7, color: '#16a34a', marginTop: 2 }}>
+                🏷 SALE! ${DISCOUNT_OFF} OFF
+              </div>
+            )}
           </div>
-          <div className="retro-text font-bold text-xs" style={{ color: '#dc2626' }}>${price}</div>
+          {/* Price display */}
+          {soldOut ? (
+            <div className="retro-text font-bold text-xs px-2 py-1 border-2 border-red-600"
+              style={{ color: '#dc2626', backgroundColor: '#fee2e2' }}>SOLD OUT</div>
+          ) : discount ? (
+            <div className="text-right">
+              <div className="retro-text line-through" style={{ fontSize: 8, color: '#9ca3af' }}>${basePrice}</div>
+              <div className="retro-text font-bold text-xs" style={{ color: '#16a34a' }}>${effectPrice}</div>
+            </div>
+          ) : (
+            <div className="retro-text font-bold text-xs" style={{ color: '#dc2626' }}>${basePrice}</div>
+          )}
         </div>
-        <div className="flex items-center gap-2 p-2 justify-between">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setQty(q => Math.max(1, q - 1))}
-              className="border-2 border-black w-7 h-7 font-bold retro-text hover:scale-105 transition-all"
-              style={{ backgroundColor: '#fbbf24', fontSize: 14 }}>−</button>
-            <span className="retro-text font-bold w-6 text-center" style={{ color: '#000', fontSize: 12 }}>{qty}</span>
-            <button onClick={() => setQty(q => Math.min(99, q + 1))}
-              className="border-2 border-black w-7 h-7 font-bold retro-text hover:scale-105 transition-all"
-              style={{ backgroundColor: '#fbbf24', fontSize: 14 }}>+</button>
+        {!soldOut && (
+          <div className="flex items-center gap-2 p-2 justify-between">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setQty(q => Math.max(1, q - 1))}
+                className="border-2 border-black w-7 h-7 font-bold retro-text hover:scale-105 transition-all"
+                style={{ backgroundColor: '#fbbf24', fontSize: 14 }}>−</button>
+              <span className="retro-text font-bold w-6 text-center" style={{ color: '#000', fontSize: 12 }}>{qty}</span>
+              <button onClick={() => setQty(q => Math.min(99, q + 1))}
+                className="border-2 border-black w-7 h-7 font-bold retro-text hover:scale-105 transition-all"
+                style={{ backgroundColor: '#fbbf24', fontSize: 14 }}>+</button>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="retro-text font-bold" style={{ fontSize: 9, color: canAfford ? '#15803d' : '#dc2626' }}>${total}</span>
+              <button onClick={onBuy} disabled={!canAfford}
+                className="border-2 border-black px-3 py-1 font-bold retro-text transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ backgroundColor: canAfford ? '#22c55e' : '#9ca3af', color: '#fff', fontSize: 9, boxShadow: canAfford ? '2px 2px 0px #000' : 'none' }}>
+                BUY
+              </button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="retro-text font-bold" style={{ fontSize: 9, color: canAfford ? '#15803d' : '#dc2626' }}>${total}</span>
-            <button onClick={onBuy} disabled={!canAfford}
-              className="border-2 border-black px-3 py-1 font-bold retro-text transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ backgroundColor: canAfford ? '#22c55e' : '#9ca3af', color: '#fff', fontSize: 9, boxShadow: canAfford ? '2px 2px 0px #000' : 'none' }}>
-              BUY
-            </button>
-          </div>
-        </div>
+        )}
       </div>
     );
 
@@ -882,18 +917,24 @@ const PokemonGame = () => {
           </div>
           <MartItem
             img="/potion.png" name="POTION" desc="Full heal (extra use)"
-            price={potPrice} qty={pokemartPotionQty} setQty={setPokemartPotionQty}
+            basePrice={basePrices.potion} effectPrice={potPrice}
+            qty={pokemartPotionQty} setQty={setPokemartPotionQty}
             canAfford={canAffordPot} onBuy={handleBuyPot} total={potTotal}
+            soldOut={pokemartOffers.potion.soldOut} discount={pokemartOffers.potion.discount}
           />
           <MartItem
             img="/great-ball.png" name="GREAT BALL" desc="1.5× catch rate"
-            price={gbPrice} qty={pokemartQty} setQty={setPokemartQty}
+            basePrice={basePrices.greatBall} effectPrice={gbPrice}
+            qty={pokemartQty} setQty={setPokemartQty}
             canAfford={canAffordGb} onBuy={handleBuyGb} total={gbTotal}
+            soldOut={pokemartOffers.greatBall.soldOut} discount={pokemartOffers.greatBall.discount}
           />
           <MartItem
             img="/repel.png" name="REPEL" desc="Repel foe, new wild appears"
-            price={repelPrice} qty={pokemartRepelQty} setQty={setPokemartRepelQty}
+            basePrice={basePrices.repel} effectPrice={repelPrice}
+            qty={pokemartRepelQty} setQty={setPokemartRepelQty}
             canAfford={canAffordRepel} onBuy={handleBuyRepel} total={repelTotal}
+            soldOut={pokemartOffers.repel.soldOut} discount={pokemartOffers.repel.discount}
           />
           <button onClick={startNewBattle}
             className="w-full border-4 border-black py-2 font-bold retro-text hover:scale-105 transition-all"
@@ -2994,6 +3035,9 @@ const PokemonGame = () => {
   const nextBattle = () => {
     totalBattles.current += 1;
     if (totalBattles.current % 5 === 0) {
+      // Randomise stock before showing — each item has 20% sold-out, 10% discount chance
+      const roll = () => ({ soldOut: Math.random() < 0.2, discount: Math.random() < 0.1 });
+      setPokemartOffers({ potion: roll(), greatBall: roll(), repel: roll() });
       setShowPokemart(true);
       return; // startNewBattle() called by mart Continue button
     }
