@@ -688,7 +688,7 @@ const PokemonGame = () => {
                 if (playerPokemon) {
                   setPlayerPokemon(prev => ({ ...prev, exp: 19 }));
                   setAvailableTeam(prev => prev.map(p =>
-                    p.name === playerPokemon.name ? { ...p, exp: 19 } : p
+                    p.uid === playerPokemon.uid ? { ...p, exp: 19 } : p
                   ));
                   setBattleLog(prev => [...prev, 'DEBUG: EXP set to 19. Win one more battle for Mewtwo!']);
                 }
@@ -1412,7 +1412,7 @@ const PokemonGame = () => {
     const saveData = {
       v: 1,
       team: availableTeam,
-      active: playerPokemon?.name || null,
+      active: playerPokemon?.uid || null,
       wild: wildPokemon || null,
       turn: isPlayerTurn,
       log: battleLog.slice(-3),
@@ -1439,7 +1439,6 @@ const PokemonGame = () => {
         setSaveCodeMsg('❌ Invalid save code.');
         return;
       }
-      setAvailableTeam(data.team);
       setPokedex(data.dex || []);
       setBattlesWon(data.won || 0);
       setDifficulty(data.diff || 'medium');
@@ -1452,7 +1451,14 @@ const PokemonGame = () => {
       setEarnedBadges(loadedBadges);
 
       // Set active pokemon (prefer saved active, fallback to first)
-      const active = data.team.find(p => p.name === data.active) || data.team[0];
+      // Migrate old saves that lack uid — assign one so uid-based logic works
+      const migratedTeam = (data.team || []).map(p =>
+        p.uid ? p : { ...p, uid: `${Date.now()}-${Math.random()}` }
+      );
+      setAvailableTeam(migratedTeam);
+      const active = migratedTeam.find(p => p.uid === data.active) ||
+                     migratedTeam.find(p => p.name === data.active) ||
+                     migratedTeam[0];
       setPlayerPokemon(active);
 
       // Restore exact wild pokemon if saved, else encounter a new one
@@ -3854,7 +3860,7 @@ const PokemonGame = () => {
                       style={{
                         borderColor: isCarriedOrGone ? '#9ca3af' : '#000',
                         borderStyle: isCarriedOrGone ? 'dashed' : 'solid',
-                        backgroundColor: isCarriedOrGone ? 'transparent' : (pokemon.name === playerPokemon?.name ? '#9ca3af' : '#fbbf24'),
+                        backgroundColor: isCarriedOrGone ? 'transparent' : (pokemon.uid === playerPokemon?.uid ? '#9ca3af' : '#fbbf24'),
                         borderWidth: '3px',
                         opacity: isCarriedOrGone ? 0.4 : 1,
                       }}
