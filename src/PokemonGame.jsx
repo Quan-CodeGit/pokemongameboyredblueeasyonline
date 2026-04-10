@@ -1823,7 +1823,7 @@ const PokemonGame = () => {
       case 'hard':
         return { veryCommon: 20, common: 25, uncommon: 25, rare: 15, veryRare: 15 };
       default: // medium
-        return { veryCommon: 35, common: 30, uncommon: 20, rare: 10, veryRare: 5 };
+        return { veryCommon: 37.5, common: 30, uncommon: 20, rare: 7.25, veryRare: 5 };
     }
   };
 
@@ -1831,7 +1831,8 @@ const PokemonGame = () => {
   const getMoneyReward = (pokemon) => {
     if (!pokemon) return 50;
     const atk = pokemon.attack;
-    if (atk <= 50) return 50;   // Very Common + Common
+    if (atk <= 30) return 50;   // Very Common
+    if (atk <= 50) return 50;   // Common
     if (atk <= 70) return 75;   // Uncommon
     if (atk <= 85) return 100;  // Rare
     return 200;                  // Very Rare
@@ -2914,25 +2915,23 @@ const PokemonGame = () => {
     if ((!isPlayerTurn && !teleportSwitchPending) || newPoke.uid === playerPokemon?.uid) return;
     setTeleportSwitchPending(false);
     
-    const oldPokemonName = playerPokemon.name;
-    
+    const oldUid  = playerPokemon.uid;
+    const oldName = playerPokemon.name;
+
     const switchedPokemon = {
       ...newPoke,
       moves: [...newPoke.moves],
       moveTypes: [...newPoke.moveTypes],
     };
-    
-    // Update the old pokemon's HP in the team
-    setAvailableTeam(prev => prev.map(p => {
-      if (p.name === oldPokemonName) {
-        return { ...p, hp: playerPokemon.hp };
-      }
-      return p;
-    }));
-    
+
+    // Save HP back to the outgoing pokemon by uid so duplicate-name pokemon stay separate
+    setAvailableTeam(prev => prev.map(p =>
+      p.uid === oldUid ? { ...p, hp: playerPokemon.hp } : p
+    ));
+
     setPlayerPokemon(switchedPokemon);
     playSound('sendout');
-    addLog(`Come back, ${oldPokemonName}!`);
+    addLog(`Come back, ${oldName}!`);
     addLog(`Go, ${switchedPokemon.name}!`);
     setIsPlayerTurn(false);
     setTimeout(enemyAttack, 1500);
@@ -3665,16 +3664,16 @@ const PokemonGame = () => {
                   <div className="grid grid-cols-4 gap-2">
                     {availableTeam.map((pokemon, index) => (
                       <button
-                        key={index}
+                        key={pokemon.uid ?? index}
                         onClick={() => switchPokemon(pokemon)}
-                        disabled={((!isPlayerTurn && !teleportSwitchPending)) || pokemon.name === playerPokemon.name || pokemon.hp <= 0}
+                        disabled={((!isPlayerTurn && !teleportSwitchPending)) || pokemon.uid === playerPokemon.uid || pokemon.hp <= 0}
                         className={`border-3 py-1 px-1 transition-all ${
-                          pokemon.name === playerPokemon.name || pokemon.hp <= 0 ? 'cursor-not-allowed opacity-50' :
+                          pokemon.uid === playerPokemon.uid || pokemon.hp <= 0 ? 'cursor-not-allowed opacity-50' :
                           (isPlayerTurn || teleportSwitchPending) ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
-                        } ${teleportSwitchPending && pokemon.name !== playerPokemon.name && pokemon.hp > 0 ? 'border-purple-500' : 'border-black'}`}
+                        } ${teleportSwitchPending && pokemon.uid !== playerPokemon.uid && pokemon.hp > 0 ? 'border-purple-500' : 'border-black'}`}
                         style={{
-                          backgroundColor: pokemon.name === playerPokemon.name || pokemon.hp <= 0 ? '#9ca3af' : (teleportSwitchPending ? '#e9d5ff' : '#fbbf24'),
-                          boxShadow: (isPlayerTurn || teleportSwitchPending) && pokemon.name !== playerPokemon.name && pokemon.hp > 0 ? '2px 2px 0px #000' : 'none'
+                          backgroundColor: pokemon.uid === playerPokemon.uid || pokemon.hp <= 0 ? '#9ca3af' : (teleportSwitchPending ? '#e9d5ff' : '#fbbf24'),
+                          boxShadow: (isPlayerTurn || teleportSwitchPending) && pokemon.uid !== playerPokemon.uid && pokemon.hp > 0 ? '2px 2px 0px #000' : 'none'
                         }}
                       >
                         <div className="mb-1 flex justify-center bg-white border-2 border-black p-1">
