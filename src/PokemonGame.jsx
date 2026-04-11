@@ -1983,12 +1983,29 @@ const PokemonGame = () => {
   };
 
   const checkEvolution = async (pokemon) => {
-    const newExp = (pokemon.exp || 0) + 1;
+    // If pokemon is currently transformed (Ditto etc.), revert to original form before evolving/boosting
+    const baseForEvolution = pokemon.originalForm
+      ? {
+          ...pokemon,
+          type:      pokemon.originalForm.type,
+          type2:     pokemon.originalForm.type2,
+          attack:    pokemon.originalForm.attack,
+          spAtk:     pokemon.originalForm.spAtk,
+          def:       pokemon.originalForm.def,
+          spDef:     pokemon.originalForm.spDef,
+          moves:     pokemon.originalForm.moves,
+          moveTypes: pokemon.originalForm.moveTypes,
+        }
+      : pokemon;
+    // Strip any leftover transform sprite/state before evolving
+    delete baseForEvolution.spriteName;
+    delete baseForEvolution.originalForm;
+    const newExp = (baseForEvolution.exp || 0) + 1;
     
     // Check if should evolve (every 3 exp)
     if (newExp % 3 === 0) {
       playSound('evolve');
-      addLog(`${pokemon.name} is evolving!`);
+      addLog(`${baseForEvolution.name} is evolving!`);
       setIsEvolving(true);
       
       const evolutionMap = {
@@ -2066,7 +2083,7 @@ const PokemonGame = () => {
         'jigglypuff': { name: 'Wigglytuff', type2: null }
       };
       
-      const lowerName = pokemon.name.toLowerCase();
+      const lowerName = baseForEvolution.name.toLowerCase();
 
       // Special case: Eevee — player chooses evolution via stone selection screen
       if (lowerName === 'eevee') {
@@ -2074,7 +2091,7 @@ const PokemonGame = () => {
         return new Promise((resolve) => {
           // Resolve with _eeveeHandled flag so the caller skips the normal victory flow
           eeveeResolveRef.current = (p) => resolve({ ...p, _eeveeHandled: true });
-          setEeveeEvolveData({ pokemon, newExp });
+          setEeveeEvolveData({ pokemon: baseForEvolution, newExp });
           setEeveeSelectedStone(null);
           setEeveeEvolving(false);
           setGameState('eevee-evolution');
@@ -2088,15 +2105,15 @@ const PokemonGame = () => {
           hp: 95, maxHp: 95, attack: 125, spAtk: 60, def: 79, spDef: 100,
           color: '🐉', moves: ['Hydro Pump', 'Bite', 'Return', 'Thrash'],
           moveTypes: ['Water', 'Dark', 'Normal', 'Normal'],
-          exp: newExp, defeatedMewtwo: pokemon.defeatedMewtwo, uid: pokemon.uid
+          exp: newExp, defeatedMewtwo: baseForEvolution.defeatedMewtwo, uid: baseForEvolution.uid
         };
 
-        addLog(`${pokemon.name} evolved into Gyarados!`);
+        addLog(`${baseForEvolution.name} evolved into Gyarados!`);
 
         setTimeout(() => {
           setPlayerPokemon(gyarados);
           setAvailableTeam(prev => prev.map(p =>
-            p.uid === pokemon.uid ? gyarados : p
+            p.uid === baseForEvolution.uid ? gyarados : p
           ));
           setPokedex(prev => prev.find(p => p.name === 'Gyarados') ? prev : [...prev, gyarados]);
           setIsEvolving(false);
@@ -2109,56 +2126,56 @@ const PokemonGame = () => {
 
       if (nextEvolution) {
         const evolvedPokemon = {
-          ...pokemon,
+          ...baseForEvolution,
           name: nextEvolution.name,
-          type: nextEvolution.type || pokemon.type,
+          type: nextEvolution.type || baseForEvolution.type,
           type2: nextEvolution.type2,
-          hp: pokemon.maxHp + 15,
-          maxHp: pokemon.maxHp + 15,
-          attack: pokemon.attack + 15,
-          spAtk: (pokemon.spAtk || 0) + 15,
-          def: (pokemon.def || 0) + 15,
-          spDef: (pokemon.spDef || 0) + 15,
+          hp: baseForEvolution.maxHp + 15,
+          maxHp: baseForEvolution.maxHp + 15,
+          attack: baseForEvolution.attack + 15,
+          spAtk: (baseForEvolution.spAtk || 0) + 15,
+          def: (baseForEvolution.def || 0) + 15,
+          spDef: (baseForEvolution.spDef || 0) + 15,
           exp: newExp
         };
 
-        addLog(`${pokemon.name} evolved into ${nextEvolution.name}!`);
+        addLog(`${baseForEvolution.name} evolved into ${nextEvolution.name}!`);
         addLog(`All stats +15!`);
 
         setTimeout(() => {
           setPlayerPokemon(evolvedPokemon);
           setAvailableTeam(prev => prev.map(p =>
-            p.uid === pokemon.uid ? evolvedPokemon : p
+            p.uid === baseForEvolution.uid ? evolvedPokemon : p
           ));
           setPokedex(prev => prev.find(p => p.name === nextEvolution.name) ? prev : [...prev, evolvedPokemon]);
           setIsEvolving(false);
         }, 2000);
-        
+
         return evolvedPokemon;
       } else {
         // No evolution available (final form)
-        addLog(`${pokemon.name} is at max evolution!`);
+        addLog(`${baseForEvolution.name} is at max evolution!`);
         addLog(`All stats +5!`);
 
         const strengthenedPokemon = {
-          ...pokemon,
-          hp: pokemon.maxHp + 5,
-          maxHp: pokemon.maxHp + 5,
-          attack: pokemon.attack + 5,
-          spAtk: (pokemon.spAtk || 0) + 5,
-          def: (pokemon.def || 0) + 5,
-          spDef: (pokemon.spDef || 0) + 5,
+          ...baseForEvolution,
+          hp: baseForEvolution.maxHp + 5,
+          maxHp: baseForEvolution.maxHp + 5,
+          attack: baseForEvolution.attack + 5,
+          spAtk: (baseForEvolution.spAtk || 0) + 5,
+          def: (baseForEvolution.def || 0) + 5,
+          spDef: (baseForEvolution.spDef || 0) + 5,
           exp: newExp
         };
-        
+
         setTimeout(() => {
           setPlayerPokemon(strengthenedPokemon);
           setAvailableTeam(prev => prev.map(p =>
-            p.uid === pokemon.uid ? strengthenedPokemon : p
+            p.uid === baseForEvolution.uid ? strengthenedPokemon : p
           ));
           setIsEvolving(false);
         }, 2000);
-        
+
         return strengthenedPokemon;
       }
     }
@@ -2957,7 +2974,7 @@ const PokemonGame = () => {
       delete healedPokemon.originalForm;
       setPlayerPokemon(healedPokemon);
       setAvailableTeam(prev => prev.map(p =>
-        p.uid === healedPokemon.uid ? healedPokemon : { ...p, hp: p.maxHp }
+        p.uid === healedPokemon.uid ? healedPokemon : p
       ));
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
@@ -2981,7 +2998,7 @@ const PokemonGame = () => {
     // Update states
     setPlayerPokemon(healedPokemon);
     setAvailableTeam(prev => prev.map(p =>
-      p.uid === healedPokemon.uid ? healedPokemon : { ...p, hp: p.maxHp }
+      p.uid === healedPokemon.uid ? healedPokemon : p
     ));
 
     // STAGE 2: Check ref to see if we should spawn Mewtwo
