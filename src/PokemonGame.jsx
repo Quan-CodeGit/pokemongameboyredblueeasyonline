@@ -2765,7 +2765,7 @@ const PokemonGame = () => {
           addLog(`${currentName} took ${poisonDmg} poison damage!`);
           if (poisonHp <= 0) {
             setAvailableTeam(prev => prev.map(p =>
-              p.name === currentName ? { ...p, hp: 0 } : p
+              p.uid === currentUid ? { ...p, hp: 0 } : p
             ));
             setTimeout(() => {
               addLog(`${currentName} fainted from poison!`);
@@ -2774,7 +2774,7 @@ const PokemonGame = () => {
             return { ...prevPlayerPokemon, hp: 0 };
           }
           setAvailableTeam(prev => prev.map(p =>
-            p.name === currentName ? { ...p, hp: poisonHp } : p
+            p.uid === currentUid ? { ...p, hp: poisonHp } : p
           ));
           setTimeout(() => setIsPlayerTurn(true), hitDelay);
           return { ...prevPlayerPokemon, hp: poisonHp };
@@ -2957,7 +2957,7 @@ const PokemonGame = () => {
       delete healedPokemon.originalForm;
       setPlayerPokemon(healedPokemon);
       setAvailableTeam(prev => prev.map(p =>
-        p.name === healedPokemon.name ? healedPokemon : p
+        p.uid === healedPokemon.uid ? healedPokemon : { ...p, hp: p.maxHp }
       ));
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
@@ -2981,7 +2981,7 @@ const PokemonGame = () => {
     // Update states
     setPlayerPokemon(healedPokemon);
     setAvailableTeam(prev => prev.map(p =>
-      p.name === healedPokemon.name ? healedPokemon : p
+      p.uid === healedPokemon.uid ? healedPokemon : { ...p, hp: p.maxHp }
     ));
 
     // STAGE 2: Check ref to see if we should spawn Mewtwo
