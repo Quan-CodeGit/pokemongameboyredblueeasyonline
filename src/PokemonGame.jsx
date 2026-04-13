@@ -114,6 +114,28 @@ const BADGE_DATA = [
     ],
     palette: { 1:'#e02020', 2:'#0a0a14', 3:'#1a0000', 4:'#2060d8', 5:'#90c0ff', 6:'#30cc30' },
   },
+  {
+    id: 'birdkeeper', name: 'BIRD KEEPER', description: 'Defeat the 3 legendary birds',
+    pixels: [
+      [0,0,0,0,3,3,0,0,0,0,3,3,0,0,0,0],
+      [0,0,0,3,2,2,3,0,0,3,4,4,3,0,0,0],
+      [0,0,3,2,2,2,2,3,3,4,4,4,4,3,0,0],
+      [0,3,2,2,2,2,3,5,5,3,4,4,4,4,3,0],
+      [0,3,2,2,2,3,5,5,5,5,3,4,4,4,3,0],
+      [3,2,2,2,3,5,5,5,5,5,5,3,4,4,4,3],
+      [3,2,2,3,5,5,1,1,1,1,5,5,3,4,4,3],
+      [3,2,3,5,5,1,1,3,3,1,1,5,5,3,4,3],
+      [3,4,3,5,5,1,1,3,3,1,1,5,5,3,2,3],
+      [3,4,4,3,5,5,1,1,1,1,5,5,3,2,2,3],
+      [3,4,4,4,3,5,5,5,5,5,5,3,2,2,2,3],
+      [0,3,4,4,4,3,5,5,5,5,3,2,2,2,3,0],
+      [0,3,4,4,4,4,3,5,5,3,2,2,2,2,3,0],
+      [0,0,3,4,4,4,4,3,3,2,2,2,2,3,0,0],
+      [0,0,0,3,4,4,3,0,0,3,2,2,3,0,0,0],
+      [0,0,0,0,3,3,0,0,0,0,3,3,0,0,0,0],
+    ],
+    palette: { 1:'#f0f0f0', 2:'#60a8e0', 3:'#150800', 4:'#f0d020', 5:'#f86820' },
+  },
 ];
 
 const PokemonGame = () => {
@@ -187,6 +209,13 @@ const PokemonGame = () => {
   // Use ref to track Mewtwo spawn - bypasses React state timing issues
   const shouldSpawnMewtwo = useRef(false);
   const hasDefeatedMewtwo = useRef(false);
+
+  // Bird Gauntlet state
+  const battlesWonPostMewtwo = useRef(0);
+  const hasCompletedGauntlet = useRef(false);
+  const [birdGauntletActive, setBirdGauntletActive] = useState(false);
+  const [pendingBirds, setPendingBirds] = useState([]);
+  const [currentBirdIndex, setCurrentBirdIndex] = useState(0);
   const introMusicRef = useRef(null);
   const audioCtxRef = useRef(null);
   const sfxCacheRef = useRef({});
@@ -1401,6 +1430,7 @@ const PokemonGame = () => {
     { id: 140, name: 'Kabuto' }, { id: 141, name: 'Kabutops' },
     { id: 142, name: 'Aerodactyl' },
     { id: 143, name: 'Snorlax' },
+    { id: 144, name: 'Articuno' }, { id: 145, name: 'Zapdos' }, { id: 146, name: 'Moltres' },
     { id: 147, name: 'Dratini' }, { id: 148, name: 'Dragonair' }, { id: 149, name: 'Dragonite' },
     { id: 150, name: 'Mewtwo' },
     { id: 151, name: 'Mew' },
@@ -1423,6 +1453,8 @@ const PokemonGame = () => {
       badges: earnedBadges,
       money: playerMoney,
       bag: bag,
+      gauntletDone: hasCompletedGauntlet.current,
+      postMewtwoBattles: battlesWonPostMewtwo.current,
     };
     try {
       return btoa(unescape(encodeURIComponent(JSON.stringify(saveData))));
@@ -1467,6 +1499,9 @@ const PokemonGame = () => {
       } else {
         encounterWildPokemon();
       }
+      // Restore gauntlet progress
+      hasCompletedGauntlet.current = data.gauntletDone || false;
+      battlesWonPostMewtwo.current = data.postMewtwoBattles || 0;
       setGameState('battle');
       setIsPlayerTurn(data.turn !== undefined ? data.turn : true);
       setBattleLog([`Welcome back! Go, ${active.name}!`, ...(data.log || [])]);
@@ -1948,6 +1983,15 @@ const PokemonGame = () => {
   // Mew - mythical Pokemon, 1% encounter rate
   const mewData = { name: 'Mew', type: 'Psychic', type2: null, hp: 100, maxHp: 100, attack: 100, spAtk: 100, def: 100, spDef: 100, color: '🩷', moves: ['Psychic', 'Ancient Power', 'Aura Sphere', 'Shadow Ball'], moveTypes: ['Psychic', 'Rock', 'Fighting', 'Ghost'] };
 
+  // Legendary Birds - post-Mewtwo gauntlet
+  const BIRD_DATA = {
+    Articuno: { name: 'Articuno', type: 'Ice', type2: 'Flying', hp: 90, maxHp: 90, attack: 85, spAtk: 95, def: 80, spDef: 100, color: '🧊', moves: ['Blizzard', 'Ice Beam', 'Powder Snow', 'Agility'], moveTypes: ['Ice', 'Ice', 'Ice', 'Normal'] },
+    Zapdos:   { name: 'Zapdos',   type: 'Electric', type2: 'Flying', hp: 90, maxHp: 90, attack: 90, spAtk: 100, def: 75, spDef: 85,  color: '⚡', moves: ['Thunder', 'Thunderbolt', 'Drill Peck', 'Agility'],  moveTypes: ['Electric', 'Electric', 'Flying', 'Normal'] },
+    Moltres:  { name: 'Moltres',  type: 'Fire',     type2: 'Flying', hp: 95, maxHp: 95, attack: 100, spAtk: 110, def: 80, spDef: 85, color: '🔥', moves: ['Fire Blast', 'Flamethrower', 'Sky Attack', 'Ember'],  moveTypes: ['Fire', 'Fire', 'Flying', 'Fire'] },
+  };
+
+  const BIRD_NAMES = new Set(['Articuno', 'Zapdos', 'Moltres']);
+
   const encounterWildPokemon = () => {
     // 1% chance to encounter Mew
     if (Math.random() < 0.01) {
@@ -2206,6 +2250,7 @@ const PokemonGame = () => {
     'Rest': { effect: 'rest', message: ' went to sleep and restored HP!' },
     'Softboiled': { effect: 'heal_half', message: ' restored its HP!' },
     'Self-Destruct': { effect: 'self_destruct', message: '' },
+    'Agility': { effect: 'raise_attack', message: "'s speed sharply rose!" },
   };
 
   const EEVEELUTIONS = {
@@ -2617,8 +2662,26 @@ const PokemonGame = () => {
           setTimeout(() => {
             playSound('victory');
             setBattlesWon(prev => prev + 1);
+            if (hasDefeatedMewtwo.current && !hasCompletedGauntlet.current) {
+              battlesWonPostMewtwo.current += 1;
+            }
             setPlayerMoney(prev => prev + getMoneyReward(wildPokemon));
-            setTimeout(() => setGameState('victory'), 1500);
+            // Bird gauntlet: advance to next bird or gauntlet victory
+            if (birdGauntletActive) {
+              setCurrentBirdIndex(prev => {
+                const next = prev + 1;
+                if (next >= 3) {
+                  hasCompletedGauntlet.current = true;
+                  setBirdGauntletActive(false);
+                  setTimeout(() => { setGameState('bird-gauntlet-victory'); }, 1500);
+                } else {
+                  setTimeout(() => { setGameState('bird-intermission'); }, 1500);
+                }
+                return next;
+              });
+            } else {
+              setTimeout(() => setGameState('victory'), 1500);
+            }
           }, 1200);
         }, 300);
       }, 600);
@@ -2922,11 +2985,24 @@ const PokemonGame = () => {
       
       setAvailableTeam(prev => [...prev, newPokemon]);
       addLog(`Success! ${wildPokemon.name} was caught!`);
-      
-      // Play catch sound
       playSound('catch');
-      
-      setTimeout(() => setGameState('catch'), 1000);
+
+      if (birdGauntletActive) {
+        setBattlesWon(prev => prev + 1);
+        setCurrentBirdIndex(prev => {
+          const next = prev + 1;
+          if (next >= 3) {
+            hasCompletedGauntlet.current = true;
+            setBirdGauntletActive(false);
+            setTimeout(() => { setGameState('bird-gauntlet-victory'); }, 1000);
+          } else {
+            setTimeout(() => { setGameState('bird-intermission'); }, 1000);
+          }
+          return next;
+        });
+      } else {
+        setTimeout(() => setGameState('catch'), 1000);
+      }
     } else {
       addLog(`${wildPokemon.name} broke free!`);
       setIsPlayerTurn(false);
@@ -3007,6 +3083,16 @@ const PokemonGame = () => {
       setGameState('mewtwo-intro');
       setPotionUsed(false); setShowBag(false);
       setBattleLog([]);
+      return;
+    }
+
+    // STAGE 2.5: Bird Gauntlet — triggers after 10 post-Mewtwo wins
+    if (hasDefeatedMewtwo.current && !hasCompletedGauntlet.current && battlesWonPostMewtwo.current >= 10) {
+      const shuffled = ['Articuno', 'Zapdos', 'Moltres'].sort(() => Math.random() - 0.5);
+      setPendingBirds(shuffled);
+      setCurrentBirdIndex(0);
+      setBirdGauntletActive(true);
+      setGameState('bird-gauntlet-intro');
       return;
     }
 
@@ -3136,6 +3222,11 @@ const PokemonGame = () => {
     setSelectedDifficultyIndex(1);
     shouldSpawnMewtwo.current = false;
     hasDefeatedMewtwo.current = false;
+    battlesWonPostMewtwo.current = 0;
+    hasCompletedGauntlet.current = false;
+    setBirdGauntletActive(false);
+    setPendingBirds([]);
+    setCurrentBirdIndex(0);
     setIsPoisoned({ player: false, enemy: false });
     setIsSleeping({ player: 0, enemy: 0 });
     setRocketPhase('');
@@ -4168,7 +4259,184 @@ const PokemonGame = () => {
     );
   }
 
+  // ── Bird Gauntlet Intro Screen ────────────────────────────────────────────
+  if (gameState === 'bird-gauntlet-intro') {
+    const startGauntlet = () => {
+      const bird = BIRD_DATA[pendingBirds[0]];
+      setWildPokemon({ ...bird });
+      setBattleLog([`A legendary ${bird.name} appeared!`, `This is a legendary challenge!`]);
+      setIsPlayerTurn(true);
+      setPotionUsed(false);
+      setShowBag(false);
+      setIsPoisoned({ player: false, enemy: false });
+      setIsSleeping({ player: 0, enemy: 0 });
+      setGameState('battle');
+    };
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+        <SettingsButton />
+        <BadgeAcquiredPopup />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen text-center p-4">
+            <div className="border-4 border-black p-3 mb-4" style={{backgroundColor: '#1e1b4b'}}>
+              <h2 className="text-xl font-bold retro-text mb-1" style={{color: '#fbbf24'}}>⚠ LEGENDARY BIRDS ⚠</h2>
+              <p className="text-xs retro-text" style={{color: '#c7d2fe'}}>3 legendary birds approach...</p>
+            </div>
+            <div className="border-4 border-black mb-4 overflow-hidden" style={{backgroundColor: '#000'}}>
+              <img src="/legendary-birds.png" alt="Legendary Birds" className="w-full object-contain" style={{maxHeight: '180px', imageRendering: 'pixelated'}} />
+            </div>
+            <div className="border-4 border-black p-3 mb-4 text-left" style={{backgroundColor: '#fef3c7'}}>
+              <p className="text-xs retro-text mb-1" style={{color: '#000'}}>▸ <strong>Articuno</strong> · <strong>Zapdos</strong> · <strong>Moltres</strong></p>
+              <p className="text-xs retro-text mb-1" style={{color: '#000'}}>▸ 3 consecutive battles · no healing between birds</p>
+              <p className="text-xs retro-text mb-1" style={{color: '#000'}}>▸ You may use items &amp; Great Balls freely</p>
+              <p className="text-xs retro-text" style={{color: '#dc2626'}}>▸ If you fall — the gauntlet restarts</p>
+            </div>
+            <p className="text-xs retro-text mb-3" style={{color: '#6b7280'}}>
+              Order: {pendingBirds.join(' → ')}
+            </p>
+            <button
+              onClick={startGauntlet}
+              className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+              style={{backgroundColor: '#7c3aed', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+            >
+              READY — FACE THE BIRDS
+            </button>
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Bird Intermission Screen ───────────────────────────────────────────────
+  if (gameState === 'bird-intermission') {
+    const defeatedBird = pendingBirds[currentBirdIndex - 1];
+    const nextBird = BIRD_DATA[pendingBirds[currentBirdIndex]];
+    const faceNext = () => {
+      setWildPokemon({ ...nextBird });
+      setBattleLog([`A legendary ${nextBird.name} appeared!`, `The battle continues!`]);
+      setIsPlayerTurn(true);
+      setPotionUsed(false);
+      setShowBag(false);
+      setIsPoisoned({ player: false, enemy: false });
+      setIsSleeping({ player: 0, enemy: 0 });
+      setGameState('battle');
+    };
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+        <SettingsButton />
+        <BadgeAcquiredPopup />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen text-center p-4">
+            <div className="border-4 border-black p-3 mb-4" style={{backgroundColor: '#14532d'}}>
+              <p className="text-sm font-bold retro-text" style={{color: '#86efac'}}>✓ {defeatedBird} defeated!</p>
+            </div>
+            <div className="border-4 border-black p-3 mb-4" style={{backgroundColor: '#1e1b4b'}}>
+              <p className="text-xs retro-text mb-1" style={{color: '#c7d2fe'}}>Next up:</p>
+              <p className="text-lg font-bold retro-text" style={{color: '#fbbf24'}}>{nextBird.name}</p>
+              <div className="flex justify-center gap-2 mt-1">
+                <span className="px-2 py-0 text-xs font-bold retro-text border-2 border-black" style={{backgroundColor: '#ef4444', color: '#fff'}}>{nextBird.type}</span>
+                {nextBird.type2 && <span className="px-2 py-0 text-xs font-bold retro-text border-2 border-black" style={{backgroundColor: '#60a5fa', color: '#fff'}}>{nextBird.type2}</span>}
+              </div>
+              <div className="mt-2 border-4 border-black overflow-hidden inline-block" style={{backgroundColor: '#c8d8e8'}}>
+                <img src={getPokemonSprite(nextBird.name)} alt={nextBird.name} style={{width:'80px', height:'80px', imageRendering:'pixelated'}} />
+              </div>
+            </div>
+            <div className="border-4 border-black p-2 mb-4" style={{backgroundColor: '#fef3c7'}}>
+              <p className="text-xs retro-text font-bold mb-1" style={{color: '#000'}}>YOUR TEAM</p>
+              <div className="grid grid-cols-4 gap-1">
+                {availableTeam.map((p, i) => (
+                  <div key={p.uid ?? i} className="border-2 border-black text-center p-1" style={{backgroundColor: p.uid === playerPokemon?.uid ? '#fbbf24' : '#e5e7eb'}}>
+                    <img src={getPokemonSprite(p.name)} alt={p.name} style={{width:'32px', height:'32px', imageRendering:'pixelated', margin:'0 auto'}} />
+                    <p className="text-xs retro-text" style={{fontSize:'8px', color:'#000'}}>{p.name}</p>
+                    <p className="text-xs retro-text" style={{fontSize:'8px', color: p.hp <= 0 ? '#dc2626' : '#16a34a'}}>{p.hp}/{p.maxHp}</p>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs retro-text mt-1" style={{color:'#6b7280'}}>Switch your active Pokémon if needed</p>
+              <div className="grid grid-cols-2 gap-1 mt-2">
+                {availableTeam.filter(p => p.uid !== playerPokemon?.uid && p.hp > 0).map((p, i) => (
+                  <button key={p.uid ?? i} onClick={() => { setPlayerPokemon(p); addLog(`Go, ${p.name}!`); }}
+                    className="border-2 border-black text-xs retro-text py-1 hover:scale-105 transition-all"
+                    style={{backgroundColor: '#fbbf24', color: '#000'}}>
+                    Switch → {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-xs retro-text mb-3" style={{color:'#6b7280'}}>Bird {currentBirdIndex} of 3 defeated · {3 - currentBirdIndex} remaining</p>
+            <button
+              onClick={faceNext}
+              className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+              style={{backgroundColor: '#7c3aed', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+            >
+              FACE {nextBird.name.toUpperCase()}
+            </button>
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Bird Gauntlet Victory Screen ──────────────────────────────────────────
+  if (gameState === 'bird-gauntlet-victory') {
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+        <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
+        <SettingsModal />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen text-center p-4">
+            <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#7c3aed'}}>
+              <h2 className="text-xl font-bold retro-text" style={{color: '#fbbf24'}}>🏆 GAUNTLET COMPLETE!</h2>
+              <p className="text-xs retro-text mt-1" style={{color: '#e9d5ff'}}>All 3 legendary birds have been conquered!</p>
+            </div>
+            <div className="border-4 border-black mb-4 overflow-hidden" style={{backgroundColor: '#000'}}>
+              <img src="/legendary-birds.png" alt="Legendary Birds" className="w-full object-contain" style={{maxHeight: '140px', imageRendering: 'pixelated'}} />
+            </div>
+            <div className="border-4 border-black p-3 mb-4" style={{backgroundColor: '#fef3c7'}}>
+              <p className="text-sm font-bold retro-text" style={{color: '#000'}}>
+                {pendingBirds.join(' · ')} — defeated!
+              </p>
+              <p className="text-xs retro-text mt-1" style={{color: '#6b7280'}}>Bird Keeper Badge awarded</p>
+            </div>
+            <button
+              onClick={() => { awardBadge('birdkeeper'); startNewBattle(); }}
+              className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+              style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
+            >
+              CONTINUE
+            </button>
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
   if (gameState === 'defeat') {
+    const retryGauntlet = () => {
+      const shuffled = ['Articuno', 'Zapdos', 'Moltres'].sort(() => Math.random() - 0.5);
+      setPendingBirds(shuffled);
+      setCurrentBirdIndex(0);
+      setBirdGauntletActive(true);
+      // Heal the active pokemon before retry
+      const basePokemon = availableTeam.find(p => p.uid === playerPokemon?.uid);
+      const healed = basePokemon
+        ? { ...basePokemon, hp: basePokemon.maxHp }
+        : { ...playerPokemon, hp: playerPokemon?.maxHp };
+      setPlayerPokemon(healed);
+      setAvailableTeam(prev => prev.map(p => p.uid === healed.uid ? healed : p));
+      setIsPoisoned({ player: false, enemy: false });
+      setIsSleeping({ player: 0, enemy: 0 });
+      setGameState('bird-gauntlet-intro');
+    };
+
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
@@ -4181,16 +4449,34 @@ const PokemonGame = () => {
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
             <div className="border-4 border-black p-6 mb-6" style={{backgroundColor: '#dc2626'}}>
-              <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>GAME OVER</h2>
+              <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>
+                {birdGauntletActive ? 'GAUNTLET FAILED' : 'GAME OVER'}
+              </h2>
+              {birdGauntletActive && (
+                <p className="text-sm retro-text mt-2" style={{color: '#fca5a5'}}>
+                  The legendary birds scatter... prepare again.
+                </p>
+              )}
             </div>
-            <button
-              data-continue-button
-              onClick={resetGame}
-              className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
-              style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
-            >
-              TRY AGAIN
-            </button>
+            {birdGauntletActive ? (
+              <button
+                data-continue-button
+                onClick={retryGauntlet}
+                className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all mb-3"
+                style={{backgroundColor: '#7c3aed', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+              >
+                RETRY GAUNTLET
+              </button>
+            ) : (
+              <button
+                data-continue-button
+                onClick={resetGame}
+                className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+                style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
+              >
+                TRY AGAIN
+              </button>
+            )}
           </div>
 
           {/* Game Boy Controls */}
