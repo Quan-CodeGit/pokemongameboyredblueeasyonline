@@ -1871,12 +1871,14 @@ const PokemonGame = () => {
   // Money reward based on defeated Pokemon rarity (attack-stat tiers)
   const getMoneyReward = (pokemon) => {
     if (!pokemon) return 50;
-    const atk = pokemon.attack;
-    if (atk <= 30) return 50;   // Very Common
-    if (atk <= 50) return 50;   // Common
-    if (atk <= 70) return 75;   // Uncommon
-    if (atk <= 85) return 100;  // Rare
-    return 200;                  // Very Rare
+    const power = Math.max(pokemon.attack, pokemon.spAtk);
+    const maxPower = Math.max(...wildPokemons.map(p => Math.max(p.attack, p.spAtk)));
+    const ratio = power / maxPower;
+    if (ratio <= 0.3)  return 50;   // Very Common
+    if (ratio <= 0.5)  return 50;   // Common
+    if (ratio <= 0.7)  return 75;   // Uncommon
+    if (ratio <= 0.85) return 100;  // Rare
+    return 200;                      // Very Rare
   };
 
   // Difficulty-based catch rate multiplier
@@ -1898,14 +1900,15 @@ const PokemonGame = () => {
   };
 
   const getWeightedRandomPokemon = (pokemonList) => {
-    // Group Pokemon by rarity based on attack power
-    const maxAttack = Math.max(...pokemonList.map(p => p.attack));
+    // Group Pokemon by rarity based on the higher of physical or special attack
+    const power = (p) => Math.max(p.attack, p.spAtk);
+    const maxPower = Math.max(...pokemonList.map(power));
 
-    const veryCommon = pokemonList.filter(p => p.attack / maxAttack <= 0.3);   // attack 10-30
-    const common = pokemonList.filter(p => p.attack / maxAttack > 0.3 && p.attack / maxAttack <= 0.5);  // attack 31-50
-    const uncommon = pokemonList.filter(p => p.attack / maxAttack > 0.5 && p.attack / maxAttack <= 0.7); // attack 51-70
-    const rare = pokemonList.filter(p => p.attack / maxAttack > 0.7 && p.attack / maxAttack <= 0.85);    // attack 71-85
-    const veryRare = pokemonList.filter(p => p.attack / maxAttack > 0.85);     // attack 86+
+    const veryCommon = pokemonList.filter(p => power(p) / maxPower <= 0.3);
+    const common     = pokemonList.filter(p => power(p) / maxPower > 0.3  && power(p) / maxPower <= 0.5);
+    const uncommon   = pokemonList.filter(p => power(p) / maxPower > 0.5  && power(p) / maxPower <= 0.7);
+    const rare       = pokemonList.filter(p => power(p) / maxPower > 0.7  && power(p) / maxPower <= 0.85);
+    const veryRare   = pokemonList.filter(p => power(p) / maxPower > 0.85);
 
     // Get difficulty-based encounter rates
     const rates = getEncounterRates();
