@@ -1988,9 +1988,9 @@ const PokemonGame = () => {
 
   // Legendary Birds - post-Mewtwo gauntlet
   const BIRD_DATA = {
-    Articuno: { name: 'Articuno', type: 'Ice', type2: 'Flying', hp: 90, maxHp: 90, attack: 85, spAtk: 95, def: 100, spDef: 125, color: '🧊', moves: ['Blizzard', 'Ice Beam', 'Powder Snow', 'Agility'], moveTypes: ['Ice', 'Ice', 'Ice', 'Normal'] },
-    Zapdos:   { name: 'Zapdos',   type: 'Electric', type2: 'Flying', hp: 90, maxHp: 90, attack: 90, spAtk: 125, def: 85, spDef: 90,  color: '⚡', moves: ['Thunder', 'Thunderbolt', 'Drill Peck', 'Agility'],  moveTypes: ['Electric', 'Electric', 'Flying', 'Normal'] },
-    Moltres:  { name: 'Moltres',  type: 'Fire',     type2: 'Flying', hp: 90, maxHp: 90, attack: 100, spAtk: 125, def: 90, spDef: 85, color: '🔥', moves: ['Fire Blast', 'Flamethrower', 'Sky Attack', 'Ember'],  moveTypes: ['Fire', 'Fire', 'Flying', 'Fire'] },
+    Articuno: { name: 'Articuno', type: 'Ice', type2: 'Flying', hp: 90, maxHp: 90, attack: 85, spAtk: 95, def: 100, spDef: 125, color: '🧊', moves: ['Blizzard', 'Ice Beam', 'Aerial Ace', 'Roost'], moveTypes: ['Ice', 'Ice', 'Flying', 'Flying'] },
+    Zapdos:   { name: 'Zapdos',   type: 'Electric', type2: 'Flying', hp: 90, maxHp: 90, attack: 90, spAtk: 125, def: 85, spDef: 90,  color: '⚡', moves: ['Thunder', 'Thunderbolt', 'Drill Peck', 'Roost'],  moveTypes: ['Electric', 'Electric', 'Flying', 'Flying'] },
+    Moltres:  { name: 'Moltres',  type: 'Fire',     type2: 'Flying', hp: 90, maxHp: 90, attack: 100, spAtk: 125, def: 90, spDef: 85, color: '🔥', moves: ['Fire Blast', 'Flamethrower', 'Sky Attack', 'Roost'],  moveTypes: ['Fire', 'Fire', 'Flying', 'Flying'] },
   };
 
   const BIRD_NAMES = new Set(['Articuno', 'Zapdos', 'Moltres']);
@@ -2252,6 +2252,7 @@ const PokemonGame = () => {
     'Leech Seed': { effect: 'heal_small', message: ' was seeded! HP restored!' },
     'Rest': { effect: 'rest', message: ' went to sleep and restored HP!' },
     'Softboiled': { effect: 'heal_half', message: ' restored its HP!' },
+    'Roost': { effect: 'heal_half', message: ' roosted and restored HP!' },
     'Self-Destruct': { effect: 'self_destruct', message: '' },
     'Agility': { effect: 'raise_attack', message: "'s speed sharply rose!" },
   };
