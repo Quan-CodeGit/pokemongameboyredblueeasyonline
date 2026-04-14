@@ -243,6 +243,7 @@ const PokemonGame = () => {
 
   const nextRocketBattle = useRef(Math.floor(Math.random() * 4) + 7); // first rocket at battle 7-10
   const totalBattles = useRef(0);
+  const birdGoesFirstRef = useRef(false); // flag: legendary bird attacks before player on battle start
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
@@ -289,6 +290,15 @@ const PokemonGame = () => {
   useEffect(() => {
     if (pokedex.length >= 30) awardBadge('master');
   }, [pokedex.length, awardBadge]);
+
+  // Bird goes first: fire enemyAttack on the render after wildPokemon is set
+  useEffect(() => {
+    if (!birdGoesFirstRef.current) return;
+    if (gameState !== 'battle' || !wildPokemon) return;
+    birdGoesFirstRef.current = false;
+    const t = setTimeout(enemyAttack, 1500);
+    return () => clearTimeout(t);
+  }, [wildPokemon, gameState]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Play Pokemon Center theme only on difficulty + starter selection screens
   useEffect(() => {
@@ -4270,8 +4280,9 @@ const PokemonGame = () => {
     const startGauntlet = () => {
       const bird = BIRD_DATA[pendingBirds[0]];
       setWildPokemon({ ...bird });
-      setBattleLog([`A legendary ${bird.name} appeared!`, `This is a legendary challenge!`]);
-      setIsPlayerTurn(true);
+      setBattleLog([`A legendary ${bird.name} appeared!`, `${bird.name} strikes first!`]);
+      birdGoesFirstRef.current = true;
+      setIsPlayerTurn(false);
       setPotionUsed(false);
       setShowBag(false);
       setIsPoisoned({ player: false, enemy: false });
@@ -4321,8 +4332,9 @@ const PokemonGame = () => {
     const nextBird = BIRD_DATA[pendingBirds[currentBirdIndex]];
     const faceNext = () => {
       setWildPokemon({ ...nextBird });
-      setBattleLog([`A legendary ${nextBird.name} appeared!`, `The battle continues!`]);
-      setIsPlayerTurn(true);
+      setBattleLog([`A legendary ${nextBird.name} appeared!`, `${nextBird.name} strikes first!`]);
+      birdGoesFirstRef.current = true;
+      setIsPlayerTurn(false);
       setPotionUsed(false);
       setShowBag(false);
       setIsPoisoned({ player: false, enemy: false });
@@ -4351,7 +4363,7 @@ const PokemonGame = () => {
             </div>
             <div className="border-4 border-black p-2 mb-4" style={{backgroundColor: '#fef3c7'}}>
               <p className="text-xs retro-text font-bold mb-1" style={{color: '#000'}}>YOUR TEAM</p>
-              <div className="grid grid-cols-4 gap-1">
+              <div className="grid grid-cols-3 gap-1 mb-2">
                 {availableTeam.map((p, i) => (
                   <div key={p.uid ?? i} className="border-2 border-black text-center p-1" style={{backgroundColor: p.uid === playerPokemon?.uid ? '#fbbf24' : '#e5e7eb'}}>
                     <img src={getPokemonSprite(p.name)} alt={p.name} style={{width:'32px', height:'32px', imageRendering:'pixelated', margin:'0 auto'}} />
@@ -4360,16 +4372,37 @@ const PokemonGame = () => {
                   </div>
                 ))}
               </div>
-              <p className="text-xs retro-text mt-1" style={{color:'#6b7280'}}>Switch your active Pokémon if needed</p>
-              <div className="grid grid-cols-2 gap-1 mt-2">
-                {availableTeam.filter(p => p.uid !== playerPokemon?.uid && p.hp > 0).map((p, i) => (
-                  <button key={p.uid ?? i} onClick={() => { setPlayerPokemon(p); addLog(`Go, ${p.name}!`); }}
-                    className="border-2 border-black text-xs retro-text py-1 hover:scale-105 transition-all"
-                    style={{backgroundColor: '#fbbf24', color: '#000'}}>
-                    Switch → {p.name}
-                  </button>
-                ))}
-              </div>
+              {bag.potions > 0 ? (
+                <>
+                  <p className="text-xs retro-text mb-1" style={{color:'#000'}}>
+                    🧪 Potions: <strong>{bag.potions}</strong> — heal a wounded Pokémon:
+                  </p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {availableTeam.filter(p => p.hp > 0 && p.hp < p.maxHp).map((p, i) => (
+                      <button key={p.uid ?? i}
+                        onClick={() => {
+                          setBag(prev => ({ ...prev, potions: prev.potions - 1 }));
+                          setAvailableTeam(prev => prev.map(tp =>
+                            tp.uid === p.uid ? { ...tp, hp: tp.maxHp } : tp
+                          ));
+                          if (p.uid === playerPokemon?.uid)
+                            setPlayerPokemon(prev => ({ ...prev, hp: prev.maxHp }));
+                        }}
+                        className="border-2 border-black text-xs retro-text py-1 hover:scale-105 transition-all"
+                        style={{backgroundColor: '#22c55e', color: '#fff'}}>
+                        Heal {p.name} ({p.hp}/{p.maxHp})
+                      </button>
+                    ))}
+                    {availableTeam.filter(p => p.hp > 0 && p.hp < p.maxHp).length === 0 && (
+                      <p className="col-span-2 text-xs retro-text" style={{color:'#16a34a'}}>All Pokémon are at full HP!</p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <p className="text-xs retro-text mt-1" style={{color:'#9ca3af'}}>
+                  No potions in bag — buy from Pokémart before the gauntlet next time.
+                </p>
+              )}
             </div>
             <p className="text-xs retro-text mb-3" style={{color:'#6b7280'}}>Bird {currentBirdIndex} of 3 defeated · {3 - currentBirdIndex} remaining</p>
             <button
