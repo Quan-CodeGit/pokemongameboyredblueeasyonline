@@ -1754,6 +1754,8 @@ const PokemonGame = () => {
       'nidoranm': 32, 'nidorino': 33, 'nidoking': 34,
       // Dragon types
       'dratini': 147, 'dragonair': 148, 'dragonite': 149,
+      // Legendary birds
+      'articuno': 144, 'zapdos': 145, 'moltres': 146,
       // Mythical
       'mew': 151
     };
