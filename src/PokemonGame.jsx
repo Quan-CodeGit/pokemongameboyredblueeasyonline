@@ -1876,7 +1876,7 @@ const PokemonGame = () => {
       case 'hard':
         return { veryCommon: 20, common: 25, uncommon: 25, rare: 15, veryRare: 15 };
       default: // medium
-        return { veryCommon: 37.5, common: 30, uncommon: 20, rare: 7.25, veryRare: 5 };
+        return { veryCommon: 30, common: 30, uncommon: 25, rare: 10, veryRare: 5 };
     }
   };
 
