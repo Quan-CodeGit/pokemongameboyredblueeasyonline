@@ -149,7 +149,6 @@ const PokemonGame = () => {
   const [battlesWon, setBattlesWon] = useState(0);
   const [availableTeam, setAvailableTeam] = useState([]);
   const [isEvolving, setIsEvolving] = useState(false);
-  const [spriteCache, setSpriteCache] = useState({});
   const [isPoisoned, setIsPoisoned] = useState({ player: false, enemy: false });
   const [isSleeping, setIsSleeping] = useState({ player: 0, enemy: 0 }); // turns remaining
   const [selectedStarterIndex, setSelectedStarterIndex] = useState(0);
@@ -242,8 +241,14 @@ const PokemonGame = () => {
   const [bagSelectedIndex, setBagSelectedIndex] = useState(0);
 
   const nextRocketBattle = useRef(Math.floor(Math.random() * 4) + 7); // first rocket at battle 7-10
+  const nextBugCatcherBattle = useRef(12); // first trade at battle 12, then every 12
   const totalBattles = useRef(0);
   const birdGoesFirstRef = useRef(false); // flag: legendary bird attacks before player on battle start
+
+  // Trade state
+  const [tradeOffer, setTradeOffer] = useState(null);   // Bug Catcher's offered Pokémon
+  const [tradeTarget, setTradeTarget] = useState(null); // Player's Pokémon being requested
+  const [tradePhase, setTradePhase] = useState('offer'); // 'offer' | 'animating' | 'sliding' | 'complete'
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
@@ -3073,6 +3078,11 @@ const PokemonGame = () => {
       if (triggerRocketEvent()) return;
     }
 
+    // Bug Catcher trade offer (every 10-18 battles, not during gauntlet or post-Mewtwo)
+    if (!birdGauntletActive && !hasDefeatedMewtwo.current && totalBattles.current >= nextBugCatcherBattle.current) {
+      if (triggerTradeEvent()) return;
+    }
+
     // Restore base stats from availableTeam (undo Withdraw/Growl/Dragon Dance etc.)
     // then heal HP to max
     const basePokemon = availableTeam.find(p => p.uid === playerPokemon.uid);
@@ -3188,6 +3198,72 @@ const PokemonGame = () => {
     // Set next rocket battle (7-10 battles from now)
     nextRocketBattle.current = totalBattles.current + Math.floor(Math.random() * 4) + 7;
     return true;
+  };
+
+  // ── Bug Catcher Trade ────────────────────────────
+  const bugCatcherPool = [
+    { name: 'Butterfree', type: 'Bug', type2: 'Flying', hp: 60, maxHp: 60, attack: 45, spAtk: 90, def: 50, spDef: 80, color: '🦋', moves: ['Gust', 'Confusion', 'Sleep Powder', 'Psychic'], moveTypes: ['Flying', 'Psychic', 'Grass', 'Psychic'] },
+    { name: 'Beedrill', type: 'Bug', type2: 'Poison', hp: 65, maxHp: 65, attack: 90, spAtk: 45, def: 40, spDef: 80, color: '🐝', moves: ['Fury Attack', 'Twineedle', 'Poison Jab', 'X-Scissor'], moveTypes: ['Normal', 'Bug', 'Poison', 'Bug'] },
+    { name: 'Scyther', type: 'Bug', type2: 'Flying', hp: 70, maxHp: 70, attack: 110, spAtk: 55, def: 80, spDef: 80, color: '🦗', moves: ['Slash', 'Wing Attack', 'X-Scissor', 'Aerial Ace'], moveTypes: ['Normal', 'Flying', 'Bug', 'Flying'] },
+    { name: 'Pinsir', type: 'Bug', type2: null, hp: 65, maxHp: 65, attack: 125, spAtk: 55, def: 100, spDef: 70, color: '🦂', moves: ['Vise Grip', 'Brick Break', 'X-Scissor', 'Earthquake'], moveTypes: ['Normal', 'Fighting', 'Bug', 'Ground'] },
+    { name: 'Parasect', type: 'Bug', type2: 'Grass', hp: 60, maxHp: 60, attack: 95, spAtk: 60, def: 80, spDef: 80, color: '🍄', moves: ['Slash', 'Spore', 'Leech Life', 'Giga Drain'], moveTypes: ['Normal', 'Grass', 'Bug', 'Grass'] },
+    { name: 'Venomoth', type: 'Bug', type2: 'Poison', hp: 70, maxHp: 70, attack: 65, spAtk: 90, def: 60, spDef: 75, color: '🦋', moves: ['Confusion', 'Sleep Powder', 'Psybeam', 'Bug Buzz'], moveTypes: ['Psychic', 'Grass', 'Psychic', 'Bug'] },
+    { name: 'Caterpie', type: 'Bug', type2: null, hp: 45, maxHp: 45, attack: 30, spAtk: 20, def: 35, spDef: 20, color: '🐛', moves: ['Tackle', 'String Shot', 'Bug Bite'], moveTypes: ['Normal', 'Bug', 'Bug'] },
+    { name: 'Weedle', type: 'Bug', type2: 'Poison', hp: 40, maxHp: 40, attack: 35, spAtk: 20, def: 30, spDef: 20, color: '🐝', moves: ['Poison Sting', 'String Shot', 'Bug Bite'], moveTypes: ['Poison', 'Bug', 'Bug'] },
+  ];
+
+  const triggerTradeEvent = () => {
+    const allPokemon = availableTeam.length > 0 ? availableTeam : (playerPokemon ? [playerPokemon] : []);
+    if (allPokemon.length === 0) return false;
+
+    const offered = { ...bugCatcherPool[Math.floor(Math.random() * bugCatcherPool.length)], uid: `trade-${Date.now()}` };
+
+    // Pick a random player pokemon as the trade target
+    const targetPokemon = allPokemon[Math.floor(Math.random() * allPokemon.length)];
+
+    setTradeOffer(offered);
+    setTradeTarget(targetPokemon);
+    setTradePhase('offer');
+
+    // If the requested pokemon is the active one, auto-switch to 2nd in line
+    if (targetPokemon.uid === playerPokemon?.uid) {
+      const bench = availableTeam.filter(p => p.uid !== playerPokemon.uid);
+      if (bench.length > 0) setPlayerPokemon(bench[0]);
+    }
+
+    nextBugCatcherBattle.current = totalBattles.current + 12;
+    setGameState('trade');
+    setBattleLog([]);
+    return true;
+  };
+
+  const acceptTrade = () => {
+    if (!tradeOffer || !tradeTarget) return;
+    setTradePhase('animating');
+
+    // After silhouette+flash animation, slide out
+    setTimeout(() => setTradePhase('sliding'), 1800);
+
+    // Swap pokemon and show result
+    setTimeout(() => {
+      const received = { ...tradeOffer, uid: `${Date.now()}-trade`, hp: tradeOffer.maxHp };
+      setAvailableTeam(prev => {
+        const filtered = prev.filter(p => p.uid !== tradeTarget.uid);
+        return [...filtered, received];
+      });
+      // If the active pokemon was the traded one, switch to the received one
+      if (playerPokemon?.uid === tradeTarget.uid) {
+        setPlayerPokemon(received);
+      }
+      setPokedex(prev => prev.find(p => p.name === tradeOffer.name) ? prev : [...prev, received]);
+      setTradePhase('complete');
+    }, 2600);
+  };
+
+  const declineTrade = () => {
+    setTradeOffer(null);
+    setTradeTarget(null);
+    startNewBattle();
   };
 
   const startRocketAnimation = () => {
@@ -4450,6 +4526,182 @@ const PokemonGame = () => {
             >
               CONTINUE
             </button>
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'trade') {
+    const isMobile = displayMode === 'mobile';
+    const spriteSize = isMobile ? 96 : 128;
+
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
+        <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
+        <SettingsModal />
+        <SaveLoadModal />
+        <HowToPlayModal />
+        <PokedexModal />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen text-center">
+
+            {/* Header */}
+            <div className="border-4 border-black mb-3 py-2 px-3" style={{backgroundColor: '#15803d'}}>
+              <p className="retro-text font-bold" style={{color: '#fff', fontSize: '13px', letterSpacing: '2px'}}>
+                *** TRAINER WANTS TO TRADE! ***
+              </p>
+            </div>
+
+            {/* Bug Catcher + dialog */}
+            <div className="border-4 border-black mb-3 p-3 flex items-center gap-3" style={{backgroundColor: '#fef9c3'}}>
+              <img
+                src="/bug-catcher.png"
+                alt="Bug Catcher"
+                style={{
+                  width: isMobile ? '60px' : '80px',
+                  height: 'auto',
+                  imageRendering: 'pixelated',
+                  flexShrink: 0,
+                }}
+              />
+              <div className="text-left">
+                {tradePhase === 'offer' && (
+                  <>
+                    <p className="retro-text font-bold mb-1" style={{color: '#1a1a1a', fontSize: '11px'}}>
+                      BUG CATCHER:
+                    </p>
+                    <p className="retro-text" style={{color: '#1a1a1a', fontSize: '10px', lineHeight: '1.5'}}>
+                      Hey! I caught a rare one!<br/>
+                      Trade my <span style={{color:'#15803d',fontWeight:'bold'}}>{tradeOffer?.name}</span> for<br/>
+                      your <span style={{color:'#dc2626',fontWeight:'bold'}}>{tradeTarget?.name}</span>?
+                    </p>
+                  </>
+                )}
+                {(tradePhase === 'animating' || tradePhase === 'sliding') && (
+                  <p className="retro-text font-bold" style={{color: '#7c3aed', fontSize: '11px'}}>
+                    Transferring Pokémon...
+                  </p>
+                )}
+                {tradePhase === 'complete' && (
+                  <p className="retro-text font-bold" style={{color: '#15803d', fontSize: '11px'}}>
+                    Trade complete!<br/>
+                    Take good care of {tradeOffer?.name}!
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Pokemon display area */}
+            <div className="border-4 border-black mb-3 p-3" style={{backgroundColor: '#e0e7ff'}}>
+              {tradePhase === 'offer' && (
+                <div className="flex items-center justify-around">
+                  {/* Bug Catcher's offer */}
+                  <div className="text-center">
+                    <p className="retro-text text-xs font-bold mb-1" style={{color: '#15803d'}}>HE OFFERS</p>
+                    <img
+                      src={getPokemonSprite(tradeOffer?.name || '')}
+                      alt={tradeOffer?.name}
+                      style={{width: spriteSize, height: spriteSize, imageRendering: 'pixelated', margin: '0 auto'}}
+                    />
+                    <p className="retro-text text-xs font-bold mt-1" style={{color: '#000'}}>{tradeOffer?.name}</p>
+                    <span className="retro-text text-xs px-2 py-0 border-2 border-black" style={{backgroundColor: '#15803d', color: '#fff'}}>
+                      {tradeOffer?.type}
+                    </span>
+                  </div>
+
+                  {/* Arrow */}
+                  <div style={{fontSize: '24px'}}>⇄</div>
+
+                  {/* Player's pokemon */}
+                  <div className="text-center">
+                    <p className="retro-text text-xs font-bold mb-1" style={{color: '#dc2626'}}>HE WANTS</p>
+                    <img
+                      src={getPokemonSprite(tradeTarget?.name || '')}
+                      alt={tradeTarget?.name}
+                      style={{width: spriteSize, height: spriteSize, imageRendering: 'pixelated', margin: '0 auto'}}
+                    />
+                    <p className="retro-text text-xs font-bold mt-1" style={{color: '#000'}}>{tradeTarget?.name}</p>
+                    <span className="retro-text text-xs px-2 py-0 border-2 border-black" style={{backgroundColor: '#dc2626', color: '#fff'}}>
+                      {tradeTarget?.type}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Trade animation — silhouette → flash → slide */}
+              {(tradePhase === 'animating' || tradePhase === 'sliding') && (
+                <div className="flex items-center justify-around">
+                  <div className="text-center">
+                    <img
+                      src={getPokemonSprite(tradeOffer?.name || '')}
+                      alt={tradeOffer?.name}
+                      className={tradePhase === 'animating' ? 'trade-to-silhouette' : 'trade-slide-right'}
+                      style={{width: spriteSize, height: spriteSize, imageRendering: 'pixelated', margin: '0 auto'}}
+                    />
+                  </div>
+                  <div style={{fontSize: '24px', opacity: 0.4}}>⇄</div>
+                  <div className="text-center">
+                    <img
+                      src={getPokemonSprite(tradeTarget?.name || '')}
+                      alt={tradeTarget?.name}
+                      className={tradePhase === 'animating' ? 'trade-to-silhouette' : 'trade-slide-left'}
+                      style={{width: spriteSize, height: spriteSize, imageRendering: 'pixelated', margin: '0 auto'}}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Reveal — show received pokemon */}
+              {tradePhase === 'complete' && (
+                <div className="text-center">
+                  <p className="retro-text text-xs font-bold mb-2" style={{color: '#7c3aed'}}>YOU RECEIVED</p>
+                  <img
+                    src={getPokemonSprite(tradeOffer?.name || '')}
+                    alt={tradeOffer?.name}
+                    className="trade-reveal"
+                    style={{width: spriteSize + 32, height: spriteSize + 32, imageRendering: 'pixelated', margin: '0 auto'}}
+                  />
+                  <p className="retro-text font-bold mt-2" style={{color: '#000', fontSize: '14px'}}>{tradeOffer?.name}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Buttons */}
+            {tradePhase === 'offer' && (
+              <div className="flex gap-3">
+                <button
+                  data-continue-button
+                  onClick={acceptTrade}
+                  className="flex-1 border-4 border-black font-bold py-3 retro-text hover:scale-105 transition-all"
+                  style={{backgroundColor: '#15803d', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+                >
+                  ▸ ACCEPT
+                </button>
+                <button
+                  onClick={declineTrade}
+                  className="flex-1 border-4 border-black font-bold py-3 retro-text hover:scale-105 transition-all"
+                  style={{backgroundColor: '#6b7280', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+                >
+                  ✕ DECLINE
+                </button>
+              </div>
+            )}
+            {tradePhase === 'complete' && (
+              <button
+                data-continue-button
+                onClick={() => { setTradeOffer(null); setTradeTarget(null); startNewBattle(); }}
+                className="w-full border-4 border-black font-bold py-3 retro-text hover:scale-105 transition-all"
+                style={{backgroundColor: '#7c3aed', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+              >
+                ▸ CONTINUE
+              </button>
+            )}
+
           </div>
           <GameboyControlsComponent />
           <Footer />

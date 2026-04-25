@@ -252,6 +252,51 @@ img[style*="pixelated"] {
   animation: rocketFlash 0.5s ease-in-out 3;
 }
 
+/* ── Trade animations ────────────────────────────── */
+@keyframes tradeSilhouette {
+  0%   { filter: brightness(1) saturate(1); }
+  30%  { filter: brightness(0) saturate(0); }
+  50%  { filter: brightness(0) saturate(0); }
+  65%  { filter: brightness(20) saturate(0); }
+  75%  { filter: brightness(0) saturate(0); }
+  88%  { filter: brightness(20) saturate(0); }
+  100% { filter: brightness(0) saturate(0); }
+}
+
+@keyframes tradeReveal {
+  0%   { filter: brightness(20) saturate(0); transform: scale(0.85); opacity: 0.7; }
+  40%  { filter: brightness(3) saturate(0.5); transform: scale(1.05); opacity: 0.9; }
+  100% { filter: brightness(1) saturate(1); transform: scale(1); opacity: 1; }
+}
+
+@keyframes tradeSlideLeft {
+  0%   { transform: translateX(0); }
+  60%  { transform: translateX(-40px); opacity: 0.6; }
+  100% { transform: translateX(-80px); opacity: 0; }
+}
+
+@keyframes tradeSlideRight {
+  0%   { transform: translateX(0); }
+  60%  { transform: translateX(40px); opacity: 0.6; }
+  100% { transform: translateX(80px); opacity: 0; }
+}
+
+.trade-to-silhouette {
+  animation: tradeSilhouette 1.8s ease-in-out forwards;
+}
+
+.trade-slide-left {
+  animation: tradeSlideLeft 0.6s ease-in forwards;
+}
+
+.trade-slide-right {
+  animation: tradeSlideRight 0.6s ease-in forwards;
+}
+
+.trade-reveal {
+  animation: tradeReveal 1s ease-out forwards;
+}
+
 /* ── Badge System ────────────────────────────────── */
 @keyframes badgeGlow {
   0%   { box-shadow: 0 0 16px #f8e71c, 0 0 32px #f8a71c, 12px 12px 0px #000; }
