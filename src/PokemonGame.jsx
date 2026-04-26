@@ -3304,8 +3304,18 @@ const PokemonGame = () => {
     setAvailableTeam(prev => prev.filter((_, i) => i !== stolenPokemonIndex));
     setRocketPhase('');
     setStolenPokemonIndex(-1);
-    // Count the rocket event as a battle and continue normally
-    nextBattle();
+    // Count this as a battle, then start next battle directly.
+    // Do NOT call nextBattle() here — it may early-return for Pokémart while
+    // gameState is still 'rocket', freezing the screen. Also startNewBattle()
+    // would re-check rocket with a stale availableTeam closure.
+    totalBattles.current += 1;
+    const wild = getWeightedRandomPokemon(wildPokemons);
+    setWildPokemon(wild);
+    setBattleLog([`A wild ${wild.name} appeared!`]);
+    setGameState('battle');
+    setIsPlayerTurn(true);
+    setPotionUsed(false);
+    setShowBag(false);
   };
 
   const resetGame = () => {
