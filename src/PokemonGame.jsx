@@ -2556,6 +2556,7 @@ const PokemonGame = () => {
         if (wildPokemon.hp - selfDestructDamage <= 0) {
           setTimeout(() => setGameState('victory'), 1500);
         } else {
+          totalBattles.current += 1;
           setTimeout(() => setGameState('defeat'), 1500);
         }
         return;
@@ -2854,6 +2855,7 @@ const PokemonGame = () => {
 
       const hitDelay = effectiveness > 1 ? 1800 : 1200;
       if (newPlayerHp <= 0) {
+        totalBattles.current += 1;
         setTimeout(() => {
           addLog(`${currentName} fainted!`);
           setGameState('defeat');
@@ -2868,6 +2870,7 @@ const PokemonGame = () => {
             setAvailableTeam(prev => prev.map(p =>
               p.uid === currentUid ? { ...p, hp: 0 } : p
             ));
+            totalBattles.current += 1;
             setTimeout(() => {
               addLog(`${currentName} fainted from poison!`);
               setGameState('defeat');
@@ -3300,13 +3303,8 @@ const PokemonGame = () => {
     setAvailableTeam(prev => prev.filter((_, i) => i !== stolenPokemonIndex));
     setRocketPhase('');
     setStolenPokemonIndex(-1);
-    // Start next normal battle
-    const wild = getWeightedRandomPokemon(wildPokemons);
-    setWildPokemon(wild);
-    setBattleLog([`A wild ${wild.name} appeared!`]);
-    setGameState('battle');
-    setIsPlayerTurn(true);
-    setPotionUsed(false);
+    // Count the rocket event as a battle and continue normally
+    nextBattle();
   };
 
   const resetGame = () => {
