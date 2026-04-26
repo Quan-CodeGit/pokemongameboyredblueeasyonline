@@ -2709,9 +2709,10 @@ const PokemonGame = () => {
       }, 600);
     } else {
       // Apply poison damage to enemy before enemy's turn
+      // Use newWildHp (post-attack) not stale wildPokemon.hp to avoid missed kill detection
       if (isPoisoned.enemy) {
-        const poisonDmg = Math.min(10, wildPokemon.hp);
-        const newHp = Math.max(0, wildPokemon.hp - 10);
+        const poisonDmg = Math.min(10, newWildHp);
+        const newHp = Math.max(0, newWildHp - 10);
         setWildPokemon(prev => ({ ...prev, hp: Math.max(0, prev.hp - 10) }));
         addLog(`${wildPokemon.name} took ${poisonDmg} poison damage!`);
         if (newHp <= 0) {
