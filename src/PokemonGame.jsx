@@ -3200,16 +3200,25 @@ const PokemonGame = () => {
     return true;
   };
 
-  // ── Bug Catcher Trade ────────────────────────────
+  // ── Bug Catcher Trade — all 12 Gen-1 Bug-types ──
   const bugCatcherPool = [
-    { name: 'Butterfree', type: 'Bug', type2: 'Flying', hp: 60, maxHp: 60, attack: 45, spAtk: 90, def: 50, spDef: 80, color: '🦋', moves: ['Gust', 'Confusion', 'Sleep Powder', 'Psychic'], moveTypes: ['Flying', 'Psychic', 'Grass', 'Psychic'] },
-    { name: 'Beedrill', type: 'Bug', type2: 'Poison', hp: 65, maxHp: 65, attack: 90, spAtk: 45, def: 40, spDef: 80, color: '🐝', moves: ['Fury Attack', 'Twineedle', 'Poison Jab', 'X-Scissor'], moveTypes: ['Normal', 'Bug', 'Poison', 'Bug'] },
-    { name: 'Scyther', type: 'Bug', type2: 'Flying', hp: 70, maxHp: 70, attack: 110, spAtk: 55, def: 80, spDef: 80, color: '🦗', moves: ['Slash', 'Wing Attack', 'X-Scissor', 'Aerial Ace'], moveTypes: ['Normal', 'Flying', 'Bug', 'Flying'] },
-    { name: 'Pinsir', type: 'Bug', type2: null, hp: 65, maxHp: 65, attack: 125, spAtk: 55, def: 100, spDef: 70, color: '🦂', moves: ['Vise Grip', 'Brick Break', 'X-Scissor', 'Earthquake'], moveTypes: ['Normal', 'Fighting', 'Bug', 'Ground'] },
-    { name: 'Parasect', type: 'Bug', type2: 'Grass', hp: 60, maxHp: 60, attack: 95, spAtk: 60, def: 80, spDef: 80, color: '🍄', moves: ['Slash', 'Spore', 'Leech Life', 'Giga Drain'], moveTypes: ['Normal', 'Grass', 'Bug', 'Grass'] },
-    { name: 'Venomoth', type: 'Bug', type2: 'Poison', hp: 70, maxHp: 70, attack: 65, spAtk: 90, def: 60, spDef: 75, color: '🦋', moves: ['Confusion', 'Sleep Powder', 'Psybeam', 'Bug Buzz'], moveTypes: ['Psychic', 'Grass', 'Psychic', 'Bug'] },
-    { name: 'Caterpie', type: 'Bug', type2: null, hp: 45, maxHp: 45, attack: 30, spAtk: 20, def: 35, spDef: 20, color: '🐛', moves: ['Tackle', 'String Shot', 'Bug Bite'], moveTypes: ['Normal', 'Bug', 'Bug'] },
-    { name: 'Weedle', type: 'Bug', type2: 'Poison', hp: 40, maxHp: 40, attack: 35, spAtk: 20, def: 30, spDef: 20, color: '🐝', moves: ['Poison Sting', 'String Shot', 'Bug Bite'], moveTypes: ['Poison', 'Bug', 'Bug'] },
+    // Caterpie line
+    { name: 'Caterpie',  type: 'Bug', type2: null,     hp: 45,  maxHp: 45,  attack: 30,  spAtk: 20,  def: 35,  spDef: 20,  color: '🐛', moves: ['Tackle', 'String Shot', 'Bug Bite'], moveTypes: ['Normal', 'Bug', 'Bug'] },
+    { name: 'Metapod',   type: 'Bug', type2: null,     hp: 50,  maxHp: 50,  attack: 20,  spAtk: 25,  def: 55,  spDef: 25,  color: '🥚', moves: ['Harden', 'Tackle', 'Bug Bite'], moveTypes: ['Normal', 'Normal', 'Bug'] },
+    { name: 'Butterfree',type: 'Bug', type2: 'Flying', hp: 60,  maxHp: 60,  attack: 45,  spAtk: 90,  def: 50,  spDef: 80,  color: '🦋', moves: ['Gust', 'Confusion', 'Sleep Powder', 'Psychic'], moveTypes: ['Flying', 'Psychic', 'Grass', 'Psychic'] },
+    // Weedle line
+    { name: 'Weedle',    type: 'Bug', type2: 'Poison', hp: 40,  maxHp: 40,  attack: 35,  spAtk: 20,  def: 30,  spDef: 20,  color: '🐝', moves: ['Poison Sting', 'String Shot', 'Bug Bite'], moveTypes: ['Poison', 'Bug', 'Bug'] },
+    { name: 'Kakuna',    type: 'Bug', type2: 'Poison', hp: 45,  maxHp: 45,  attack: 25,  spAtk: 25,  def: 50,  spDef: 25,  color: '🐝', moves: ['Harden', 'Poison Sting', 'Bug Bite'], moveTypes: ['Normal', 'Poison', 'Bug'] },
+    { name: 'Beedrill',  type: 'Bug', type2: 'Poison', hp: 65,  maxHp: 65,  attack: 90,  spAtk: 45,  def: 40,  spDef: 80,  color: '🐝', moves: ['Fury Attack', 'Twineedle', 'Poison Jab', 'X-Scissor'], moveTypes: ['Normal', 'Bug', 'Poison', 'Bug'] },
+    // Paras line
+    { name: 'Paras',     type: 'Bug', type2: 'Grass',  hp: 35,  maxHp: 35,  attack: 70,  spAtk: 45,  def: 55,  spDef: 55,  color: '🍄', moves: ['Scratch', 'Stun Spore', 'Leech Life', 'Spore'], moveTypes: ['Normal', 'Grass', 'Bug', 'Grass'] },
+    { name: 'Parasect',  type: 'Bug', type2: 'Grass',  hp: 60,  maxHp: 60,  attack: 95,  spAtk: 60,  def: 80,  spDef: 80,  color: '🍄', moves: ['Slash', 'Spore', 'Leech Life', 'Giga Drain'], moveTypes: ['Normal', 'Grass', 'Bug', 'Grass'] },
+    // Venonat line
+    { name: 'Venonat',   type: 'Bug', type2: 'Poison', hp: 60,  maxHp: 60,  attack: 55,  spAtk: 40,  def: 50,  spDef: 55,  color: '🔮', moves: ['Tackle', 'Confusion', 'Poison Powder', 'Psybeam'], moveTypes: ['Normal', 'Psychic', 'Poison', 'Psychic'] },
+    { name: 'Venomoth',  type: 'Bug', type2: 'Poison', hp: 70,  maxHp: 70,  attack: 65,  spAtk: 90,  def: 60,  spDef: 75,  color: '🦋', moves: ['Confusion', 'Sleep Powder', 'Psybeam', 'Bug Buzz'], moveTypes: ['Psychic', 'Grass', 'Psychic', 'Bug'] },
+    // Rare bugs
+    { name: 'Scyther',   type: 'Bug', type2: 'Flying', hp: 70,  maxHp: 70,  attack: 110, spAtk: 55,  def: 80,  spDef: 80,  color: '🦗', moves: ['Slash', 'Wing Attack', 'X-Scissor', 'Aerial Ace'], moveTypes: ['Normal', 'Flying', 'Bug', 'Flying'] },
+    { name: 'Pinsir',    type: 'Bug', type2: null,     hp: 65,  maxHp: 65,  attack: 125, spAtk: 55,  def: 100, spDef: 70,  color: '🦂', moves: ['Vise Grip', 'Brick Break', 'X-Scissor', 'Earthquake'], moveTypes: ['Normal', 'Fighting', 'Bug', 'Ground'] },
   ];
 
   const triggerTradeEvent = () => {
