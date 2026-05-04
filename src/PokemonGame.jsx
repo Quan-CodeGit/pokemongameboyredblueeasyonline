@@ -204,6 +204,8 @@ const PokemonGame = () => {
   const [rocketPhase, setRocketPhase] = useState(''); // '', 'video', 'intro', 'walking', 'grabbing', 'leaving', 'done'
   const [stolenPokemonIndex, setStolenPokemonIndex] = useState(-1);
   const stolenNameRef = useRef('');
+  const [isRocketBattle, setIsRocketBattle] = useState(false);
+  const rocketStolenBackup = useRef(null); // stolen Pokemon — returned on win, gone on loss
 
   // Use ref to track Mewtwo spawn - bypasses React state timing issues
   const shouldSpawnMewtwo = useRef(false);
@@ -2683,11 +2685,13 @@ const PokemonGame = () => {
 
           setTimeout(() => {
             playSound('victory');
-            setBattlesWon(prev => prev + 1);
-            if (hasDefeatedMewtwo.current && !hasCompletedGauntlet.current) {
-              battlesWonPostMewtwo.current += 1;
+            if (!isRocketBattle) {
+              setBattlesWon(prev => prev + 1);
+              if (hasDefeatedMewtwo.current && !hasCompletedGauntlet.current) {
+                battlesWonPostMewtwo.current += 1;
+              }
+              setPlayerMoney(prev => prev + getMoneyReward(wildPokemon));
             }
-            setPlayerMoney(prev => prev + getMoneyReward(wildPokemon));
             // Bird gauntlet: advance to next bird or gauntlet victory
             if (birdGauntletActive) {
               setCurrentBirdIndex(prev => {
@@ -2720,8 +2724,10 @@ const PokemonGame = () => {
           setTimeout(() => {
             addLog(`${wildPokemon.name} fainted from poison!`);
             playSound('victory');
-            setBattlesWon(prev => prev + 1);
-            setPlayerMoney(prev => prev + getMoneyReward(wildPokemon));
+            if (!isRocketBattle) {
+              setBattlesWon(prev => prev + 1);
+              setPlayerMoney(prev => prev + getMoneyReward(wildPokemon));
+            }
             setTimeout(() => setGameState('victory'), 1500);
           }, 500);
           return;
@@ -3225,6 +3231,17 @@ const PokemonGame = () => {
     { name: 'Pinsir',    type: 'Bug', type2: null,     hp: 65,  maxHp: 65,  attack: 125, spAtk: 55,  def: 100, spDef: 70,  color: '🦂', moves: ['Vise Grip', 'Brick Break', 'X-Scissor', 'Earthquake'], moveTypes: ['Normal', 'Fighting', 'Bug', 'Ground'] },
   ];
 
+  // ── Team Rocket Battle Pool ───────────────────────
+  const ROCKET_POKEMON_POOL = [
+    { name: 'Meowth',     type: 'Normal', type2: null,    hp: 40,  maxHp: 40,  attack: 45,  spAtk: 40,  def: 35,  spDef: 40,  color: '🐱', moves: ['Scratch', 'Bite', 'Fury Swipes', 'Pay Day'],        moveTypes: ['Normal', 'Dark', 'Normal', 'Normal'] },
+    { name: 'Koffing',    type: 'Poison', type2: null,    hp: 40,  maxHp: 40,  attack: 65,  spAtk: 60,  def: 95,  spDef: 45,  color: '💨', moves: ['Tackle', 'Smog', 'Sludge', 'Self-Destruct'],        moveTypes: ['Normal', 'Poison', 'Poison', 'Normal'] },
+    { name: 'Ekans',      type: 'Poison', type2: null,    hp: 35,  maxHp: 35,  attack: 60,  spAtk: 40,  def: 44,  spDef: 54,  color: '🐍', moves: ['Wrap', 'Poison Sting', 'Bite', 'Acid'],             moveTypes: ['Normal', 'Poison', 'Dark', 'Poison'] },
+    { name: 'Arbok',      type: 'Poison', type2: null,    hp: 60,  maxHp: 60,  attack: 95,  spAtk: 65,  def: 69,  spDef: 79,  color: '🐍', moves: ['Bite', 'Poison Sting', 'Glare', 'Acid'],             moveTypes: ['Dark', 'Poison', 'Normal', 'Poison'] },
+    { name: 'Weezing',    type: 'Poison', type2: null,    hp: 65,  maxHp: 65,  attack: 90,  spAtk: 85,  def: 120, spDef: 70,  color: '💨', moves: ['Smog', 'Sludge', 'Self-Destruct', 'Smokescreen'],   moveTypes: ['Poison', 'Poison', 'Normal', 'Normal'] },
+    { name: 'Victreebel', type: 'Grass',  type2: 'Poison', hp: 85, maxHp: 85,  attack: 105, spAtk: 100, def: 65,  spDef: 70,  color: '🌿', moves: ['Razor Leaf', 'Sludge Bomb', 'Solar Beam', 'Leaf Blade'], moveTypes: ['Grass', 'Poison', 'Grass', 'Grass'] },
+    { name: 'Weepinbell', type: 'Grass',  type2: 'Poison', hp: 65, maxHp: 65,  attack: 90,  spAtk: 85,  def: 50,  spDef: 45,  color: '🌿', moves: ['Vine Whip', 'Acid', 'Razor Leaf', 'Slam'],          moveTypes: ['Grass', 'Poison', 'Grass', 'Normal'] },
+  ];
+
   const triggerTradeEvent = () => {
     const allPokemon = availableTeam.length > 0 ? availableTeam : (playerPokemon ? [playerPokemon] : []);
     if (allPokemon.length === 0) return false;
@@ -3318,6 +3335,31 @@ const PokemonGame = () => {
     setShowBag(false);
   };
 
+  // Start a single-Pokemon fight against Team Rocket to win back the stolen Pokemon.
+  const startRocketBattle = () => {
+    const stolenPoke = availableTeam[stolenPokemonIndex];
+    rocketStolenBackup.current = stolenPoke; // keep a copy — returned on victory
+
+    // Remove stolen Pokemon from team first (same as continueAfterRocket)
+    setAvailableTeam(prev => prev.filter((_, i) => i !== stolenPokemonIndex));
+    setRocketPhase('');
+    setStolenPokemonIndex(-1);
+
+    const pick = ROCKET_POKEMON_POOL[Math.floor(Math.random() * ROCKET_POKEMON_POOL.length)];
+    const rocketPoke = { ...pick, hp: pick.maxHp };
+
+    totalBattles.current += 1;
+    setIsRocketBattle(true);
+    setWildPokemon(rocketPoke);
+    setBattleLog([`Team Rocket sends out ${rocketPoke.name}!`, 'Defeat it to recover your Pokemon!']);
+    setGameState('battle');
+    setIsPlayerTurn(true);
+    setPotionUsed(false);
+    setShowBag(false);
+    setIsPoisoned({ player: false, enemy: false });
+    setIsSleeping({ player: 0, enemy: 0 });
+  };
+
   const resetGame = () => {
     setGameState('intro');
     setPlayerPokemon(null);
@@ -3341,6 +3383,8 @@ const PokemonGame = () => {
     setIsSleeping({ player: 0, enemy: 0 });
     setRocketPhase('');
     setStolenPokemonIndex(-1);
+    setIsRocketBattle(false);
+    rocketStolenBackup.current = null;
     nextRocketBattle.current = Math.floor(Math.random() * 4) + 7;
     totalBattles.current = 0;
   };
@@ -3661,7 +3705,7 @@ const PokemonGame = () => {
                   />
                 </div>
                 <h3 className="font-bold text-sm mb-2 uppercase retro-text" style={{color: '#000'}}>
-                  WILD {wildPokemon.name}
+                  {isRocketBattle ? `🚀 ${wildPokemon.name}` : `WILD ${wildPokemon.name}`}
                 </h3>
                 <div className="flex items-center justify-center gap-1 mb-2">
                   <span className="border-2 border-black px-2 py-1 text-xs font-bold retro-text" style={{backgroundColor: '#dc2626', color: '#fff'}}>
@@ -3863,6 +3907,7 @@ const PokemonGame = () => {
                   })()}
                 </div>
 
+                {!isRocketBattle && (
                 <button
                   data-action-index={5}
                   onClick={() => catchPokemon()}
@@ -3878,6 +3923,7 @@ const PokemonGame = () => {
                 >
                   CATCH
                 </button>
+                )}
               </div>
             
               {availableTeam.length > 1 && (
@@ -4144,16 +4190,27 @@ const PokemonGame = () => {
               )}
             </div>
 
-            {/* Continue button (only after done) */}
+            {/* Fight back or let go (only after done) */}
             {rocketPhase === 'done' && (
-              <button
-                data-continue-button
-                onClick={continueAfterRocket}
-                className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all mt-4"
-                style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
-              >
-                CONTINUE
-              </button>
+              <div className="flex flex-col gap-2 mt-4">
+                {availableTeam.length > 1 && (
+                  <button
+                    onClick={startRocketBattle}
+                    className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+                    style={{backgroundColor: '#dc2626', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+                  >
+                    ⚔️ FIGHT BACK!
+                  </button>
+                )}
+                <button
+                  data-continue-button
+                  onClick={continueAfterRocket}
+                  className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+                  style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
+                >
+                  {availableTeam.length > 1 ? 'Let them go...' : 'CONTINUE'}
+                </button>
+              </div>
             )}
               </>
             )}
@@ -4302,6 +4359,17 @@ const PokemonGame = () => {
   }
 
   if (gameState === 'victory') {
+    const handleAfterRocketVictory = () => {
+      if (rocketStolenBackup.current) {
+        // Return stolen Pokemon with full HP
+        const recovered = { ...rocketStolenBackup.current, hp: rocketStolenBackup.current.maxHp };
+        setAvailableTeam(prev => [...prev, recovered]);
+        rocketStolenBackup.current = null;
+      }
+      setIsRocketBattle(false);
+      nextBattle();
+    };
+
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
@@ -4314,51 +4382,88 @@ const PokemonGame = () => {
         <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
-            <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#22c55e'}}>
-              <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>VICTORY!</h2>
-            </div>
-            <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#fef3c7'}}>
-              <p className="text-sm font-bold mb-2 retro-text" style={{color: '#000'}}>DEFEATED</p>
-              <p className="text-lg font-bold uppercase retro-text" style={{color: '#000'}}>
-                WILD {wildPokemon.name}!
-              </p>
-            </div>
-            <div className="border-4 border-black p-3 mb-4" style={{backgroundColor: '#dbeafe'}}>
-              <p className="font-bold text-sm retro-text" style={{color: '#000'}}>
-                {playerPokemon.name} +EXP
-              </p>
-              <p className="font-bold text-sm retro-text" style={{color: '#000'}}>
-                EXP: {playerPokemon.exp || 0}
-              </p>
-            </div>
-            <div className="border-4 border-black p-3 mb-2" style={{backgroundColor: '#fecaca'}}>
-              <p className="text-sm font-bold retro-text" style={{color: '#000'}}>
-                WINS: {battlesWon}
-              </p>
-            </div>
-            <div className="border-4 border-black p-3 mb-6 flex flex-col items-center gap-1" style={{backgroundColor: '#dcfce7'}}>
-              <p className="text-sm font-bold retro-text" style={{color: '#15803d'}}>
-                Balance: ${playerMoney}
-              </p>
-              <p className="text-xs retro-text" style={{color: '#15803d'}}>
-                +${getMoneyReward(wildPokemon)} earned!
-              </p>
-            </div>
-            <button
-              data-continue-button
-              onClick={nextBattle}
-              className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
-              style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
-            >
-              NEXT BATTLE
-            </button>
-            <button
-              onClick={() => setShowPokedex(true)}
-              className="w-full border-4 border-black hover:scale-105 font-bold py-2 px-6 retro-text transition-all mt-3"
-              style={{backgroundColor: '#dc2626', color: '#fff', boxShadow: '4px 4px 0px #000'}}
-            >
-              📖 POKEDEX ({pokedex.length}/{allGamePokemon.length})
-            </button>
+            {isRocketBattle ? (
+              <>
+                <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#7c3aed'}}>
+                  <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>TEAM ROCKET</h2>
+                  <h2 className="text-xl font-bold retro-text" style={{color: '#e9d5ff'}}>DEFEATED!</h2>
+                </div>
+                <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#fef3c7'}}>
+                  <p className="text-sm font-bold mb-1 retro-text" style={{color: '#000'}}>
+                    You drove off Team Rocket!
+                  </p>
+                  {rocketStolenBackup.current && (
+                    <p className="text-sm font-bold retro-text" style={{color: '#7c3aed'}}>
+                      {rocketStolenBackup.current.name} is returned!
+                    </p>
+                  )}
+                </div>
+                <div className="border-4 border-black p-3 mb-4" style={{backgroundColor: '#dbeafe'}}>
+                  <p className="font-bold text-sm retro-text" style={{color: '#000'}}>
+                    {playerPokemon.name} +EXP
+                  </p>
+                  <p className="font-bold text-sm retro-text" style={{color: '#000'}}>
+                    EXP: {playerPokemon.exp || 0}
+                  </p>
+                </div>
+                <button
+                  data-continue-button
+                  onClick={handleAfterRocketVictory}
+                  className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+                  style={{backgroundColor: '#7c3aed', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+                >
+                  CONTINUE
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#22c55e'}}>
+                  <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>VICTORY!</h2>
+                </div>
+                <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#fef3c7'}}>
+                  <p className="text-sm font-bold mb-2 retro-text" style={{color: '#000'}}>DEFEATED</p>
+                  <p className="text-lg font-bold uppercase retro-text" style={{color: '#000'}}>
+                    WILD {wildPokemon.name}!
+                  </p>
+                </div>
+                <div className="border-4 border-black p-3 mb-4" style={{backgroundColor: '#dbeafe'}}>
+                  <p className="font-bold text-sm retro-text" style={{color: '#000'}}>
+                    {playerPokemon.name} +EXP
+                  </p>
+                  <p className="font-bold text-sm retro-text" style={{color: '#000'}}>
+                    EXP: {playerPokemon.exp || 0}
+                  </p>
+                </div>
+                <div className="border-4 border-black p-3 mb-2" style={{backgroundColor: '#fecaca'}}>
+                  <p className="text-sm font-bold retro-text" style={{color: '#000'}}>
+                    WINS: {battlesWon}
+                  </p>
+                </div>
+                <div className="border-4 border-black p-3 mb-6 flex flex-col items-center gap-1" style={{backgroundColor: '#dcfce7'}}>
+                  <p className="text-sm font-bold retro-text" style={{color: '#15803d'}}>
+                    Balance: ${playerMoney}
+                  </p>
+                  <p className="text-xs retro-text" style={{color: '#15803d'}}>
+                    +${getMoneyReward(wildPokemon)} earned!
+                  </p>
+                </div>
+                <button
+                  data-continue-button
+                  onClick={nextBattle}
+                  className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+                  style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
+                >
+                  NEXT BATTLE
+                </button>
+                <button
+                  onClick={() => setShowPokedex(true)}
+                  className="w-full border-4 border-black hover:scale-105 font-bold py-2 px-6 retro-text transition-all mt-3"
+                  style={{backgroundColor: '#dc2626', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+                >
+                  📖 POKEDEX ({pokedex.length}/{allGamePokemon.length})
+                </button>
+              </>
+            )}
           </div>
 
           {/* Game Boy Controls */}
@@ -4746,6 +4851,21 @@ const PokemonGame = () => {
       setGameState('bird-gauntlet-intro');
     };
 
+    // Lost a Rocket battle — stolen Pokemon stays gone, game continues
+    const handleAfterRocketDefeat = () => {
+      const lostName = rocketStolenBackup.current?.name;
+      rocketStolenBackup.current = null;
+      setIsRocketBattle(false);
+      // Check if any team member besides active (fainted) is still alive
+      const aliveOthers = availableTeam.filter(p => p.uid !== playerPokemon?.uid && p.hp > 0);
+      if (aliveOthers.length === 0) {
+        // All Pokemon fainted — true game over
+        resetGame();
+        return;
+      }
+      nextBattle();
+    };
+
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
         <SettingsButton />
@@ -4757,34 +4877,63 @@ const PokemonGame = () => {
         <PokedexModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center">
-            <div className="border-4 border-black p-6 mb-6" style={{backgroundColor: '#dc2626'}}>
-              <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>
-                {birdGauntletActive ? 'GAUNTLET FAILED' : 'GAME OVER'}
-              </h2>
-              {birdGauntletActive && (
-                <p className="text-sm retro-text mt-2" style={{color: '#fca5a5'}}>
-                  The legendary birds scatter... prepare again.
-                </p>
-              )}
-            </div>
-            {birdGauntletActive ? (
-              <button
-                data-continue-button
-                onClick={retryGauntlet}
-                className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all mb-3"
-                style={{backgroundColor: '#7c3aed', color: '#fff', boxShadow: '4px 4px 0px #000'}}
-              >
-                RETRY GAUNTLET
-              </button>
+            {isRocketBattle ? (
+              <>
+                <div className="border-4 border-black p-6 mb-4" style={{backgroundColor: '#374151'}}>
+                  <h2 className="text-xl font-bold retro-text" style={{color: '#fff'}}>TEAM ROCKET</h2>
+                  <h2 className="text-xl font-bold retro-text" style={{color: '#fca5a5'}}>ESCAPED!</h2>
+                </div>
+                <div className="border-4 border-black p-4 mb-4" style={{backgroundColor: '#fef3c7'}}>
+                  <p className="text-sm font-bold retro-text mb-1" style={{color: '#000'}}>
+                    You lost the fight...
+                  </p>
+                  {rocketStolenBackup.current && (
+                    <p className="text-sm retro-text" style={{color: '#dc2626'}}>
+                      {rocketStolenBackup.current.name} is gone forever.
+                    </p>
+                  )}
+                </div>
+                <button
+                  data-continue-button
+                  onClick={handleAfterRocketDefeat}
+                  className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+                  style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
+                >
+                  CONTINUE
+                </button>
+              </>
             ) : (
-              <button
-                data-continue-button
-                onClick={resetGame}
-                className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
-                style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
-              >
-                TRY AGAIN
-              </button>
+              <>
+                <div className="border-4 border-black p-6 mb-6" style={{backgroundColor: '#dc2626'}}>
+                  <h2 className="text-2xl font-bold retro-text" style={{color: '#fff'}}>
+                    {birdGauntletActive ? 'GAUNTLET FAILED' : 'GAME OVER'}
+                  </h2>
+                  {birdGauntletActive && (
+                    <p className="text-sm retro-text mt-2" style={{color: '#fca5a5'}}>
+                      The legendary birds scatter... prepare again.
+                    </p>
+                  )}
+                </div>
+                {birdGauntletActive ? (
+                  <button
+                    data-continue-button
+                    onClick={retryGauntlet}
+                    className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all mb-3"
+                    style={{backgroundColor: '#7c3aed', color: '#fff', boxShadow: '4px 4px 0px #000'}}
+                  >
+                    RETRY GAUNTLET
+                  </button>
+                ) : (
+                  <button
+                    data-continue-button
+                    onClick={resetGame}
+                    className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
+                    style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
+                  >
+                    TRY AGAIN
+                  </button>
+                )}
+              </>
             )}
           </div>
 
