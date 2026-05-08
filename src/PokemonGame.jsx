@@ -536,8 +536,9 @@ const PokemonGame = () => {
         const bagSlots = [
           { id: 'free-potion' },
           ...(bag.potions > 0 ? [{ id: 'bag-potion' }] : []),
-          ...(bag.repels > 0 ? [{ id: 'repel' }] : []),
-          ...(bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
+          // Great Balls and Repels are banned during Rocket battles — only potions allowed
+          ...(!isRocketBattle && bag.repels > 0 ? [{ id: 'repel' }] : []),
+          ...(!isRocketBattle && bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
         ];
         if (e.key === 'Escape') { setShowBag(false); return; }
         if (e.key === 'ArrowUp') {
@@ -2936,7 +2937,7 @@ const PokemonGame = () => {
   };
 
   const useRepel = () => {
-    if (!isPlayerTurn || gameState !== 'battle' || bag.repels <= 0) return;
+    if (!isPlayerTurn || gameState !== 'battle' || bag.repels <= 0 || isRocketBattle) return;
     const fledName = wildPokemon.name;
     setBag(prev => ({ ...prev, repels: prev.repels - 1 }));
     setShowBag(false);
@@ -2964,6 +2965,8 @@ const PokemonGame = () => {
 
   const catchPokemon = (useGreatBall = false) => {
     if (!isPlayerTurn || gameState !== 'battle') return;
+    // Pokéballs are banned during Rocket battles — you're fighting, not catching
+    if (isRocketBattle && useGreatBall) return;
     if (useGreatBall && bag.greatBalls <= 0) return;
 
     if (useGreatBall) {
@@ -3704,8 +3707,13 @@ const PokemonGame = () => {
                     }}
                   />
                 </div>
-                <h3 className="font-bold text-sm mb-2 uppercase retro-text" style={{color: '#000'}}>
-                  {isRocketBattle ? `🚀 ${wildPokemon.name}` : `WILD ${wildPokemon.name}`}
+                <h3 className="font-bold text-sm mb-2 uppercase retro-text flex items-center justify-center gap-1" style={{color: '#000'}}>
+                  {isRocketBattle ? (
+                    <>
+                      <img src="/team-rocket-logo.png" alt="Team Rocket" style={{ width: 18, height: 18, imageRendering: 'pixelated', display: 'inline' }} />
+                      {wildPokemon.name}
+                    </>
+                  ) : `WILD ${wildPokemon.name}`}
                 </h3>
                 <div className="flex items-center justify-center gap-1 mb-2">
                   <span className="border-2 border-black px-2 py-1 text-xs font-bold retro-text" style={{backgroundColor: '#dc2626', color: '#fff'}}>
@@ -3833,11 +3841,12 @@ const PokemonGame = () => {
                   {/* Bag dropdown — z-[30] so modals (z-50) still appear on top */}
                   {showBag && isPlayerTurn && (() => {
                     // Build ordered item list for keyboard nav
+                    // Great Balls and Repels are banned during Rocket battles — only potions allowed
                     const bagSlots = [
                       { id: 'free-potion' },
                       ...(bag.potions > 0 ? [{ id: 'bag-potion' }] : []),
-                      ...(bag.repels > 0 ? [{ id: 'repel' }] : []),
-                      ...(bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
+                      ...(!isRocketBattle && bag.repels > 0 ? [{ id: 'repel' }] : []),
+                      ...(!isRocketBattle && bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
                     ];
                     return (
                     <div className="absolute bottom-full left-0 mb-1 w-52 border-4 border-black z-[30]"
@@ -3873,8 +3882,8 @@ const PokemonGame = () => {
                           POTION ×{bag.potions}
                         </button>
                       );})()}
-                      {/* Great Ball */}
-                      {bag.greatBalls > 0 && (() => { const idx = bagSlots.findIndex(s => s.id === 'great-ball'); return (
+                      {/* Great Ball — hidden during Rocket battles */}
+                      {!isRocketBattle && bag.greatBalls > 0 && (() => { const idx = bagSlots.findIndex(s => s.id === 'great-ball'); return (
                         <button onClick={() => catchPokemon(true)}
                           className="w-full text-left p-2 retro-text text-xs font-bold hover:opacity-80 transition-all flex items-center gap-1"
                           style={{
@@ -3886,8 +3895,8 @@ const PokemonGame = () => {
                           GREAT BALL ×{bag.greatBalls}
                         </button>
                       );})()}
-                      {/* Repel */}
-                      {bag.repels > 0 && (() => { const idx = bagSlots.findIndex(s => s.id === 'repel'); return (
+                      {/* Repel — hidden during Rocket battles */}
+                      {!isRocketBattle && bag.repels > 0 && (() => { const idx = bagSlots.findIndex(s => s.id === 'repel'); return (
                         <button onClick={() => useRepel()}
                           className="w-full text-left p-2 border-b-2 border-black retro-text text-xs font-bold hover:opacity-80 transition-all flex items-center gap-1"
                           style={{
@@ -3899,7 +3908,7 @@ const PokemonGame = () => {
                           REPEL ×{bag.repels}
                         </button>
                       );})()}
-                      {bag.potions === 0 && bag.greatBalls === 0 && bag.repels === 0 && (
+                      {bag.potions === 0 && (isRocketBattle || (bag.greatBalls === 0 && bag.repels === 0)) && (
                         <div className="p-2 retro-text text-xs opacity-40" style={{ color: '#000' }}>No items in bag</div>
                       )}
                     </div>
