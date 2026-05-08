@@ -496,7 +496,6 @@ const PokemonGame = () => {
       // Intro screen - Enter to start
       if (gameState === 'intro') {
         if (e.key === 'Enter') {
-          setIntroMusicPlaying(true);
           setGameState('difficulty');
         }
         return;
@@ -2638,8 +2637,9 @@ const PokemonGame = () => {
       setIsPlayerTurn(false);
 
       // Check if we reached 20 EXP IMMEDIATELY and set ref
+      // Rocket fight-back battles should not trigger Mewtwo — only normal wild encounters count
       const newExp = (playerPokemon.exp || 0) + 1;
-      if (newExp >= 20 && !hasDefeatedMewtwo.current) {
+      if (newExp >= 20 && !hasDefeatedMewtwo.current && !isRocketBattle) {
         shouldSpawnMewtwo.current = true;
       }
 
@@ -3348,7 +3348,7 @@ const PokemonGame = () => {
     const pick = ROCKET_POKEMON_POOL[Math.floor(Math.random() * ROCKET_POKEMON_POOL.length)];
     const rocketPoke = { ...pick, hp: pick.maxHp };
 
-    totalBattles.current += 1;
+    // Do NOT increment totalBattles here — nextBattle() handles it after the battle resolves
     setIsRocketBattle(true);
     setWildPokemon(rocketPoke);
     setBattleLog([`Team Rocket sends out ${rocketPoke.name}!`, 'Defeat it to recover your Pokemon!']);
@@ -4195,6 +4195,7 @@ const PokemonGame = () => {
               <div className="flex flex-col gap-2 mt-4">
                 {availableTeam.length > 1 && (
                   <button
+                    data-continue-button
                     onClick={startRocketBattle}
                     className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
                     style={{backgroundColor: '#dc2626', color: '#fff', boxShadow: '4px 4px 0px #000'}}
@@ -4203,7 +4204,6 @@ const PokemonGame = () => {
                   </button>
                 )}
                 <button
-                  data-continue-button
                   onClick={continueAfterRocket}
                   className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
                   style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
@@ -4853,7 +4853,6 @@ const PokemonGame = () => {
 
     // Lost a Rocket battle — stolen Pokemon stays gone, game continues
     const handleAfterRocketDefeat = () => {
-      const lostName = rocketStolenBackup.current?.name;
       rocketStolenBackup.current = null;
       setIsRocketBattle(false);
       // Check if any team member besides active (fainted) is still alive
