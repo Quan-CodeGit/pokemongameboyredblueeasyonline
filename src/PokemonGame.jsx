@@ -138,6 +138,134 @@ const BADGE_DATA = [
   },
 ];
 
+// ─────────────────────────────────────────────────────
+// MOVE DATA  (power, accuracy, type colors)
+// ─────────────────────────────────────────────────────
+const TYPE_COLORS = {
+  Normal:'#9ca3af', Fire:'#f97316', Water:'#3b82f6', Electric:'#eab308',
+  Grass:'#22c55e', Ice:'#67e8f9', Fighting:'#dc2626', Poison:'#a855f7',
+  Ground:'#d97706', Flying:'#818cf8', Psychic:'#ec4899', Bug:'#84cc16',
+  Rock:'#92400e', Ghost:'#6d28d9', Dragon:'#4f46e5', Dark:'#374151', Steel:'#94a3b8',
+};
+
+const MOVE_POWER = {
+  // STATUS — no power
+  Splash:null,'Growl':null,'Withdraw':null,'Harden':null,'Defense Curl':null,
+  'String Shot':null,'Sand Attack':null,'Sing':null,'Hypnosis':null,
+  'Stun Spore':null,'Spore':null,'Poison Powder':null,'Focus Energy':null,
+  'Dragon Dance':null,'Teleport':null,'Transform':null,'Leech Seed':null,
+  'Rest':null,'Softboiled':null,'Roost':null,'Self-Destruct':null,'Agility':null,
+  // FIRE
+  'Ember':40,'Flame Burst':70,'Flame Charge':50,'Flame Wheel':60,
+  'Fire Fang':65,'Fire Punch':75,'Flamethrower':90,'Fire Blast':110,'Blaze Kick':85,
+  // WATER
+  'Bubble':40,'Aqua Jet':40,'Water Gun':40,'Clamp':35,'Bubble Beam':65,
+  'Waterfall':80,'Aqua Tail':90,'Crabhammer':100,'Hydro Pump':110,
+  // ELECTRIC
+  'Thunder Shock':40,'Thundershock':40,'Spark':65,'Thunder Punch':75,
+  'Thunderbolt':90,'Thunder':110,
+  // GRASS
+  'Absorb':20,'Vine Whip':45,'Mega Drain':40,'Razor Leaf':55,'Giga Drain':75,
+  'Leaf Blade':90,'Solar Beam':120,'Petal Dance':120,'Power Whip':120,
+  // ICE
+  'Icy Wind':55,'Aurora Beam':65,'Ice Punch':75,'Ice Beam':90,'Blizzard':110,
+  // PSYCHIC
+  'Confusion':50,'Psybeam':65,'Psychic':90,
+  // DRAGON
+  'Twister':40,'Dragon Rage':40,'Dragon Claw':80,'Dragon Pulse':85,'Outrage':120,
+  // DARK
+  'Bite':60,'Crunch':80,'Dark Pulse':80,
+  // NORMAL (Physical)
+  'Barrage':15,'Bind':15,'Double Slap':15,'Fury Attack':15,'Wrap':15,
+  'Fury Swipes':18,'Sonic Boom':20,'Quick Attack':40,'Tackle':40,'Scratch':40,
+  'Pound':40,'Pay Day':40,'Stomp':65,'Horn Attack':65,'Dizzy Punch':70,
+  'Headbutt':70,'Slash':70,'Vice Grip':55,'Swift':60,'Dazzling Gleam':80,
+  'Hyper Fang':80,'Mega Punch':80,'Slam':80,'Tri Attack':80,'Body Slam':85,
+  'Moonblast':95,'Take Down':90,'Return':90,'Egg Bomb':100,'Skull Bash':100,
+  'Mega Kick':120,'Thrash':120,'Hyper Beam':150,'Giga Impact':150,
+  'Explosion':250,'Struggle':50,'Guillotine':0,
+  // FLYING (Physical)
+  'Peck':35,'Gust':40,'Aerial Ace':60,'Wing Attack':60,'Air Slash':75,
+  'Drill Peck':80,'Hurricane':110,'Sky Attack':140,
+  // BUG (Physical)
+  'Leech Life':25,'Pin Missile':25,'Twineedle':25,'Fury Cutter':40,
+  'Bug Bite':60,'X-Scissor':80,'Bug Buzz':90,
+  // POISON (Physical)
+  'Poison Sting':15,'Smog':20,'Acid':40,'Poison Fang':50,'Sludge':65,
+  'Poison Jab':80,'Sludge Bomb':90,
+  // GROUND (Physical)
+  'Mud Slap':20,'Bonemerang':50,'Mud Shot':55,'Bone Club':65,'Dig':80,'Earthquake':100,
+  // ROCK (Physical)
+  'Rock Blast':25,'Rock Throw':50,'Ancient Power':60,'Rock Slide':75,'Stone Edge':100,
+  // FIGHTING (Physical)
+  'Double Kick':30,'Mach Punch':40,'Karate Chop':50,'Low Kick':50,'Aura Sphere':80,
+  'Cross Chop':100,'Dynamic Punch':100,'Seismic Toss':100,'Superpower':120,
+  'High Jump Kick':130,
+  // GHOST (Physical)
+  'Lick':30,'Shadow Ball':80,'Night Shade':100,
+  // STEEL (Physical)
+  'Iron Tail':100,
+};
+
+const MOVE_ACCURACY = {
+  // STATUS
+  'Splash':null,'Growl':100,'Withdraw':null,'Harden':null,'Defense Curl':null,
+  'String Shot':95,'Sand Attack':100,'Sing':55,'Hypnosis':60,'Stun Spore':75,
+  'Spore':100,'Poison Powder':75,'Focus Energy':null,'Dragon Dance':null,
+  'Teleport':null,'Transform':null,'Leech Seed':90,'Rest':null,'Softboiled':null,
+  'Roost':null,'Self-Destruct':100,'Agility':null,
+  // FIRE
+  'Ember':100,'Flame Burst':100,'Flame Charge':100,'Flame Wheel':100,
+  'Fire Fang':95,'Fire Punch':100,'Flamethrower':100,'Fire Blast':85,'Blaze Kick':90,
+  // WATER
+  'Bubble':100,'Aqua Jet':100,'Water Gun':100,'Clamp':85,'Bubble Beam':100,
+  'Waterfall':100,'Aqua Tail':90,'Crabhammer':85,'Hydro Pump':80,
+  // ELECTRIC
+  'Thunder Shock':100,'Thundershock':100,'Spark':100,'Thunder Punch':100,
+  'Thunderbolt':100,'Thunder':70,
+  // GRASS
+  'Absorb':100,'Vine Whip':100,'Mega Drain':100,'Razor Leaf':95,'Giga Drain':100,
+  'Leaf Blade':100,'Solar Beam':100,'Petal Dance':100,'Power Whip':85,
+  // ICE
+  'Icy Wind':95,'Aurora Beam':100,'Ice Punch':100,'Ice Beam':100,'Blizzard':70,
+  // PSYCHIC
+  'Confusion':100,'Psybeam':100,'Psychic':100,
+  // DRAGON
+  'Twister':100,'Dragon Rage':100,'Dragon Claw':100,'Dragon Pulse':100,'Outrage':100,
+  // DARK
+  'Bite':100,'Crunch':100,'Dark Pulse':100,
+  // NORMAL
+  'Barrage':85,'Bind':85,'Double Slap':85,'Fury Attack':85,'Wrap':90,
+  'Fury Swipes':80,'Sonic Boom':90,'Quick Attack':100,'Tackle':100,'Scratch':100,
+  'Pound':100,'Pay Day':100,'Stomp':100,'Horn Attack':100,'Dizzy Punch':100,
+  'Headbutt':100,'Slash':100,'Vice Grip':100,'Swift':null,'Dazzling Gleam':100,
+  'Hyper Fang':90,'Mega Punch':85,'Slam':75,'Tri Attack':100,'Body Slam':100,
+  'Moonblast':100,'Take Down':85,'Return':100,'Egg Bomb':75,'Skull Bash':100,
+  'Mega Kick':75,'Thrash':100,'Hyper Beam':90,'Giga Impact':90,
+  'Explosion':100,'Struggle':100,'Guillotine':30,
+  // FLYING
+  'Peck':100,'Gust':100,'Aerial Ace':null,'Wing Attack':100,'Air Slash':95,
+  'Drill Peck':100,'Hurricane':70,'Sky Attack':90,
+  // BUG
+  'Leech Life':100,'Pin Missile':95,'Twineedle':100,'Fury Cutter':95,
+  'Bug Bite':100,'X-Scissor':100,'Bug Buzz':100,
+  // POISON
+  'Poison Sting':100,'Smog':70,'Acid':100,'Poison Fang':100,'Sludge':100,
+  'Poison Jab':100,'Sludge Bomb':100,
+  // GROUND
+  'Mud Slap':100,'Bonemerang':90,'Mud Shot':95,'Bone Club':85,'Dig':100,'Earthquake':100,
+  // ROCK
+  'Rock Blast':90,'Rock Throw':90,'Ancient Power':100,'Rock Slide':90,'Stone Edge':80,
+  // FIGHTING
+  'Double Kick':100,'Mach Punch':100,'Karate Chop':100,'Low Kick':100,
+  'Aura Sphere':null,'Cross Chop':80,'Dynamic Punch':50,'Seismic Toss':100,
+  'Superpower':100,'High Jump Kick':90,
+  // GHOST
+  'Lick':100,'Shadow Ball':100,'Night Shade':100,
+  // STEEL
+  'Iron Tail':75,
+};
+
 const PokemonGame = () => {
   const [gameState, setGameState] = useState('intro');
   const [playerPokemon, setPlayerPokemon] = useState(null);
@@ -2276,6 +2404,19 @@ const PokemonGame = () => {
     'Agility': { effect: 'raise_attack', message: "'s speed sharply rose!" },
   };
 
+  // Helper: get display info for a move (category, power string, accuracy string, type color)
+  const getMoveInfo = (moveName, moveType) => {
+    const specialTypes = ['Fire', 'Water', 'Electric', 'Grass', 'Ice', 'Psychic', 'Dragon', 'Dark'];
+    const isStatus = statusMoves.hasOwnProperty(moveName);
+    const category = isStatus ? 'STS' : (specialTypes.includes(moveType) ? 'SPC' : 'PHY');
+    const power = MOVE_POWER[moveName];
+    const acc   = MOVE_ACCURACY[moveName];
+    const powerStr = isStatus ? '—' : (power === 0 ? 'OHKO' : power != null ? String(power) : '—');
+    const accStr   = acc == null ? '—' : `${acc}%`;
+    const color    = TYPE_COLORS[moveType] || '#6b7280';
+    return { category, powerStr, accStr, color };
+  };
+
   const EEVEELUTIONS = {
     water: { name: 'Vaporeon', type: 'Water', type2: null, hp: 130, maxHp: 130, attack: 65, spAtk: 110, def: 60, spDef: 95, color: '💧', moves: ['Water Gun', 'Aurora Beam', 'Hydro Pump', 'Ice Beam'], moveTypes: ['Water', 'Ice', 'Water', 'Ice'], id: 134 },
     thunder: { name: 'Jolteon', type: 'Electric', type2: null, hp: 65, maxHp: 65, attack: 65, spAtk: 110, def: 60, spDef: 95, color: '⚡', moves: ['Thundershock', 'Quick Attack', 'Thunder', 'Pin Missile'], moveTypes: ['Electric', 'Normal', 'Electric', 'Bug'], id: 135 },
@@ -3800,24 +3941,58 @@ const PokemonGame = () => {
 
             <div className="space-y-2">
               <div className="grid grid-cols-2 gap-2">
-                {playerPokemon.moves.map((move, index) => (
+                {playerPokemon.moves.map((move, index) => {
+                  const moveType = playerPokemon.moveTypes?.[index] || 'Normal';
+                  const { category, powerStr, accStr, color: typeColor } = getMoveInfo(move, moveType);
+                  return (
                   <button
                     key={index}
                     data-action-index={index}
                     onClick={() => playerAttack(index)}
                     disabled={!isPlayerTurn || teleportSwitchPending}
-                    className={`border-4 py-2 px-3 font-bold text-xs transition-all retro-text ${
+                    className={`border-4 px-2 font-bold transition-all retro-text ${
                       isPlayerTurn && !teleportSwitchPending ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
                     } ${selectedActionIndex === index && isPlayerTurn && !teleportSwitchPending ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
                     style={{
                       backgroundColor: isPlayerTurn && !teleportSwitchPending ? '#fbbf24' : '#9ca3af',
                       color: '#000',
-                      boxShadow: selectedActionIndex === index && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none')
+                      boxShadow: selectedActionIndex === index && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none'),
+                      paddingTop: 5, paddingBottom: 5,
                     }}
                   >
-                    {move.toUpperCase()}
+                    {/* Move name */}
+                    <div style={{ fontSize: 10, fontWeight: 'bold', lineHeight: 1.2, marginBottom: 3 }}>
+                      {move.toUpperCase()}
+                    </div>
+                    {/* Move info row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
+                      {/* Type badge */}
+                      <span style={{
+                        backgroundColor: typeColor, color: '#fff',
+                        fontSize: 7, fontWeight: 'bold', padding: '1px 3px',
+                        borderRadius: 2, letterSpacing: 0.3, lineHeight: 1.4,
+                      }}>
+                        {moveType.toUpperCase()}
+                      </span>
+                      {/* Category */}
+                      <span style={{
+                        fontSize: 7, fontWeight: 'bold', color: '#1e3a5f',
+                        backgroundColor: 'rgba(0,0,0,0.08)', padding: '1px 3px', borderRadius: 2,
+                      }}>
+                        {category}
+                      </span>
+                      {/* Power */}
+                      <span style={{ fontSize: 7, color: '#374151' }}>
+                        P:{powerStr}
+                      </span>
+                      {/* Accuracy */}
+                      <span style={{ fontSize: 7, color: '#374151' }}>
+                        A:{accStr}
+                      </span>
+                    </div>
                   </button>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
