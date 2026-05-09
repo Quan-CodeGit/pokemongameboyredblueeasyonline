@@ -266,6 +266,10 @@ const MOVE_ACCURACY = {
   'Iron Tail':75,
 };
 
+// PP: strong moves (power > 60) = 5 PP, everything else = 10 PP
+const getMovePP   = (moveName) => { const p = MOVE_POWER[moveName]; return (p !== null && p !== undefined && p > 60) ? 5 : 10; };
+const getInitialPP = (moves)  => moves.map(m => getMovePP(m));
+
 const PokemonGame = () => {
   const [gameState, setGameState] = useState('intro');
   const [playerPokemon, setPlayerPokemon] = useState(null);
@@ -357,7 +361,7 @@ const PokemonGame = () => {
 
   // ── Pokémart / Bag ──────────────────────────────────
   const [playerMoney, setPlayerMoney] = useState(0);
-  const [bag, setBag] = useState({ greatBalls: 0, potions: 0, repels: 0 });
+  const [bag, setBag] = useState({ greatBalls: 0, potions: 0, repels: 0, ethers: 0 });
   const [showPokemart, setShowPokemart] = useState(false);
   const [pokemartQty, setPokemartQty] = useState(1);
   const [pokemartPotionQty, setPokemartPotionQty] = useState(1);
@@ -366,9 +370,12 @@ const PokemonGame = () => {
     potion:    { soldOut: false, discount: false },
     greatBall: { soldOut: false, discount: false },
     repel:     { soldOut: false, discount: false },
+    ether:     { soldOut: false, discount: false },
   });
+  const [pokemartEtherQty, setPokemartEtherQty] = useState(1);
   const [showBag, setShowBag] = useState(false);
   const [bagSelectedIndex, setBagSelectedIndex] = useState(0);
+  const [etherTargetPending, setEtherTargetPending] = useState(false);
 
   const nextRocketBattle = useRef(Math.floor(Math.random() * 4) + 7); // first rocket at battle 7-10
   const nextBugCatcherBattle = useRef(12); // first trade at battle 12, then every 12
@@ -664,6 +671,7 @@ const PokemonGame = () => {
         const bagSlots = [
           { id: 'free-potion' },
           ...(bag.potions > 0 ? [{ id: 'bag-potion' }] : []),
+          ...(bag.ethers > 0 ? [{ id: 'ether' }] : []),
           // Great Balls and Repels are banned during Rocket battles — only potions allowed
           ...(!isRocketBattle && bag.repels > 0 ? [{ id: 'repel' }] : []),
           ...(!isRocketBattle && bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
@@ -682,8 +690,17 @@ const PokemonGame = () => {
           else if (slot.id === 'bag-potion') { useBagPotion(); }
           else if (slot.id === 'repel') { useRepel(); }
           else if (slot.id === 'great-ball') { catchPokemon(true); }
+          else if (slot.id === 'ether') { setEtherTargetPending(true); setShowBag(false); }
           return;
         }
+        return;
+      }
+
+      // Ether target mode: Escape cancels, 1-4 selects a move
+      if (etherTargetPending) {
+        if (e.key === 'Escape') { setEtherTargetPending(false); return; }
+        const numKey = parseInt(e.key);
+        if (numKey >= 1 && numKey <= 4) { useEther(numKey - 1); return; }
         return;
       }
 
@@ -753,7 +770,7 @@ const PokemonGame = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay, showSettings, showBadgeCase, badgePopupQueue, quickMenuFocused, quickMenuIndex, debugMode, settingsIndex, showBag, bagSelectedIndex, bag, potionUsed]);
+  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay, showSettings, showBadgeCase, badgePopupQueue, quickMenuFocused, quickMenuIndex, debugMode, settingsIndex, showBag, bagSelectedIndex, bag, potionUsed, etherTargetPending, playerPokemon]);
 
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
@@ -991,7 +1008,7 @@ const PokemonGame = () => {
   const PokemartModal = () => {
     if (!showPokemart) return null;
     const DISCOUNT_OFF = 50;
-    const basePrices = { potion: 100, greatBall: 200, repel: 300 };
+    const basePrices = { potion: 100, greatBall: 200, repel: 300, ether: 100 };
 
     // Effective price per item (discount applies only if not sold out)
     const effectivePrice = (key) => {
@@ -999,17 +1016,20 @@ const PokemonGame = () => {
       return (!o.soldOut && o.discount) ? basePrices[key] - DISCOUNT_OFF : basePrices[key];
     };
 
-    const potPrice  = effectivePrice('potion');
-    const gbPrice   = effectivePrice('greatBall');
+    const potPrice   = effectivePrice('potion');
+    const gbPrice    = effectivePrice('greatBall');
     const repelPrice = effectivePrice('repel');
+    const etherPrice = effectivePrice('ether');
 
     const potTotal   = pokemartPotionQty * potPrice;
     const gbTotal    = pokemartQty       * gbPrice;
     const repelTotal = pokemartRepelQty  * repelPrice;
+    const etherTotal = pokemartEtherQty  * etherPrice;
 
     const canAffordPot   = !pokemartOffers.potion.soldOut    && playerMoney >= potTotal;
     const canAffordGb    = !pokemartOffers.greatBall.soldOut && playerMoney >= gbTotal;
     const canAffordRepel = !pokemartOffers.repel.soldOut     && playerMoney >= repelTotal;
+    const canAffordEther = !pokemartOffers.ether.soldOut     && playerMoney >= etherTotal;
 
     const handleBuyPot = () => {
       if (!canAffordPot) return;
@@ -1028,6 +1048,12 @@ const PokemonGame = () => {
       setPlayerMoney(prev => prev - repelTotal);
       setBag(prev => ({ ...prev, repels: prev.repels + pokemartRepelQty }));
       setPokemartRepelQty(1);
+    };
+    const handleBuyEther = () => {
+      if (!canAffordEther) return;
+      setPlayerMoney(prev => prev - etherTotal);
+      setBag(prev => ({ ...prev, ethers: prev.ethers + pokemartEtherQty }));
+      setPokemartEtherQty(1);
     };
 
     const MartItem = ({ img, name, desc, basePrice, effectPrice, qty, setQty, canAfford, onBuy, total, soldOut, discount }) => (
@@ -1109,6 +1135,13 @@ const PokemonGame = () => {
             qty={pokemartRepelQty} setQty={setPokemartRepelQty}
             canAfford={canAffordRepel} onBuy={handleBuyRepel} total={repelTotal}
             soldOut={pokemartOffers.repel.soldOut} discount={pokemartOffers.repel.discount}
+          />
+          <MartItem
+            img="/ether.png" name="ETHER" desc="Restore 10 PP to one move"
+            basePrice={basePrices.ether} effectPrice={etherPrice}
+            qty={pokemartEtherQty} setQty={setPokemartEtherQty}
+            canAfford={canAffordEther} onBuy={handleBuyEther} total={etherTotal}
+            soldOut={pokemartOffers.ether.soldOut} discount={pokemartOffers.ether.discount}
           />
           <button onClick={startNewBattle}
             className="w-full border-4 border-black py-2 font-bold retro-text hover:scale-105 transition-all"
@@ -1621,7 +1654,7 @@ const PokemonGame = () => {
       setDifficulty(data.diff || 'medium');
       setPotionUsed(data.potion || false);
       setPlayerMoney(data.money || 0);
-      setBag(data.bag ? { greatBalls: 0, potions: 0, repels: 0, ...data.bag } : { greatBalls: 0, potions: 0, repels: 0 });
+      setBag(data.bag ? { greatBalls: 0, potions: 0, repels: 0, ethers: 0, ...data.bag } : { greatBalls: 0, potions: 0, repels: 0, ethers: 0 });
       // Restore badges — rebuild ref so awardBadge dedup still works
       const loadedBadges = data.badges || [];
       earnedBadgeSetRef.current = new Set(loadedBadges);
@@ -2515,6 +2548,7 @@ const PokemonGame = () => {
     if (effectiveness === 0) effectText = " It doesn't affect " + defender.name + "...";
     else if (effectiveness >= 4) effectText = " EXTREMELY effective!";
     else if (effectiveness > 1) effectText = " Super effective!";
+    else if (effectiveness <= 0.25) effectText = " Barely effective... (¼×)";
     else if (effectiveness < 1) effectText = " Not very effective...";
 
     return { damage, effectText, effectiveness, isStatus: false };
@@ -2661,8 +2695,44 @@ const PokemonGame = () => {
     }
   };
 
+  // Use an Ether on one of the player's moves (restores up to 10 PP)
+  const useEther = (moveIndex) => {
+    if (bag.ethers <= 0) return;
+    const maxPp = playerPokemon.maxPp || getInitialPP(playerPokemon.moves);
+    const curPp = playerPokemon.pp   || [...maxPp];
+    const newPp = [...curPp];
+    const restored = Math.min(10, maxPp[moveIndex] - curPp[moveIndex]);
+    if (restored <= 0) { addLog(`${playerPokemon.moves[moveIndex]}'s PP is already full!`); setEtherTargetPending(false); return; }
+    newPp[moveIndex] = Math.min(maxPp[moveIndex], curPp[moveIndex] + 10);
+    setPlayerPokemon(prev => ({ ...prev, pp: newPp }));
+    setAvailableTeam(prev => prev.map(p => p.uid === playerPokemon.uid ? { ...p, pp: newPp } : p));
+    setBag(prev => ({ ...prev, ethers: prev.ethers - 1 }));
+    addLog(`${playerPokemon.name}'s ${playerPokemon.moves[moveIndex]} PP restored by ${restored}!`);
+    setEtherTargetPending(false);
+    setShowBag(false);
+    // Counts as a turn — enemy attacks
+    setIsPlayerTurn(false);
+    setTimeout(enemyAttack, 1500);
+  };
+
   const playerAttack = async (moveIndex) => {
+    // If waiting for ether target, apply ether instead of attacking
+    if (etherTargetPending) { useEther(moveIndex); return; }
+
     if (!isPlayerTurn || gameState !== 'battle' || isEvolving) return;
+
+    // Check PP — prevent using a depleted move
+    const curPP  = playerPokemon.pp   || getInitialPP(playerPokemon.moves);
+    const maxPP  = playerPokemon.maxPp || getInitialPP(playerPokemon.moves);
+    if (curPP[moveIndex] <= 0) {
+      addLog(`${playerPokemon.moves[moveIndex]} has no PP left!`);
+      return;
+    }
+    // Decrement PP for this move
+    const newPP = [...curPP];
+    newPP[moveIndex] -= 1;
+    setPlayerPokemon(prev => ({ ...prev, pp: newPP, maxPp: prev.maxPp || maxPP }));
+    setAvailableTeam(prev => prev.map(p => p.uid === playerPokemon.uid ? { ...p, pp: newPP, maxPp: p.maxPp || maxPP } : p));
 
     // Check if player is asleep
     if (isSleeping.player > 0) {
@@ -3325,7 +3395,7 @@ const PokemonGame = () => {
     if (totalBattles.current % 5 === 0) {
       // Randomise stock before showing — each item has 20% sold-out, 10% discount chance
       const roll = () => ({ soldOut: Math.random() < 0.2, discount: Math.random() < 0.1 });
-      setPokemartOffers({ potion: roll(), greatBall: roll(), repel: roll() });
+      setPokemartOffers({ potion: roll(), greatBall: roll(), repel: roll(), ether: roll() });
       setShowPokemart(true);
       return; // startNewBattle() called by mart Continue button
     }
@@ -3940,33 +4010,65 @@ const PokemonGame = () => {
             </div>
 
             <div className="space-y-2">
+              {/* Ether target mode banner */}
+              {etherTargetPending && (
+                <div className="flex items-center justify-between mb-1 px-1">
+                  <span className="retro-text font-bold" style={{ fontSize: 9, color: '#7c3aed' }}>
+                    🧪 SELECT MOVE TO RESTORE PP
+                  </span>
+                  <button onClick={() => setEtherTargetPending(false)}
+                    className="retro-text font-bold border-2 border-black px-1"
+                    style={{ fontSize: 8, backgroundColor: '#fbbf24', color: '#000' }}>
+                    CANCEL
+                  </button>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2">
                 {playerPokemon.moves.map((move, index) => {
                   const moveType = playerPokemon.moveTypes?.[index] || 'Normal';
                   const { category, powerStr, accStr, color: typeColor } = getMoveInfo(move, moveType);
+                  const maxPP   = (playerPokemon.maxPp || getInitialPP(playerPokemon.moves))[index];
+                  const curPP   = (playerPokemon.pp    || getInitialPP(playerPokemon.moves))[index];
+                  const ppEmpty = curPP <= 0;
+                  const isEtherMode = etherTargetPending;
+                  const ppFull  = curPP >= maxPP;
+                  const btnDisabled = isEtherMode
+                    ? ppFull                                            // grey out full-PP moves in ether mode
+                    : (!isPlayerTurn || teleportSwitchPending || ppEmpty);
                   return (
                   <button
                     key={index}
                     data-action-index={index}
                     onClick={() => playerAttack(index)}
-                    disabled={!isPlayerTurn || teleportSwitchPending}
+                    disabled={btnDisabled}
                     className={`border-4 px-2 font-bold transition-all retro-text ${
-                      isPlayerTurn && !teleportSwitchPending ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
-                    } ${selectedActionIndex === index && isPlayerTurn && !teleportSwitchPending ? 'border-blue-500 ring-2 ring-blue-300' : 'border-black'}`}
+                      !btnDisabled ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
+                    } ${selectedActionIndex === index && isPlayerTurn && !teleportSwitchPending && !isEtherMode ? 'border-blue-500 ring-2 ring-blue-300' : (isEtherMode && !ppFull ? 'border-purple-500' : 'border-black')}`}
                     style={{
-                      backgroundColor: isPlayerTurn && !teleportSwitchPending ? '#fbbf24' : '#9ca3af',
+                      backgroundColor: isEtherMode
+                        ? (ppFull ? '#9ca3af' : '#ddd6fe')
+                        : (ppEmpty ? '#9ca3af' : (isPlayerTurn && !teleportSwitchPending ? '#fbbf24' : '#9ca3af')),
                       color: '#000',
-                      boxShadow: selectedActionIndex === index && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none'),
+                      boxShadow: isEtherMode && !ppFull ? '3px 3px 0px #7c3aed'
+                               : (selectedActionIndex === index && isPlayerTurn ? '3px 3px 0px #3b82f6'
+                               : (!btnDisabled ? '3px 3px 0px #000' : 'none')),
                       paddingTop: 5, paddingBottom: 5,
                     }}
                   >
-                    {/* Move name */}
-                    <div style={{ fontSize: 10, fontWeight: 'bold', lineHeight: 1.2, marginBottom: 3 }}>
-                      {move.toUpperCase()}
+                    {/* Move name + PP */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                      <div style={{ fontSize: 10, fontWeight: 'bold', lineHeight: 1.2 }}>
+                        {isEtherMode && !ppFull ? '🧪 ' : ''}{move.toUpperCase()}
+                      </div>
+                      <div style={{
+                        fontSize: 8, fontWeight: 'bold',
+                        color: ppEmpty ? '#dc2626' : (curPP <= 1 ? '#f97316' : '#166534'),
+                      }}>
+                        {curPP}/{maxPP}
+                      </div>
                     </div>
                     {/* Move info row */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
-                      {/* Type badge */}
                       <span style={{
                         backgroundColor: typeColor, color: '#fff',
                         fontSize: 7, fontWeight: 'bold', padding: '1px 3px',
@@ -3974,21 +4076,14 @@ const PokemonGame = () => {
                       }}>
                         {moveType.toUpperCase()}
                       </span>
-                      {/* Category */}
                       <span style={{
                         fontSize: 7, fontWeight: 'bold', color: '#1e3a5f',
                         backgroundColor: 'rgba(0,0,0,0.08)', padding: '1px 3px', borderRadius: 2,
                       }}>
                         {category}
                       </span>
-                      {/* Power */}
-                      <span style={{ fontSize: 7, color: '#374151' }}>
-                        P:{powerStr}
-                      </span>
-                      {/* Accuracy */}
-                      <span style={{ fontSize: 7, color: '#374151' }}>
-                        A:{accStr}
-                      </span>
+                      <span style={{ fontSize: 7, color: '#374151' }}>P:{powerStr}</span>
+                      <span style={{ fontSize: 7, color: '#374151' }}>A:{accStr}</span>
                     </div>
                   </button>
                   );
@@ -4011,7 +4106,7 @@ const PokemonGame = () => {
                       boxShadow: selectedActionIndex === 4 && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none')
                     }}
                   >
-                    BAG {(bag.greatBalls + bag.potions + bag.repels) > 0 && `(${bag.greatBalls + bag.potions + bag.repels})`}
+                    BAG {(bag.greatBalls + bag.potions + bag.repels + bag.ethers) > 0 && `(${bag.greatBalls + bag.potions + bag.repels + bag.ethers})`}
                   </button>
                   {/* Bag dropdown — z-[30] so modals (z-50) still appear on top */}
                   {showBag && isPlayerTurn && (() => {
@@ -4020,6 +4115,7 @@ const PokemonGame = () => {
                     const bagSlots = [
                       { id: 'free-potion' },
                       ...(bag.potions > 0 ? [{ id: 'bag-potion' }] : []),
+                      ...(bag.ethers > 0 ? [{ id: 'ether' }] : []),
                       ...(!isRocketBattle && bag.repels > 0 ? [{ id: 'repel' }] : []),
                       ...(!isRocketBattle && bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
                     ];
@@ -4057,6 +4153,19 @@ const PokemonGame = () => {
                           POTION ×{bag.potions}
                         </button>
                       );})()}
+                      {/* Ether — allowed during Rocket battles */}
+                      {bag.ethers > 0 && (() => { const idx = bagSlots.findIndex(s => s.id === 'ether'); return (
+                        <button onClick={() => { setEtherTargetPending(true); setShowBag(false); }}
+                          className="w-full text-left p-2 border-b-2 border-black retro-text text-xs font-bold hover:opacity-80 transition-all flex items-center gap-1"
+                          style={{
+                            backgroundColor: bagSelectedIndex === idx ? '#ddd6fe' : '#f5f3ff',
+                            color: '#000', outline: bagSelectedIndex === idx ? '2px solid #000' : 'none',
+                          }}>
+                          {bagSelectedIndex === idx ? '▶ ' : ''}
+                          <img src="/ether.png" alt="Ether" style={{ width: 16, height: 16, imageRendering: 'pixelated' }} />
+                          ETHER ×{bag.ethers}
+                        </button>
+                      );})()}
                       {/* Great Ball — hidden during Rocket battles */}
                       {!isRocketBattle && bag.greatBalls > 0 && (() => { const idx = bagSlots.findIndex(s => s.id === 'great-ball'); return (
                         <button onClick={() => catchPokemon(true)}
@@ -4083,7 +4192,7 @@ const PokemonGame = () => {
                           REPEL ×{bag.repels}
                         </button>
                       );})()}
-                      {bag.potions === 0 && (isRocketBattle || (bag.greatBalls === 0 && bag.repels === 0)) && (
+                      {bag.potions === 0 && bag.ethers === 0 && (isRocketBattle || (bag.greatBalls === 0 && bag.repels === 0)) && (
                         <div className="p-2 retro-text text-xs opacity-40" style={{ color: '#000' }}>No items in bag</div>
                       )}
                     </div>
