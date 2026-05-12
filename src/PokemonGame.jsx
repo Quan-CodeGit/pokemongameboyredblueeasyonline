@@ -2327,11 +2327,13 @@ const PokemonGame = () => {
 
       // Special case: Magikarp transforms into the mighty Gyarados
       if (lowerName === 'magikarp') {
+        const gyaradosMoves = ['Hydro Pump', 'Bite', 'Return', 'Thrash'];
         const gyarados = {
           name: 'Gyarados', type: 'Water', type2: 'Flying',
           hp: 95, maxHp: 95, attack: 125, spAtk: 60, def: 79, spDef: 100,
-          color: '🐉', moves: ['Hydro Pump', 'Bite', 'Return', 'Thrash'],
+          color: '🐉', moves: gyaradosMoves,
           moveTypes: ['Water', 'Dark', 'Normal', 'Normal'],
+          pp: getInitialPP(gyaradosMoves), maxPp: getInitialPP(gyaradosMoves),
           exp: newExp, defeatedMewtwo: baseForEvolution.defeatedMewtwo, uid: baseForEvolution.uid
         };
 
@@ -2352,6 +2354,8 @@ const PokemonGame = () => {
       const nextEvolution = evolutionMap[lowerName];
 
       if (nextEvolution) {
+        const evolvedMoves = baseForEvolution.moves;
+        const freshPP = getInitialPP(evolvedMoves);
         const evolvedPokemon = {
           ...baseForEvolution,
           name: nextEvolution.name,
@@ -2363,7 +2367,8 @@ const PokemonGame = () => {
           spAtk: (baseForEvolution.spAtk || 0) + 15,
           def: (baseForEvolution.def || 0) + 15,
           spDef: (baseForEvolution.spDef || 0) + 15,
-          exp: newExp
+          exp: newExp,
+          pp: freshPP, maxPp: freshPP
         };
 
         addLog(`${baseForEvolution.name} evolved into ${nextEvolution.name}!`);
@@ -2472,11 +2477,14 @@ const PokemonGame = () => {
 
     // After flash animation → show success screen
     setTimeout(() => {
+      const eeveeEvolvedMoves = chosen.moves || [];
+      const eeveeEvolvedPP = getInitialPP(eeveeEvolvedMoves);
       const evolvedPokemon = {
         ...chosen,
         exp: newExp,
         defeatedMewtwo: pokemon.defeatedMewtwo,
-        uid: pokemon.uid
+        uid: pokemon.uid,
+        pp: eeveeEvolvedPP, maxPp: eeveeEvolvedPP
       };
       setPlayerPokemon(evolvedPokemon);
       setAvailableTeam(prev => prev.map(p =>
@@ -2698,14 +2706,21 @@ const PokemonGame = () => {
   // Use an Ether on one of the player's moves (restores up to 10 PP)
   const useEther = (moveIndex) => {
     if (bag.ethers <= 0) return;
-    const maxPp = playerPokemon.maxPp || getInitialPP(playerPokemon.moves);
-    const curPp = playerPokemon.pp   || [...maxPp];
+    // Always derive maxPp fresh from getInitialPP — never trust stored maxPp which may be stale
+    const maxPp  = getInitialPP(playerPokemon.moves);
+    const curPp  = [...(playerPokemon.pp || maxPp)];
+    const cap    = maxPp[moveIndex];        // hard ceiling for this move
+    const current = curPp[moveIndex] ?? cap; // treat undefined as full
+    if (current >= cap) {
+      addLog(`${playerPokemon.moves[moveIndex]}'s PP is already full!`);
+      setEtherTargetPending(false);
+      return;
+    }
+    const restored = Math.min(10, cap - current);
     const newPp = [...curPp];
-    const restored = Math.min(10, maxPp[moveIndex] - curPp[moveIndex]);
-    if (restored <= 0) { addLog(`${playerPokemon.moves[moveIndex]}'s PP is already full!`); setEtherTargetPending(false); return; }
-    newPp[moveIndex] = Math.min(maxPp[moveIndex], curPp[moveIndex] + 10);
-    setPlayerPokemon(prev => ({ ...prev, pp: newPp }));
-    setAvailableTeam(prev => prev.map(p => p.uid === playerPokemon.uid ? { ...p, pp: newPp } : p));
+    newPp[moveIndex] = Math.min(cap, current + 10); // hard-capped — can never exceed cap
+    setPlayerPokemon(prev => ({ ...prev, pp: newPp, maxPp }));
+    setAvailableTeam(prev => prev.map(p => p.uid === playerPokemon.uid ? { ...p, pp: newPp, maxPp } : p));
     setBag(prev => ({ ...prev, ethers: prev.ethers - 1 }));
     addLog(`${playerPokemon.name}'s ${playerPokemon.moves[moveIndex]} PP restored by ${restored}!`);
     setEtherTargetPending(false);
