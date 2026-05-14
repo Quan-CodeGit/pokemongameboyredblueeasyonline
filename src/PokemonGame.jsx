@@ -1019,7 +1019,7 @@ const PokemonGame = () => {
               <img
                 src="/type-chart.png"
                 alt="Pokemon Type Chart"
-                style={{width: '100%', display: 'block', imageRendering: 'crisp-edges', filter: 'contrast(1.08) saturate(1.1)'}}
+                style={{width: '100%', display: 'block'}}
               />
             </div>
           )}
