@@ -309,6 +309,7 @@ const PokemonGame = () => {
   const [playerFlashClass, setPlayerFlashClass] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
+  const [htpTab, setHtpTab] = useState('guide'); // 'guide' | 'typechart'
   const [showPokedex, setShowPokedex] = useState(false);
   const [showSaveLoad, setShowSaveLoad] = useState(false);
   const [loadCodeInput, setLoadCodeInput] = useState('');
@@ -565,10 +566,13 @@ const PokemonGame = () => {
         return;
       }
 
-      // Close How to Play modal with Enter or Escape
+      // How to Play modal — navigate tabs with Left/Right, close with Enter/Escape
       if (showHowToPlay) {
+        if (e.key === 'ArrowLeft')  setHtpTab('guide');
+        if (e.key === 'ArrowRight') setHtpTab('typechart');
         if (e.key === 'Enter' || e.key === 'Escape') {
           setShowHowToPlay(false);
+          setHtpTab('guide'); // reset to guide on close
         }
         return;
       }
@@ -770,7 +774,7 @@ const PokemonGame = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay, showSettings, showBadgeCase, badgePopupQueue, quickMenuFocused, quickMenuIndex, debugMode, settingsIndex, showBag, bagSelectedIndex, bag, potionUsed, etherTargetPending, playerPokemon]);
+  }, [gameState, isPlayerTurn, isEvolving, selectedStarterIndex, selectedActionIndex, showHowToPlay, htpTab, showSettings, showBadgeCase, badgePopupQueue, quickMenuFocused, quickMenuIndex, debugMode, settingsIndex, showBag, bagSelectedIndex, bag, potionUsed, etherTargetPending, playerPokemon]);
 
   // Get container size based on display mode
   // PC mode = bigger landscape, Mobile mode = smaller portrait
@@ -909,7 +913,6 @@ const PokemonGame = () => {
   // How to Play modal component
   const HowToPlayModal = () => {
     if (!showHowToPlay) return null;
-    const [htpTab, setHtpTab] = React.useState('guide');
 
     // Full type weakness chart data (18 types)
     const TYPE_CHART = [
@@ -1016,7 +1019,7 @@ const PokemonGame = () => {
               <img
                 src="/type-chart.png"
                 alt="Pokemon Type Chart"
-                style={{width: '100%', display: 'block', imageRendering: 'auto'}}
+                style={{width: '100%', display: 'block', imageRendering: 'crisp-edges', filter: 'contrast(1.08) saturate(1.1)'}}
               />
             </div>
           )}
