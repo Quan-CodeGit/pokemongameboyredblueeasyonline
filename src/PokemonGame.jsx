@@ -909,56 +909,158 @@ const PokemonGame = () => {
   // How to Play modal component
   const HowToPlayModal = () => {
     if (!showHowToPlay) return null;
+    const [htpTab, setHtpTab] = React.useState('guide');
+
+    // Full type weakness chart data (18 types)
+    const TYPE_CHART = [
+      { name: 'Normal',   color: '#9ca3af', abbr: 'NOR', weakTo: ['Fighting'] },
+      { name: 'Fighting', color: '#dc2626', abbr: 'FTG', weakTo: ['Flying', 'Psychic', 'Fairy'] },
+      { name: 'Flying',   color: '#818cf8', abbr: 'FLY', weakTo: ['Rock', 'Electric', 'Ice'] },
+      { name: 'Poison',   color: '#a855f7', abbr: 'PSN', weakTo: ['Ground', 'Psychic'] },
+      { name: 'Ground',   color: '#d97706', abbr: 'GRD', weakTo: ['Water', 'Grass', 'Ice'] },
+      { name: 'Rock',     color: '#92400e', abbr: 'RCK', weakTo: ['Fighting', 'Ground', 'Steel', 'Water', 'Grass'] },
+      { name: 'Bug',      color: '#84cc16', abbr: 'BUG', weakTo: ['Flying', 'Rock', 'Fire'] },
+      { name: 'Ghost',    color: '#6d28d9', abbr: 'GHO', weakTo: ['Ghost', 'Dark'] },
+      { name: 'Steel',    color: '#94a3b8', abbr: 'STL', weakTo: ['Fighting', 'Ground', 'Fire'] },
+      { name: 'Fire',     color: '#f97316', abbr: 'FIR', weakTo: ['Ground', 'Rock', 'Water'] },
+      { name: 'Water',    color: '#3b82f6', abbr: 'WTR', weakTo: ['Electric', 'Grass'] },
+      { name: 'Grass',    color: '#22c55e', abbr: 'GRS', weakTo: ['Flying', 'Poison', 'Bug', 'Fire', 'Ice'] },
+      { name: 'Electric', color: '#eab308', abbr: 'ELC', weakTo: ['Ground'] },
+      { name: 'Psychic',  color: '#ec4899', abbr: 'PSY', weakTo: ['Bug', 'Ghost', 'Dark'] },
+      { name: 'Ice',      color: '#67e8f9', abbr: 'ICE', weakTo: ['Fighting', 'Rock', 'Steel', 'Fire'] },
+      { name: 'Dragon',   color: '#4f46e5', abbr: 'DRG', weakTo: ['Ice', 'Dragon', 'Fairy'] },
+      { name: 'Dark',     color: '#374151', abbr: 'DRK', weakTo: ['Fighting', 'Bug', 'Fairy'] },
+      { name: 'Fairy',    color: '#f472b6', abbr: 'FAI', weakTo: ['Poison', 'Steel'] },
+    ];
+    const tcColorMap = Object.fromEntries(TYPE_CHART.map(t => [t.name, t.color]));
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{backgroundColor: 'rgba(0,0,0,0.8)'}}>
-        <div className="border-8 border-black bg-yellow-100 p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto" style={{boxShadow: '12px 12px 0px #000'}}>
-          <div className="border-4 border-black bg-green-600 p-3 mb-4">
+        <div className="border-8 border-black bg-yellow-100 p-4 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto" style={{boxShadow: '12px 12px 0px #000'}}>
+          {/* Header */}
+          <div className="border-4 border-black bg-green-600 p-3 mb-3">
             <h2 className="text-xl font-bold text-center retro-text text-white">❓ HOW TO PLAY</h2>
           </div>
 
-          <div className="border-4 border-black bg-white p-4 mb-4">
-            <p className="text-sm mb-4 retro-text" style={{color: '#000', lineHeight: '1.8'}}>
-              Hello trainer! Welcome to the world of Pokemon. I'm Professor Pine and I will be your guide to become the Pokemon Master. Here's how to play:
-            </p>
-
-            <div className="mb-4">
-              <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>🎮 CONTROLS:</h3>
-              <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
-                <li>• <strong>Arrow Keys</strong> - Navigate menus</li>
-                <li>• <strong>Enter</strong> - Confirm selection</li>
-                <li>• <strong>Space</strong> - Quick access Settings/Debug</li>
-              </ul>
-            </div>
-
-            <div className="mb-4">
-              <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>⚔️ BATTLE:</h3>
-              <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
-                <li>• Choose from 4 moves to attack</li>
-                <li>• Use <strong>POTION</strong> to heal (once per battle)</li>
-                <li>• Use <strong>CATCH</strong> to capture wild Pokemon</li>
-                <li>• <strong>SWITCH</strong> between your team Pokemon</li>
-              </ul>
-            </div>
-
-            <div className="mb-4">
-              <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>📈 EVOLUTION:</h3>
-              <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
-                <li>• Win battles to gain EXP</li>
-                <li>• Every 3 EXP = Evolution (+15 all stats)</li>
-                <li>• Max evolution = +5 all stats per 3 EXP</li>
-              </ul>
-            </div>
-
-            <div className="mb-4">
-              <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>🔮 MEWTWO CHALLENGE:</h3>
-              <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
-                <li>• Reach 20 EXP to unlock Mewtwo battle</li>
-                <li>• Defeat or catch Mewtwo to unlock final evolutions</li>
-                <li>• Face Gengar, Alakazam, Dragonite & more!</li>
-              </ul>
-            </div>
+          {/* Mini tabs */}
+          <div className="flex mb-3 border-4 border-black" style={{boxShadow: '4px 4px 0px #000'}}>
+            <button
+              onClick={() => setHtpTab('guide')}
+              className="flex-1 py-2 font-bold retro-text text-sm border-r-4 border-black transition-all"
+              style={{
+                backgroundColor: htpTab === 'guide' ? '#fbbf24' : '#e5e7eb',
+                color: '#000',
+                boxShadow: htpTab === 'guide' ? 'inset 0 -3px 0 #92400e' : 'none',
+              }}
+            >
+              📖 GUIDE
+            </button>
+            <button
+              onClick={() => setHtpTab('typechart')}
+              className="flex-1 py-2 font-bold retro-text text-sm transition-all"
+              style={{
+                backgroundColor: htpTab === 'typechart' ? '#fbbf24' : '#e5e7eb',
+                color: '#000',
+                boxShadow: htpTab === 'typechart' ? 'inset 0 -3px 0 #92400e' : 'none',
+              }}
+            >
+              ⚔️ TYPE CHART
+            </button>
           </div>
+
+          {/* GUIDE TAB */}
+          {htpTab === 'guide' && (
+            <div className="border-4 border-black bg-white p-4 mb-3">
+              <p className="text-sm mb-4 retro-text" style={{color: '#000', lineHeight: '1.8'}}>
+                Hello trainer! Welcome to the world of Pokemon. I'm Professor Pine and I will be your guide to become the Pokemon Master. Here's how to play:
+              </p>
+              <div className="mb-4">
+                <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>🎮 CONTROLS:</h3>
+                <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
+                  <li>• <strong>Arrow Keys</strong> - Navigate menus</li>
+                  <li>• <strong>Enter</strong> - Confirm selection</li>
+                  <li>• <strong>Space</strong> - Quick access Settings/Debug</li>
+                </ul>
+              </div>
+              <div className="mb-4">
+                <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>⚔️ BATTLE:</h3>
+                <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
+                  <li>• Choose from 4 moves to attack</li>
+                  <li>• Use <strong>POTION</strong> to heal (once per battle)</li>
+                  <li>• Use <strong>CATCH</strong> to capture wild Pokemon</li>
+                  <li>• <strong>SWITCH</strong> between your team Pokemon</li>
+                </ul>
+              </div>
+              <div className="mb-4">
+                <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>📈 EVOLUTION:</h3>
+                <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
+                  <li>• Win battles to gain EXP</li>
+                  <li>• Every 3 EXP = Evolution (+15 all stats)</li>
+                  <li>• Max evolution = +5 all stats per 3 EXP</li>
+                </ul>
+              </div>
+              <div className="mb-4">
+                <h3 className="font-bold text-sm mb-2 retro-text" style={{color: '#dc2626'}}>🔮 MEWTWO CHALLENGE:</h3>
+                <ul className="text-xs retro-text space-y-1" style={{color: '#000'}}>
+                  <li>• Reach 20 EXP to unlock Mewtwo battle</li>
+                  <li>• Defeat or catch Mewtwo to unlock final evolutions</li>
+                  <li>• Face Gengar, Alakazam, Dragonite & more!</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* TYPE CHART TAB */}
+          {htpTab === 'typechart' && (
+            <div className="border-4 border-black bg-white p-3 mb-3">
+              <p className="text-xs retro-text text-center mb-3 font-bold" style={{color: '#dc2626'}}>
+                ▲ Small circles = what hits this type SUPER EFFECTIVE
+              </p>
+              <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px'}}>
+                {TYPE_CHART.map(type => (
+                  <div key={type.name} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px'}}>
+                    {/* Weakness circles */}
+                    <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '2px', minHeight: '22px', alignItems: 'center'}}>
+                      {type.weakTo.map(w => (
+                        <div
+                          key={w}
+                          title={w}
+                          style={{
+                            width: 18, height: 18,
+                            borderRadius: '50%',
+                            backgroundColor: tcColorMap[w] || '#888',
+                            border: '2px solid #000',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}
+                        >
+                          <span style={{fontSize: 6, fontWeight: 'bold', color: '#fff', lineHeight: 1, textShadow: '0 0 2px #000'}}>
+                            {(Object.fromEntries(TYPE_CHART.map(t=>[t.name,t.abbr])))[w] || w.slice(0,3).toUpperCase()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Main type circle */}
+                    <div style={{
+                      width: 54, height: 54,
+                      borderRadius: '50%',
+                      backgroundColor: type.color,
+                      border: '3px solid #000',
+                      boxShadow: '3px 3px 0px #000',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <span style={{fontSize: 11, fontWeight: 'bold', color: '#fff', textShadow: '1px 1px 0 #000', letterSpacing: '-0.5px'}}>
+                        {type.abbr}
+                      </span>
+                    </div>
+                    {/* Type name */}
+                    <span className="retro-text" style={{fontSize: 8, fontWeight: 'bold', color: '#000', textAlign: 'center', lineHeight: 1.2}}>
+                      {type.name.toUpperCase()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button
             onClick={() => setShowHowToPlay(false)}
