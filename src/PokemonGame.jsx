@@ -2544,15 +2544,15 @@ const PokemonGame = () => {
     const attackStat = isSpecialMove ? (attacker.spAtk || 0) : (attacker.attack || 0);
     const defenseStat = isSpecialMove ? (defender.spDef || 0) : (defender.def || 0);
 
-    // Move power scaling — baseline 60 BP = multiplier 1.0, keeps existing damage range
-    // OHKO moves (power 0) and unknown moves fall back to 1.0 multiplier
+    // Move power used directly in the formula
+    // OHKO moves (power 0) and unknown moves use a fallback of 50 BP
     const power = MOVE_POWER[moveName];
-    const powerMult = (power !== null && power !== undefined && power > 0) ? power / 60 : 1.0;
+    const bp = (power !== null && power !== undefined && power > 0) ? power : 50;
 
-    // Calculate base damage with defense reduction + power scaling
-    // Formula: ((attack * 0.4) - (defense * 0.2) + random(0-10)) * powerMult
+    // Formula: power * attack / 200 - defense * 0.1 + random(0-10)
+    // Examples at atk=60, def=30: 40bp→14, 90bp→29, 150bp→47
     let baseDamage = Math.floor(
-      (attackStat * 0.4 - defenseStat * 0.2 + Math.random() * 10) * powerMult
+      (bp * attackStat) / 200 - defenseStat * 0.1 + Math.random() * 10
     );
     baseDamage = Math.max(1, baseDamage); // Minimum 1 damage
 
@@ -2789,7 +2789,7 @@ const PokemonGame = () => {
     // Handle miss
     if (result.missed) {
       addLog(`${playerPokemon.name} used ${moveName}!`);
-      addLog(`But it missed!`);
+      addLog(`${playerPokemon.name}'s attack missed!`);
       setIsPlayerTurn(false);
       setTimeout(enemyAttack, 1500);
       return;
@@ -3098,7 +3098,7 @@ const PokemonGame = () => {
       // Handle miss — enemy wastes its turn, player gets to go
       if (result.missed) {
         addLog(`${wildPokemon.name} used ${moveName}!`);
-        addLog(`But it missed!`);
+        addLog(`${wildPokemon.name}'s attack missed!`);
         setIsPlayerTurn(true);
         return prevPlayerPokemon;
       }
