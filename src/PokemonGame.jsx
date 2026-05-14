@@ -1012,53 +1012,12 @@ const PokemonGame = () => {
 
           {/* TYPE CHART TAB */}
           {htpTab === 'typechart' && (
-            <div className="border-4 border-black bg-white p-3 mb-3">
-              <p className="text-xs retro-text text-center mb-3 font-bold" style={{color: '#dc2626'}}>
-                ▲ Small circles = what hits this type SUPER EFFECTIVE
-              </p>
-              <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px'}}>
-                {TYPE_CHART.map(type => (
-                  <div key={type.name} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px'}}>
-                    {/* Weakness circles */}
-                    <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '2px', minHeight: '22px', alignItems: 'center'}}>
-                      {type.weakTo.map(w => (
-                        <div
-                          key={w}
-                          title={w}
-                          style={{
-                            width: 18, height: 18,
-                            borderRadius: '50%',
-                            backgroundColor: tcColorMap[w] || '#888',
-                            border: '2px solid #000',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}
-                        >
-                          <span style={{fontSize: 6, fontWeight: 'bold', color: '#fff', lineHeight: 1, textShadow: '0 0 2px #000'}}>
-                            {(Object.fromEntries(TYPE_CHART.map(t=>[t.name,t.abbr])))[w] || w.slice(0,3).toUpperCase()}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Main type circle */}
-                    <div style={{
-                      width: 54, height: 54,
-                      borderRadius: '50%',
-                      backgroundColor: type.color,
-                      border: '3px solid #000',
-                      boxShadow: '3px 3px 0px #000',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <span style={{fontSize: 11, fontWeight: 'bold', color: '#fff', textShadow: '1px 1px 0 #000', letterSpacing: '-0.5px'}}>
-                        {type.abbr}
-                      </span>
-                    </div>
-                    {/* Type name */}
-                    <span className="retro-text" style={{fontSize: 8, fontWeight: 'bold', color: '#000', textAlign: 'center', lineHeight: 1.2}}>
-                      {type.name.toUpperCase()}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            <div className="border-4 border-black bg-white p-2 mb-3">
+              <img
+                src="/type-chart.png"
+                alt="Pokemon Type Chart"
+                style={{width: '100%', display: 'block', imageRendering: 'auto'}}
+              />
             </div>
           )}
 
