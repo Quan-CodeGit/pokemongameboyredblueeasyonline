@@ -2152,7 +2152,8 @@ const PokemonGame = () => {
 
   const chooseStarter = (starter) => {
     playSound('sendout');
-    const newPokemon = { ...starter, uid: `${Date.now()}-${Math.random()}` };
+    const freshPP = getInitialPP(starter.moves || []);
+    const newPokemon = { ...starter, uid: `${Date.now()}-${Math.random()}`, pp: freshPP, maxPp: freshPP };
     setPlayerPokemon(newPokemon);
     setAvailableTeam([newPokemon]);
     setPokedex([newPokemon]); // Add starter to pokedex
@@ -2524,6 +2525,15 @@ const PokemonGame = () => {
       return { damage: 0, effectText: '', isStatus: true, statusData: statusMoves[moveName] };
     }
 
+    // Accuracy check — only for moves that have a defined accuracy value
+    // (null / undefined = always hits, e.g. Swift, Aura Sphere)
+    const acc = MOVE_ACCURACY[moveName];
+    if (acc !== null && acc !== undefined) {
+      if (Math.random() * 100 > acc) {
+        return { damage: 0, effectText: '', isStatus: false, missed: true };
+      }
+    }
+
     // Gen 1-3 Physical/Special split based on move TYPE (not Pokemon type)
     // Special types: Fire, Water, Electric, Grass, Ice, Psychic, Dragon, Dark
     // Physical types: Normal, Fighting, Poison, Ground, Flying, Bug, Rock, Ghost, Steel
@@ -2534,9 +2544,16 @@ const PokemonGame = () => {
     const attackStat = isSpecialMove ? (attacker.spAtk || 0) : (attacker.attack || 0);
     const defenseStat = isSpecialMove ? (defender.spDef || 0) : (defender.def || 0);
 
-    // Calculate base damage with defense reduction
-    // Formula: (attack * 0.4) - (defense * 0.2) + random(0-10)
-    let baseDamage = Math.floor(attackStat * 0.4) - Math.floor(defenseStat * 0.2) + Math.floor(Math.random() * 10);
+    // Move power scaling — baseline 60 BP = multiplier 1.0, keeps existing damage range
+    // OHKO moves (power 0) and unknown moves fall back to 1.0 multiplier
+    const power = MOVE_POWER[moveName];
+    const powerMult = (power !== null && power !== undefined && power > 0) ? power / 60 : 1.0;
+
+    // Calculate base damage with defense reduction + power scaling
+    // Formula: ((attack * 0.4) - (defense * 0.2) + random(0-10)) * powerMult
+    let baseDamage = Math.floor(
+      (attackStat * 0.4 - defenseStat * 0.2 + Math.random() * 10) * powerMult
+    );
     baseDamage = Math.max(1, baseDamage); // Minimum 1 damage
 
     // Apply difficulty multiplier for enemy attacks
@@ -2768,6 +2785,15 @@ const PokemonGame = () => {
     const result = calculateDamage(playerPokemon, wildPokemon, moveIndex);
 
     playSound('attack');
+
+    // Handle miss
+    if (result.missed) {
+      addLog(`${playerPokemon.name} used ${moveName}!`);
+      addLog(`But it missed!`);
+      setIsPlayerTurn(false);
+      setTimeout(enemyAttack, 1500);
+      return;
+    }
 
     // Handle status moves
     if (result.isStatus) {
@@ -3069,6 +3095,14 @@ const PokemonGame = () => {
         return prevPlayerPokemon;
       }
 
+      // Handle miss — enemy wastes its turn, player gets to go
+      if (result.missed) {
+        addLog(`${wildPokemon.name} used ${moveName}!`);
+        addLog(`But it missed!`);
+        setIsPlayerTurn(true);
+        return prevPlayerPokemon;
+      }
+
       const { damage, effectText, effectiveness } = result;
 
       const newPlayerHp = Math.max(0, prevPlayerPokemon.hp - damage);
@@ -3226,7 +3260,8 @@ const PokemonGame = () => {
         delete caughtPokemon.spriteName;
         delete caughtPokemon.originalForm;
       }
-      const newPokemon = { ...caughtPokemon, hp: caughtPokemon.maxHp, uid: `${Date.now()}-${Math.random()}` };
+      const caughtPP = getInitialPP(caughtPokemon.moves || []);
+      const newPokemon = { ...caughtPokemon, hp: caughtPokemon.maxHp, uid: `${Date.now()}-${Math.random()}`, pp: caughtPP, maxPp: caughtPP };
       
       // Mark Mewtwo as defeated for ALL team members if caught
       if (wildPokemon.name === 'Mewtwo') {
@@ -3277,15 +3312,22 @@ const PokemonGame = () => {
     const oldUid  = playerPokemon.uid;
     const oldName = playerPokemon.name;
 
+    // Ensure incoming Pokemon has PP initialized
+    const incomingPP  = newPoke.pp    || getInitialPP(newPoke.moves || []);
+    const incomingMax = newPoke.maxPp || getInitialPP(newPoke.moves || []);
     const switchedPokemon = {
       ...newPoke,
       moves: [...newPoke.moves],
       moveTypes: [...newPoke.moveTypes],
+      pp: incomingPP,
+      maxPp: incomingMax,
     };
 
-    // Save HP back to the outgoing pokemon by uid so duplicate-name pokemon stay separate
+    // Save HP AND PP back to the outgoing pokemon so they persist when switched back in
     setAvailableTeam(prev => prev.map(p =>
-      p.uid === oldUid ? { ...p, hp: playerPokemon.hp } : p
+      p.uid === oldUid
+        ? { ...p, hp: playerPokemon.hp, pp: playerPokemon.pp || getInitialPP(playerPokemon.moves), maxPp: playerPokemon.maxPp || getInitialPP(playerPokemon.moves) }
+        : p
     ));
 
     setPlayerPokemon(switchedPokemon);
@@ -3505,7 +3547,8 @@ const PokemonGame = () => {
 
     // Swap pokemon and show result
     setTimeout(() => {
-      const received = { ...tradeOffer, uid: `${Date.now()}-trade`, hp: tradeOffer.maxHp };
+      const tradePP = getInitialPP(tradeOffer.moves || []);
+      const received = { ...tradeOffer, uid: `${Date.now()}-trade`, hp: tradeOffer.maxHp, pp: tradePP, maxPp: tradePP };
       setAvailableTeam(prev => {
         const filtered = prev.filter(p => p.uid !== tradeTarget.uid);
         return [...filtered, received];
