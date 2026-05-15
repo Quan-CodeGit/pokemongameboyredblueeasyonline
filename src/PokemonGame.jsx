@@ -2466,9 +2466,11 @@ const PokemonGame = () => {
         };
 
         setTimeout(() => {
-          setPlayerPokemon(strengthenedPokemon);
+          // Use functional update so we inherit the LIVE pp/maxPp rather than the
+          // stale snapshot captured in the closure when strengthenedPokemon was built
+          setPlayerPokemon(prev => ({ ...strengthenedPokemon, pp: prev.pp, maxPp: prev.maxPp }));
           setAvailableTeam(prev => prev.map(p =>
-            p.uid === baseForEvolution.uid ? strengthenedPokemon : p
+            p.uid === baseForEvolution.uid ? { ...strengthenedPokemon, pp: p.pp, maxPp: p.maxPp } : p
           ));
           setIsEvolving(false);
         }, 2000);
@@ -2965,10 +2967,8 @@ const PokemonGame = () => {
 
         // Mark Mewtwo as defeated for entire team
         if (wildPokemon.name === 'Mewtwo') {
-          const updatedTeam = availableTeam.map(p => ({ ...p, defeatedMewtwo: true }));
-          setAvailableTeam(updatedTeam);
-          const updatedPlayer = { ...playerPokemon, defeatedMewtwo: true };
-          setPlayerPokemon(updatedPlayer);
+          setAvailableTeam(prev => prev.map(p => ({ ...p, defeatedMewtwo: true })));
+          setPlayerPokemon(prev => ({ ...prev, defeatedMewtwo: true }));
           hasDefeatedMewtwo.current = true;
           shouldSpawnMewtwo.current = false;
           addLog(`You defeated the legendary Mewtwo!`);
@@ -2992,10 +2992,10 @@ const PokemonGame = () => {
           if (updatedPokemon) {
             // Only update if NOT evolving (evolution updates happen in setTimeout inside checkEvolution)
             if (newExp % 3 !== 0) {
-              // Not evolving, just gaining EXP - update state
-              setPlayerPokemon(updatedPokemon);
+              // Only update exp — use functional update so we never overwrite pp from stale closure
+              setPlayerPokemon(prev => ({ ...prev, exp: updatedPokemon.exp }));
               setAvailableTeam(prev => prev.map(p =>
-                p.uid === updatedPokemon.uid ? updatedPokemon : p
+                p.uid === updatedPokemon.uid ? { ...p, exp: updatedPokemon.exp } : p
               ));
             }
           }
@@ -3329,10 +3329,8 @@ const PokemonGame = () => {
       
       // Mark Mewtwo as defeated for ALL team members if caught
       if (wildPokemon.name === 'Mewtwo') {
-        const updatedTeam = availableTeam.map(p => ({ ...p, defeatedMewtwo: true }));
-        setAvailableTeam(updatedTeam);
-        const updatedPlayer = { ...playerPokemon, defeatedMewtwo: true };
-        setPlayerPokemon(updatedPlayer);
+        setAvailableTeam(prev => prev.map(p => ({ ...p, defeatedMewtwo: true })));
+        setPlayerPokemon(prev => ({ ...prev, defeatedMewtwo: true }));
         hasDefeatedMewtwo.current = true;
         shouldSpawnMewtwo.current = false;
       }
@@ -3414,9 +3412,10 @@ const PokemonGame = () => {
         : { ...playerPokemon, hp: playerPokemon.maxHp };
       delete healedPokemon.spriteName;
       delete healedPokemon.originalForm;
-      setPlayerPokemon(healedPokemon);
+      // Preserve live pp from functional state — closures here can be stale
+      setPlayerPokemon(prev => ({ ...healedPokemon, pp: prev.pp || healedPokemon.pp, maxPp: prev.maxPp || healedPokemon.maxPp }));
       setAvailableTeam(prev => prev.map(p =>
-        p.uid === healedPokemon.uid ? healedPokemon : p
+        p.uid === healedPokemon.uid ? { ...healedPokemon, pp: p.pp || healedPokemon.pp, maxPp: p.maxPp || healedPokemon.maxPp } : p
       ));
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
@@ -3442,10 +3441,10 @@ const PokemonGame = () => {
     setIsPoisoned({ player: false, enemy: false });
     setIsSleeping({ player: 0, enemy: 0 });
 
-    // Update states
-    setPlayerPokemon(healedPokemon);
+    // Preserve live pp — closures here can be stale
+    setPlayerPokemon(prev => ({ ...healedPokemon, pp: prev.pp || healedPokemon.pp, maxPp: prev.maxPp || healedPokemon.maxPp }));
     setAvailableTeam(prev => prev.map(p =>
-      p.uid === healedPokemon.uid ? healedPokemon : p
+      p.uid === healedPokemon.uid ? { ...healedPokemon, pp: p.pp || healedPokemon.pp, maxPp: p.maxPp || healedPokemon.maxPp } : p
     ));
 
     // STAGE 2: Check ref to see if we should spawn Mewtwo
@@ -5259,8 +5258,8 @@ const PokemonGame = () => {
       const healed = basePokemon
         ? { ...basePokemon, hp: basePokemon.maxHp }
         : { ...playerPokemon, hp: playerPokemon?.maxHp };
-      setPlayerPokemon(healed);
-      setAvailableTeam(prev => prev.map(p => p.uid === healed.uid ? healed : p));
+      setPlayerPokemon(prev => ({ ...healed, pp: prev.pp || healed.pp, maxPp: prev.maxPp || healed.maxPp }));
+      setAvailableTeam(prev => prev.map(p => p.uid === healed.uid ? { ...healed, pp: p.pp || healed.pp, maxPp: p.maxPp || healed.maxPp } : p));
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
       setGameState('bird-gauntlet-intro');
