@@ -2782,7 +2782,11 @@ const PokemonGame = () => {
     if (isEnemy) {
       setWildPokemon(transformed);
     } else {
-      setPlayerPokemon(transformed);
+      // Use functional update so we don't overwrite the live (already-decremented) pp
+      // with the stale closure snapshot that was baked into `transformed`.
+      // Give each copied move 5 PP (Gen 1 Transform behaviour).
+      const transformPP = new Array(target.moves.length).fill(5);
+      setPlayerPokemon(prev => ({ ...transformed, pp: transformPP, maxPp: transformPP }));
     }
   };
 
@@ -2820,17 +2824,27 @@ const PokemonGame = () => {
     if (!isPlayerTurn || gameState !== 'battle' || isEvolving) return;
 
     // Check PP — prevent using a depleted move
-    const curPP  = playerPokemon.pp   || getInitialPP(playerPokemon.moves);
-    const maxPP  = playerPokemon.maxPp || getInitialPP(playerPokemon.moves);
-    if (curPP[moveIndex] <= 0) {
+    // Use closure value only for the early-return check (UI feedback)
+    const curPPCheck = playerPokemon.pp || getInitialPP(playerPokemon.moves);
+    if (curPPCheck[moveIndex] <= 0) {
       addLog(`${playerPokemon.moves[moveIndex]} has no PP left!`);
       return;
     }
-    // Decrement PP for this move
-    const newPP = [...curPP];
-    newPP[moveIndex] -= 1;
-    setPlayerPokemon(prev => ({ ...prev, pp: newPP, maxPp: prev.maxPp || maxPP }));
-    setAvailableTeam(prev => prev.map(p => p.uid === playerPokemon.uid ? { ...p, pp: newPP, maxPp: p.maxPp || maxPP } : p));
+    // Decrement PP inside functional updaters so we always read the LIVE state,
+    // never a stale closure snapshot — this is the fix for PP "auto-refill" bug.
+    setPlayerPokemon(prev => {
+      const livePP = prev.pp || getInitialPP(prev.moves || []);
+      const newPP  = [...livePP];
+      newPP[moveIndex] = Math.max(0, (newPP[moveIndex] ?? 0) - 1);
+      return { ...prev, pp: newPP };
+    });
+    setAvailableTeam(prev => prev.map(p => {
+      if (p.uid !== playerPokemon.uid) return p;
+      const livePP = p.pp || getInitialPP(p.moves || []);
+      const newPP  = [...livePP];
+      newPP[moveIndex] = Math.max(0, (newPP[moveIndex] ?? 0) - 1);
+      return { ...p, pp: newPP };
+    }));
 
     // Check if player is asleep
     if (isSleeping.player > 0) {
