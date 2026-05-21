@@ -362,18 +362,20 @@ const PokemonGame = () => {
 
   // ── Pokémart / Bag ──────────────────────────────────
   const [playerMoney, setPlayerMoney] = useState(0);
-  const [bag, setBag] = useState({ greatBalls: 0, potions: 0, repels: 0, ethers: 0 });
+  const [bag, setBag] = useState({ greatBalls: 0, potions: 0, repels: 0, ethers: 0, rareCandy: 0 });
   const [showPokemart, setShowPokemart] = useState(false);
   const [pokemartQty, setPokemartQty] = useState(1);
   const [pokemartPotionQty, setPokemartPotionQty] = useState(1);
   const [pokemartRepelQty, setPokemartRepelQty] = useState(1);
   const [pokemartOffers, setPokemartOffers] = useState({
-    potion:    { soldOut: false, discount: false },
-    greatBall: { soldOut: false, discount: false },
-    repel:     { soldOut: false, discount: false },
-    ether:     { soldOut: false, discount: false },
+    potion:     { soldOut: false, discount: false },
+    greatBall:  { soldOut: false, discount: false },
+    repel:      { soldOut: false, discount: false },
+    ether:      { soldOut: false, discount: false },
+    rareCandy:  { soldOut: false, discount: false },
   });
   const [pokemartEtherQty, setPokemartEtherQty] = useState(1);
+  const [pokemartRareCandyQty, setPokemartRareCandyQty] = useState(1);
   const [showBag, setShowBag] = useState(false);
   const [bagSelectedIndex, setBagSelectedIndex] = useState(0);
   const [etherTargetPending, setEtherTargetPending] = useState(false);
@@ -676,6 +678,7 @@ const PokemonGame = () => {
           { id: 'free-potion' },
           ...(bag.potions > 0 ? [{ id: 'bag-potion' }] : []),
           ...(bag.ethers > 0 ? [{ id: 'ether' }] : []),
+          ...(bag.rareCandy > 0 ? [{ id: 'rare-candy' }] : []),
           // Great Balls and Repels are banned during Rocket battles — only potions allowed
           ...(!isRocketBattle && bag.repels > 0 ? [{ id: 'repel' }] : []),
           ...(!isRocketBattle && bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
@@ -695,6 +698,7 @@ const PokemonGame = () => {
           else if (slot.id === 'repel') { useRepel(); }
           else if (slot.id === 'great-ball') { catchPokemon(true); }
           else if (slot.id === 'ether') { setEtherTargetPending(true); setShowBag(false); }
+          else if (slot.id === 'rare-candy') { useRareCandy(); }
           return;
         }
         return;
@@ -1072,7 +1076,7 @@ const PokemonGame = () => {
   const PokemartModal = () => {
     if (!showPokemart) return null;
     const DISCOUNT_OFF = 50;
-    const basePrices = { potion: 100, greatBall: 200, repel: 300, ether: 100 };
+    const basePrices = { potion: 100, greatBall: 200, repel: 300, ether: 100, rareCandy: 300 };
 
     // Effective price per item (discount applies only if not sold out)
     const effectivePrice = (key) => {
@@ -1084,16 +1088,19 @@ const PokemonGame = () => {
     const gbPrice    = effectivePrice('greatBall');
     const repelPrice = effectivePrice('repel');
     const etherPrice = effectivePrice('ether');
+    const rcPrice    = effectivePrice('rareCandy');
 
-    const potTotal   = pokemartPotionQty * potPrice;
-    const gbTotal    = pokemartQty       * gbPrice;
-    const repelTotal = pokemartRepelQty  * repelPrice;
-    const etherTotal = pokemartEtherQty  * etherPrice;
+    const potTotal   = pokemartPotionQty    * potPrice;
+    const gbTotal    = pokemartQty          * gbPrice;
+    const repelTotal = pokemartRepelQty     * repelPrice;
+    const etherTotal = pokemartEtherQty     * etherPrice;
+    const rcTotal    = pokemartRareCandyQty * rcPrice;
 
     const canAffordPot   = !pokemartOffers.potion.soldOut    && playerMoney >= potTotal;
     const canAffordGb    = !pokemartOffers.greatBall.soldOut && playerMoney >= gbTotal;
     const canAffordRepel = !pokemartOffers.repel.soldOut     && playerMoney >= repelTotal;
     const canAffordEther = !pokemartOffers.ether.soldOut     && playerMoney >= etherTotal;
+    const canAffordRc    = !pokemartOffers.rareCandy.soldOut && playerMoney >= rcTotal;
 
     const handleBuyPot = () => {
       if (!canAffordPot) return;
@@ -1118,6 +1125,12 @@ const PokemonGame = () => {
       setPlayerMoney(prev => prev - etherTotal);
       setBag(prev => ({ ...prev, ethers: prev.ethers + pokemartEtherQty }));
       setPokemartEtherQty(1);
+    };
+    const handleBuyRc = () => {
+      if (!canAffordRc) return;
+      setPlayerMoney(prev => prev - rcTotal);
+      setBag(prev => ({ ...prev, rareCandy: prev.rareCandy + pokemartRareCandyQty }));
+      setPokemartRareCandyQty(1);
     };
 
     const MartItem = ({ img, name, desc, basePrice, effectPrice, qty, setQty, canAfford, onBuy, total, soldOut, discount }) => (
@@ -1206,6 +1219,13 @@ const PokemonGame = () => {
             qty={pokemartEtherQty} setQty={setPokemartEtherQty}
             canAfford={canAffordEther} onBuy={handleBuyEther} total={etherTotal}
             soldOut={pokemartOffers.ether.soldOut} discount={pokemartOffers.ether.discount}
+          />
+          <MartItem
+            img="/rare-candy.png" name="RARE CANDY" desc="+1 EXP, may trigger evolution"
+            basePrice={basePrices.rareCandy} effectPrice={rcPrice}
+            qty={pokemartRareCandyQty} setQty={setPokemartRareCandyQty}
+            canAfford={canAffordRc} onBuy={handleBuyRc} total={rcTotal}
+            soldOut={pokemartOffers.rareCandy.soldOut} discount={pokemartOffers.rareCandy.discount}
           />
           <button onClick={startNewBattle}
             className="w-full border-4 border-black py-2 font-bold retro-text hover:scale-105 transition-all"
@@ -3274,6 +3294,51 @@ const PokemonGame = () => {
     setTimeout(enemyAttack, 1500);
   };
 
+  // Rare Candy: +1 EXP, triggers evolution if applicable, uses a turn
+  const useRareCandy = async () => {
+    if (!isPlayerTurn || gameState !== 'battle' || isEvolving || bag.rareCandy <= 0) return;
+
+    setBag(prev => ({ ...prev, rareCandy: prev.rareCandy - 1 }));
+    setShowBag(false);
+    addLog(`Used Rare Candy on ${playerPokemon.name}!`);
+    playSound('levelup');
+
+    const newExp = (playerPokemon.exp || 0) + 1;
+
+    // Eevee stone-selection screen would break mid-battle — just apply EXP silently
+    // and let the normal post-battle path trigger the stone selection instead.
+    if (playerPokemon.name.toLowerCase() === 'eevee' && newExp % 3 === 0) {
+      setPlayerPokemon(prev => ({ ...prev, exp: newExp }));
+      setAvailableTeam(prev => prev.map(p =>
+        p.uid === playerPokemon.uid ? { ...p, exp: newExp } : p
+      ));
+      addLog(`${playerPokemon.name} is ready to evolve!`);
+      setIsPlayerTurn(false);
+      setTimeout(enemyAttack, 1500);
+      return;
+    }
+
+    // For all other Pokemon, run normal evolution check
+    const updatedPokemon = await checkEvolution(playerPokemon);
+    if (updatedPokemon?._eeveeHandled) return; // shouldn't happen but guard anyway
+
+    if (updatedPokemon) {
+      if (newExp % 3 !== 0) {
+        // No evolution — just store the new EXP
+        setPlayerPokemon(prev => ({ ...prev, exp: updatedPokemon.exp }));
+        setAvailableTeam(prev => prev.map(p =>
+          p.uid === updatedPokemon.uid ? { ...p, exp: updatedPokemon.exp } : p
+        ));
+      }
+      // If newExp % 3 === 0, checkEvolution already scheduled the setPlayerPokemon
+    }
+
+    setIsPlayerTurn(false);
+    // Give evolution animation (2000ms) time to finish before enemy attacks
+    const delay = newExp % 3 === 0 ? 2500 : 1500;
+    setTimeout(enemyAttack, delay);
+  };
+
   const useRepel = () => {
     if (!isPlayerTurn || gameState !== 'battle' || bag.repels <= 0 || isRocketBattle) return;
     const fledName = wildPokemon.name;
@@ -3529,7 +3594,7 @@ const PokemonGame = () => {
     if (totalBattles.current % 5 === 0) {
       // Randomise stock before showing — each item has 20% sold-out, 10% discount chance
       const roll = () => ({ soldOut: Math.random() < 0.2, discount: Math.random() < 0.1 });
-      setPokemartOffers({ potion: roll(), greatBall: roll(), repel: roll(), ether: roll() });
+      setPokemartOffers({ potion: roll(), greatBall: roll(), repel: roll(), ether: roll(), rareCandy: roll() });
       setShowPokemart(true);
       return; // startNewBattle() called by mart Continue button
     }
@@ -4241,7 +4306,7 @@ const PokemonGame = () => {
                       boxShadow: selectedActionIndex === 4 && isPlayerTurn ? '3px 3px 0px #3b82f6' : (isPlayerTurn ? '3px 3px 0px #000' : 'none')
                     }}
                   >
-                    BAG {(bag.greatBalls + bag.potions + bag.repels + bag.ethers) > 0 && `(${bag.greatBalls + bag.potions + bag.repels + bag.ethers})`}
+                    BAG {(bag.greatBalls + bag.potions + bag.repels + bag.ethers + bag.rareCandy) > 0 && `(${bag.greatBalls + bag.potions + bag.repels + bag.ethers + bag.rareCandy})`}
                   </button>
                   {/* Bag dropdown — z-[30] so modals (z-50) still appear on top */}
                   {showBag && isPlayerTurn && (() => {
@@ -4251,6 +4316,7 @@ const PokemonGame = () => {
                       { id: 'free-potion' },
                       ...(bag.potions > 0 ? [{ id: 'bag-potion' }] : []),
                       ...(bag.ethers > 0 ? [{ id: 'ether' }] : []),
+                      ...(bag.rareCandy > 0 ? [{ id: 'rare-candy' }] : []),
                       ...(!isRocketBattle && bag.repels > 0 ? [{ id: 'repel' }] : []),
                       ...(!isRocketBattle && bag.greatBalls > 0 ? [{ id: 'great-ball' }] : []),
                     ];
@@ -4301,6 +4367,19 @@ const PokemonGame = () => {
                           ETHER ×{bag.ethers}
                         </button>
                       );})()}
+                      {/* Rare Candy */}
+                      {bag.rareCandy > 0 && (() => { const idx = bagSlots.findIndex(s => s.id === 'rare-candy'); return (
+                        <button onClick={() => useRareCandy()}
+                          className="w-full text-left p-2 border-b-2 border-black retro-text text-xs font-bold hover:opacity-80 transition-all flex items-center gap-1"
+                          style={{
+                            backgroundColor: bagSelectedIndex === idx ? '#fce7f3' : '#fdf2f8',
+                            color: '#000', outline: bagSelectedIndex === idx ? '2px solid #000' : 'none',
+                          }}>
+                          {bagSelectedIndex === idx ? '▶ ' : ''}
+                          <img src="/rare-candy.png" alt="Rare Candy" style={{ width: 16, height: 16, imageRendering: 'pixelated' }} />
+                          RARE CANDY ×{bag.rareCandy}
+                        </button>
+                      );})()}
                       {/* Great Ball — hidden during Rocket battles */}
                       {!isRocketBattle && bag.greatBalls > 0 && (() => { const idx = bagSlots.findIndex(s => s.id === 'great-ball'); return (
                         <button onClick={() => catchPokemon(true)}
@@ -4327,7 +4406,7 @@ const PokemonGame = () => {
                           REPEL ×{bag.repels}
                         </button>
                       );})()}
-                      {bag.potions === 0 && bag.ethers === 0 && (isRocketBattle || (bag.greatBalls === 0 && bag.repels === 0)) && (
+                      {bag.potions === 0 && bag.ethers === 0 && bag.rareCandy === 0 && (isRocketBattle || (bag.greatBalls === 0 && bag.repels === 0)) && (
                         <div className="p-2 retro-text text-xs opacity-40" style={{ color: '#000' }}>No items in bag</div>
                       )}
                     </div>
