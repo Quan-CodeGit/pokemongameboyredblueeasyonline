@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pokemon-game-v5';
+const CACHE_NAME = 'pokemon-game-v6';
 
 // Install: cache all game assets
 self.addEventListener('install', (event) => {
@@ -11,12 +11,39 @@ self.addEventListener('install', (event) => {
       return cache.addAll([
         '/',
         '/index.html',
+
+        // Trainer / UI sprites
         '/red-sprite.png',
         '/red-trainer.png',
+        '/skip-icon.png',
+
+        // Team Rocket assets
         '/team-rocket.png',
+        '/team-rocket-logo.png',
         '/team-rocket-intro.mp4',
         '/team-rocket-encounter.mp3',
-        '/sounds/intro.mp3',
+
+        // Bag item images
+        '/potion.png',
+        '/great-ball.png',
+        '/repel.png',
+        '/ether.png',
+
+        // Other images
+        '/legendary-birds.png',
+        '/bug-catcher.png',
+        '/type-chart.png',
+
+        // Eevee evolution stones
+        '/stones/water-stone.webp',
+        '/stones/thunder-stone.png',
+        '/stones/fire-stone.webp',
+
+        // Sound effects (mp3)
+        '/sfx-badge.mp3',
+        '/sfx-confirm.mp3',
+
+        // Background music & battle sounds
         '/sounds/mewtwo-warning.mp3',
         '/sounds/evolve.mp3',
         '/sounds/sendout.mp3',
@@ -24,6 +51,9 @@ self.addEventListener('install', (event) => {
         '/sounds/levelup.mp3',
         '/sounds/super-effective.mp3',
         '/sounds/not-very-effective.mp3',
+        '/sounds/pokemon-center.mp3',
+
+        // All 151 Pokemon sprites
         ...spriteUrls,
       ]);
     })
@@ -76,7 +106,7 @@ async function handleRangeRequest(request) {
 
 // Fetch strategy:
 // - HTML / JS / CSS → network first (always get latest deploy), fallback to cache
-// - Everything else (sprites, sounds, video) → cache first (fast, offline-friendly)
+// - Everything else (sprites, sounds, images) → cache first (fast, offline-friendly)
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -106,7 +136,7 @@ self.addEventListener('fetch', (event) => {
         .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/')))
     );
   } else {
-    // Cache first: sprites, sounds, images load instantly
+    // Cache first: sprites, sounds, images load instantly and work offline
     event.respondWith(
       caches.match(event.request).then((cached) => {
         if (cached) return cached;
