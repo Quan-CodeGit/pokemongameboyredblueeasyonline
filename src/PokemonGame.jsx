@@ -384,6 +384,7 @@ const PokemonGame = () => {
   const nextBugCatcherBattle = useRef(12); // first trade at battle 12, then every 12
   const totalBattles = useRef(0);
   const birdGoesFirstRef = useRef(false); // flag: legendary bird attacks before player on battle start
+  const attackInProgressRef = useRef(false); // mutex: prevents double-tap race condition on playerAttack
 
   // Trade state
   const [tradeOffer, setTradeOffer] = useState(null);   // Bug Catcher's offered Pokémon
@@ -2842,6 +2843,9 @@ const PokemonGame = () => {
     if (etherTargetPending) { useEther(moveIndex); return; }
 
     if (!isPlayerTurn || gameState !== 'battle' || isEvolving) return;
+    // Mutex: prevent double-tap / rapid-click from firing two attacks in one turn
+    if (attackInProgressRef.current) return;
+    attackInProgressRef.current = true;
 
     // Check PP — prevent using a depleted move
     // Use closure value only for the early-return check (UI feedback)
@@ -2908,10 +2912,10 @@ const PokemonGame = () => {
         addLog(`${wildPokemon.name} took ${selfDestructDamage} damage!`);
         addLog(`${playerPokemon.name} fainted from the explosion!`);
         if (wildPokemon.hp - selfDestructDamage <= 0) {
-          setTimeout(() => setGameState('victory'), 1500);
+          setTimeout(() => setGameState(prev => prev === 'battle' ? 'victory' : prev), 1500);
         } else {
           totalBattles.current += 1;
-          setTimeout(() => setGameState('defeat'), 1500);
+          setTimeout(() => setGameState(prev => prev === 'battle' ? 'defeat' : prev), 1500);
         }
         return;
       }
@@ -3090,6 +3094,11 @@ const PokemonGame = () => {
   };
 
   const enemyAttack = () => {
+    // Release the player-attack mutex so the next turn can be accepted
+    attackInProgressRef.current = false;
+    // Guard: never run if the battle has already ended (stale setTimeout firing after victory/catch/repel)
+    if (gameState !== 'battle') return;
+
     // Check if enemy is asleep
     if (isSleeping.enemy > 0) {
       const turnsLeft = isSleeping.enemy - 1;
@@ -3223,8 +3232,9 @@ const PokemonGame = () => {
       if (newPlayerHp <= 0) {
         totalBattles.current += 1;
         setTimeout(() => {
+          // Only transition to defeat if we're still in an active battle
+          setGameState(prev => prev === 'battle' ? 'defeat' : prev);
           addLog(`${currentName} fainted!`);
-          setGameState('defeat');
         }, 800);
       } else {
         // Apply poison damage to player before their turn
@@ -3238,8 +3248,9 @@ const PokemonGame = () => {
             ));
             totalBattles.current += 1;
             setTimeout(() => {
+              // Only transition to defeat if still in active battle
+              setGameState(prev => prev === 'battle' ? 'defeat' : prev);
               addLog(`${currentName} fainted from poison!`);
-              setGameState('defeat');
             }, 800);
             return { ...prevPlayerPokemon, hp: 0 };
           }
@@ -3480,6 +3491,7 @@ const PokemonGame = () => {
   };
 
   const startNewBattle = () => {
+    attackInProgressRef.current = false; // reset attack mutex at battle start
     setShowPokemart(false);
     setShowBag(false);
     // Check if Team Rocket should appear (every 7-10 battles, only if player has bench Pokemon and enabled)
