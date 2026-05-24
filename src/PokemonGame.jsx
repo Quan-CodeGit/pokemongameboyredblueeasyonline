@@ -272,10 +272,18 @@ const getInitialPP = (moves)  => moves.map(m => getMovePP(m));
 
 const PokemonGame = () => {
   const [gameState, setGameState] = useState('intro');
+  // Ref that always mirrors gameState — readable from stale closures (setTimeout callbacks)
+  // without needing a fresh render capture.
+  const gameStateRef = useRef('intro');
+  gameStateRef.current = gameState; // updated synchronously on every render
   const [playerPokemon, setPlayerPokemon] = useState(null);
   const [wildPokemon, setWildPokemon] = useState(null);
   const [battleLog, setBattleLog] = useState([]);
   const [isPlayerTurn, setIsPlayerTurn] = useState(true);
+  // Ref mirror for isPlayerTurn — lets playerAttack lock the turn synchronously before
+  // React batches setIsPlayerTurn(false), preventing double-click double-attacks.
+  const isPlayerTurnRef = useRef(true);
+  isPlayerTurnRef.current = isPlayerTurn;
   const [potionUsed, setPotionUsed] = useState(false);
   const [pokedex, setPokedex] = useState([]);
   const [battlesWon, setBattlesWon] = useState(0);
@@ -384,7 +392,6 @@ const PokemonGame = () => {
   const nextBugCatcherBattle = useRef(12); // first trade at battle 12, then every 12
   const totalBattles = useRef(0);
   const birdGoesFirstRef = useRef(false); // flag: legendary bird attacks before player on battle start
-  const attackInProgressRef = useRef(false); // mutex: prevents double-tap race condition on playerAttack
 
   // Trade state
   const [tradeOffer, setTradeOffer] = useState(null);   // Bug Catcher's offered Pokémon
@@ -2842,10 +2849,11 @@ const PokemonGame = () => {
     // If waiting for ether target, apply ether instead of attacking
     if (etherTargetPending) { useEther(moveIndex); return; }
 
-    if (!isPlayerTurn || gameState !== 'battle' || isEvolving) return;
-    // Mutex: prevent double-tap / rapid-click from firing two attacks in one turn
-    if (attackInProgressRef.current) return;
-    attackInProgressRef.current = true;
+    // Use refs (not stale closure state) so the check + lock is atomic.
+    // Two rapid clicks both read isPlayerTurnRef.current before React batches setIsPlayerTurn,
+    // but the ref is set to false synchronously so the second click is blocked.
+    if (!isPlayerTurnRef.current || gameStateRef.current !== 'battle' || isEvolving) return;
+    isPlayerTurnRef.current = false; // synchronous lock — blocks any concurrent call immediately
 
     // Check PP — prevent using a depleted move
     // Use closure value only for the early-return check (UI feedback)
@@ -3094,10 +3102,10 @@ const PokemonGame = () => {
   };
 
   const enemyAttack = () => {
-    // Release the player-attack mutex so the next turn can be accepted
-    attackInProgressRef.current = false;
-    // Guard: never run if the battle has already ended (stale setTimeout firing after victory/catch/repel)
-    if (gameState !== 'battle') return;
+    // Guard: never run if the battle has already ended.
+    // MUST use gameStateRef.current (not closure `gameState`) — the closure value is stale
+    // inside setTimeout callbacks, so it could wrongly pass even after victory/catch/repel.
+    if (gameStateRef.current !== 'battle') return;
 
     // Check if enemy is asleep
     if (isSleeping.enemy > 0) {
@@ -3491,7 +3499,6 @@ const PokemonGame = () => {
   };
 
   const startNewBattle = () => {
-    attackInProgressRef.current = false; // reset attack mutex at battle start
     setShowPokemart(false);
     setShowBag(false);
     // Check if Team Rocket should appear (every 7-10 battles, only if player has bench Pokemon and enabled)
