@@ -804,7 +804,7 @@ const PokemonGame = () => {
     <div className="fixed top-4 right-4 z-50">
       {/* 3-dot menu toggle */}
       <button
-        onClick={() => { setMenuOpen(prev => !prev); setQuickMenuIndex(0); }}
+        onClick={() => { setMenuOpen(prev => !prev); setQuickMenuFocused(prev => !prev); setQuickMenuIndex(0); }}
         className="hover:scale-110 transition-all"
         style={{
           width: '44px',
