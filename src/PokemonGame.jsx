@@ -1142,7 +1142,7 @@ const PokemonGame = () => {
     };
 
     const MartItem = ({ img, name, desc, basePrice, effectPrice, qty, setQty, canAfford, onBuy, total, soldOut, discount }) => (
-      <div className="border-4 border-black mb-3" style={{ backgroundColor: soldOut ? '#f3f4f6' : '#fff', opacity: soldOut ? 0.75 : 1 }}>
+      <div className="border-4 border-black" style={{ backgroundColor: soldOut ? '#f3f4f6' : '#fff', opacity: soldOut ? 0.75 : 1 }}>
         <div className="flex gap-3 items-center p-3 border-b-2 border-black">
           <img src={img} alt={name} style={{ width: 40, height: 40, imageRendering: 'pixelated', filter: soldOut ? 'grayscale(1)' : 'none' }} />
           <div className="flex-1">
@@ -1193,48 +1193,54 @@ const PokemonGame = () => {
 
     return (
       <div className="fixed inset-0 z-[200] flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.92)' }}>
-        <div className="border-4 border-black p-5 w-80" style={{ backgroundColor: '#f9fafb', boxShadow: '6px 6px 0px #000', maxWidth: '90vw' }}>
+        <div className="border-4 border-black p-5" style={{ backgroundColor: '#f9fafb', boxShadow: '6px 6px 0px #000', width: '640px', maxWidth: '96vw' }}>
           {/* Header */}
           <div className="text-center mb-4 border-b-4 border-black pb-3">
             <div className="retro-text font-bold text-lg" style={{ color: '#2563eb' }}>🏪 POKE MART</div>
             <div className="retro-text text-xs mt-1" style={{ color: '#555' }}>Welcome, trainer!</div>
             <div className="retro-text text-xs font-bold mt-1" style={{ color: '#15803d' }}>Balance: ${playerMoney}</div>
           </div>
-          <MartItem
-            img="/potion.png" name="POTION" desc="Full heal (extra use)"
-            basePrice={basePrices.potion} effectPrice={potPrice}
-            qty={pokemartPotionQty} setQty={setPokemartPotionQty}
-            canAfford={canAffordPot} onBuy={handleBuyPot} total={potTotal}
-            soldOut={pokemartOffers.potion.soldOut} discount={pokemartOffers.potion.discount}
-          />
-          <MartItem
-            img="/great-ball.png" name="GREAT BALL" desc="1.5× catch rate"
-            basePrice={basePrices.greatBall} effectPrice={gbPrice}
-            qty={pokemartQty} setQty={setPokemartQty}
-            canAfford={canAffordGb} onBuy={handleBuyGb} total={gbTotal}
-            soldOut={pokemartOffers.greatBall.soldOut} discount={pokemartOffers.greatBall.discount}
-          />
-          <MartItem
-            img="/repel.png" name="REPEL" desc="Repel foe, new wild appears"
-            basePrice={basePrices.repel} effectPrice={repelPrice}
-            qty={pokemartRepelQty} setQty={setPokemartRepelQty}
-            canAfford={canAffordRepel} onBuy={handleBuyRepel} total={repelTotal}
-            soldOut={pokemartOffers.repel.soldOut} discount={pokemartOffers.repel.discount}
-          />
-          <MartItem
-            img="/ether.png" name="ETHER" desc="Restore 10 PP to one move"
-            basePrice={basePrices.ether} effectPrice={etherPrice}
-            qty={pokemartEtherQty} setQty={setPokemartEtherQty}
-            canAfford={canAffordEther} onBuy={handleBuyEther} total={etherTotal}
-            soldOut={pokemartOffers.ether.soldOut} discount={pokemartOffers.ether.discount}
-          />
-          <MartItem
-            img="/rare-candy.png" name="RARE CANDY" desc="+1 EXP, may trigger evolution"
-            basePrice={basePrices.rareCandy} effectPrice={rcPrice}
-            qty={pokemartRareCandyQty} setQty={setPokemartRareCandyQty}
-            canAfford={canAffordRc} onBuy={handleBuyRc} total={rcTotal}
-            soldOut={pokemartOffers.rareCandy.soldOut} discount={pokemartOffers.rareCandy.discount}
-          />
+          {/* 2-column grid for items */}
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <MartItem
+              img="/potion.png" name="POTION" desc="Full heal (extra use)"
+              basePrice={basePrices.potion} effectPrice={potPrice}
+              qty={pokemartPotionQty} setQty={setPokemartPotionQty}
+              canAfford={canAffordPot} onBuy={handleBuyPot} total={potTotal}
+              soldOut={pokemartOffers.potion.soldOut} discount={pokemartOffers.potion.discount}
+            />
+            <MartItem
+              img="/great-ball.png" name="GREAT BALL" desc="1.5× catch rate"
+              basePrice={basePrices.greatBall} effectPrice={gbPrice}
+              qty={pokemartQty} setQty={setPokemartQty}
+              canAfford={canAffordGb} onBuy={handleBuyGb} total={gbTotal}
+              soldOut={pokemartOffers.greatBall.soldOut} discount={pokemartOffers.greatBall.discount}
+            />
+            <MartItem
+              img="/repel.png" name="REPEL" desc="Repel foe, new wild appears"
+              basePrice={basePrices.repel} effectPrice={repelPrice}
+              qty={pokemartRepelQty} setQty={setPokemartRepelQty}
+              canAfford={canAffordRepel} onBuy={handleBuyRepel} total={repelTotal}
+              soldOut={pokemartOffers.repel.soldOut} discount={pokemartOffers.repel.discount}
+            />
+            <MartItem
+              img="/ether.png" name="ETHER" desc="Restore 10 PP to one move"
+              basePrice={basePrices.ether} effectPrice={etherPrice}
+              qty={pokemartEtherQty} setQty={setPokemartEtherQty}
+              canAfford={canAffordEther} onBuy={handleBuyEther} total={etherTotal}
+              soldOut={pokemartOffers.ether.soldOut} discount={pokemartOffers.ether.discount}
+            />
+            {/* Rare Candy spans both columns */}
+            <div className="col-span-2">
+              <MartItem
+                img="/rare-candy.png" name="RARE CANDY" desc="+1 EXP, may trigger evolution"
+                basePrice={basePrices.rareCandy} effectPrice={rcPrice}
+                qty={pokemartRareCandyQty} setQty={setPokemartRareCandyQty}
+                canAfford={canAffordRc} onBuy={handleBuyRc} total={rcTotal}
+                soldOut={pokemartOffers.rareCandy.soldOut} discount={pokemartOffers.rareCandy.discount}
+              />
+            </div>
+          </div>
           <button onClick={startNewBattle}
             className="w-full border-4 border-black py-2 font-bold retro-text hover:scale-105 transition-all"
             style={{ backgroundColor: '#fbbf24', color: '#000', boxShadow: '3px 3px 0px #000' }}>
