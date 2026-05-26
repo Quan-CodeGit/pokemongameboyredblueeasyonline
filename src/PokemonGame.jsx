@@ -270,6 +270,73 @@ const MOVE_ACCURACY = {
 const getMovePP   = (moveName) => { const p = MOVE_POWER[moveName]; return (p !== null && p !== undefined && p > 60) ? 5 : 10; };
 const getInitialPP = (moves)  => moves.map(m => getMovePP(m));
 
+// ─────────────────────────────────────────────────────
+// POKÉMON LEAGUE CONSTANTS
+// ─────────────────────────────────────────────────────
+const LEAGUE_LEGENDARY_BAN = ['Mewtwo', 'Mew', 'Articuno', 'Zapdos', 'Moltres'];
+
+const ELITE_FOUR_POOL = [
+  {
+    id: 'lorelei', name: 'Lorelei', title: 'Elite Four • Ice',
+    greeting: "Nothing can stop the combination of Ice and Water. Prepare for defeat!",
+    team: [
+      { name: 'Dewgong',  type: 'Water', type2: 'Ice',  hp: 90,  maxHp: 90,  attack: 70,  spAtk: 70,  def: 65,  spDef: 95,  moves: ['Ice Beam','Surf','Rest','Body Slam'],           moveTypes: ['Ice','Water','Normal','Normal'] },
+      { name: 'Cloyster', type: 'Water', type2: 'Ice',  hp: 50,  maxHp: 50,  attack: 95,  spAtk: 85,  def: 180, spDef: 45,  moves: ['Blizzard','Ice Beam','Clamp','Withdraw'],        moveTypes: ['Ice','Ice','Water','Water'] },
+      { name: 'Lapras',   type: 'Water', type2: 'Ice',  hp: 130, maxHp: 130, attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Thunder','Body Slam'],         moveTypes: ['Water','Ice','Electric','Normal'] },
+    ]
+  },
+  {
+    id: 'bruno', name: 'Bruno', title: 'Elite Four • Fighting',
+    greeting: "I pity you! You're just a child. Prepare for my power!",
+    team: [
+      { name: 'Hitmonchan', type: 'Fighting', hp: 50,  maxHp: 50,  attack: 105, spAtk: 35,  def: 79,  spDef: 110, moves: ['Fire Punch','Ice Punch','Thunder Punch','Mega Punch'],   moveTypes: ['Fire','Ice','Electric','Normal'] },
+      { name: 'Hitmonlee',  type: 'Fighting', hp: 50,  maxHp: 50,  attack: 120, spAtk: 35,  def: 53,  spDef: 110, moves: ['High Jump Kick','Jump Kick','Mega Kick','Rolling Kick'], moveTypes: ['Fighting','Fighting','Normal','Fighting'] },
+      { name: 'Machamp',    type: 'Fighting', hp: 90,  maxHp: 90,  attack: 130, spAtk: 65,  def: 80,  spDef: 85,  moves: ['Cross Chop','Submission','Leer','Seismic Toss'],          moveTypes: ['Fighting','Fighting','Normal','Fighting'] },
+    ]
+  },
+  {
+    id: 'agatha', name: 'Agatha', title: 'Elite Four • Ghost',
+    greeting: "You're a frivolous child! I'll show you real power with my Ghosts!",
+    team: [
+      { name: 'Gengar',  type: 'Ghost', type2: 'Poison', hp: 60, maxHp: 60, attack: 65, spAtk: 130, def: 60, spDef: 75, moves: ['Shadow Ball','Hypnosis','Thunderbolt','Toxic'],     moveTypes: ['Ghost','Psychic','Electric','Poison'] },
+      { name: 'Arbok',   type: 'Poison',                 hp: 60, maxHp: 60, attack: 85, spAtk: 65,  def: 69, spDef: 79, moves: ['Glare','Wrap','Poison Sting','Bite'],               moveTypes: ['Normal','Normal','Poison','Dark'] },
+      { name: 'Haunter', type: 'Ghost', type2: 'Poison', hp: 45, maxHp: 45, attack: 50, spAtk: 115, def: 45, spDef: 55, moves: ['Lick','Hypnosis','Shadow Ball','Dream Eater'],      moveTypes: ['Ghost','Psychic','Ghost','Psychic'] },
+    ]
+  },
+  {
+    id: 'lance', name: 'Lance', title: 'Elite Four • Dragon',
+    greeting: "I am Lance the dragon trainer! You've done well to reach me. Now face my wrath!",
+    team: [
+      { name: 'Gyarados',   type: 'Water',  type2: 'Flying', hp: 95, maxHp: 95, attack: 125, spAtk: 60,  def: 79, spDef: 100, moves: ['Hydro Pump','Bite','Thrash','Dragon Rage'],    moveTypes: ['Water','Dark','Normal','Dragon'] },
+      { name: 'Aerodactyl', type: 'Rock',   type2: 'Flying', hp: 80, maxHp: 80, attack: 105, spAtk: 60,  def: 65, spDef: 75,  moves: ['Rock Slide','Wing Attack','Bite','Hyper Beam'], moveTypes: ['Rock','Flying','Dark','Normal'] },
+      { name: 'Dragonite',  type: 'Dragon', type2: 'Flying', hp: 91, maxHp: 91, attack: 134, spAtk: 100, def: 95, spDef: 100, moves: ['Hyper Beam','Fire Blast','Thunder','Surf'],     moveTypes: ['Normal','Fire','Electric','Water'] },
+    ]
+  },
+];
+
+const CHAMPION_POKEMON_POOL = [
+  { name: 'Charizard',  type: 'Fire',     type2: 'Flying',  hp: 78,  maxHp: 78,  attack: 84,  spAtk: 109, def: 78,  spDef: 85,  moves: ['Flamethrower','Wing Attack','Slash','Dragon Rage'],    moveTypes: ['Fire','Flying','Normal','Dragon'] },
+  { name: 'Blastoise',  type: 'Water',                      hp: 79,  maxHp: 79,  attack: 83,  spAtk: 85,  def: 100, spDef: 105, moves: ['Surf','Blizzard','Withdraw','Bite'],                    moveTypes: ['Water','Ice','Water','Dark'] },
+  { name: 'Venusaur',   type: 'Grass',    type2: 'Poison',  hp: 80,  maxHp: 80,  attack: 82,  spAtk: 100, def: 83,  spDef: 100, moves: ['Solar Beam','Sleep Powder','Sludge Bomb','Synthesis'],   moveTypes: ['Grass','Grass','Poison','Grass'] },
+  { name: 'Rhydon',     type: 'Ground',   type2: 'Rock',    hp: 105, maxHp: 105, attack: 130, spAtk: 45,  def: 120, spDef: 45,  moves: ['Earthquake','Rock Slide','Stomp','Horn Drill'],          moveTypes: ['Ground','Rock','Normal','Normal'] },
+  { name: 'Arcanine',   type: 'Fire',                       hp: 90,  maxHp: 90,  attack: 110, spAtk: 100, def: 80,  spDef: 80,  moves: ['Flamethrower','Extreme Speed','Bite','Fire Spin'],       moveTypes: ['Fire','Normal','Dark','Fire'] },
+  { name: 'Exeggutor',  type: 'Grass',    type2: 'Psychic', hp: 95,  maxHp: 95,  attack: 95,  spAtk: 125, def: 85,  spDef: 65,  moves: ['Psychic','Solar Beam','Sleep Powder','Stomp'],           moveTypes: ['Psychic','Grass','Grass','Normal'] },
+  { name: 'Alakazam',   type: 'Psychic',                    hp: 55,  maxHp: 55,  attack: 50,  spAtk: 135, def: 45,  spDef: 95,  moves: ['Psychic','Recover','Thunderbolt','Shadow Ball'],          moveTypes: ['Psychic','Psychic','Electric','Ghost'] },
+  { name: 'Machamp',    type: 'Fighting',                   hp: 90,  maxHp: 90,  attack: 130, spAtk: 65,  def: 80,  spDef: 85,  moves: ['Cross Chop','Submission','Leer','Seismic Toss'],          moveTypes: ['Fighting','Fighting','Normal','Fighting'] },
+  { name: 'Gengar',     type: 'Ghost',    type2: 'Poison',  hp: 60,  maxHp: 60,  attack: 65,  spAtk: 130, def: 60,  spDef: 75,  moves: ['Shadow Ball','Thunderbolt','Psychic','Toxic'],            moveTypes: ['Ghost','Electric','Psychic','Poison'] },
+  { name: 'Gyarados',   type: 'Water',    type2: 'Flying',  hp: 95,  maxHp: 95,  attack: 125, spAtk: 60,  def: 79,  spDef: 100, moves: ['Hydro Pump','Bite','Thrash','Dragon Rage'],               moveTypes: ['Water','Dark','Normal','Dragon'] },
+  { name: 'Lapras',     type: 'Water',    type2: 'Ice',     hp: 130, maxHp: 130, attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Thunder','Psychic'],                    moveTypes: ['Water','Ice','Electric','Psychic'] },
+  { name: 'Snorlax',    type: 'Normal',                     hp: 160, maxHp: 160, attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Rest','Earthquake','Hyper Beam'],             moveTypes: ['Normal','Normal','Ground','Normal'] },
+  { name: 'Nidoking',   type: 'Poison',   type2: 'Ground',  hp: 81,  maxHp: 81,  attack: 102, spAtk: 85,  def: 77,  spDef: 75,  moves: ['Earthquake','Sludge Bomb','Rock Slide','Hyper Beam'],     moveTypes: ['Ground','Poison','Rock','Normal'] },
+  { name: 'Starmie',    type: 'Water',    type2: 'Psychic', hp: 60,  maxHp: 60,  attack: 75,  spAtk: 100, def: 85,  spDef: 85,  moves: ['Surf','Psychic','Ice Beam','Thunderbolt'],                moveTypes: ['Water','Psychic','Ice','Electric'] },
+  { name: 'Dragonite',  type: 'Dragon',   type2: 'Flying',  hp: 91,  maxHp: 91,  attack: 134, spAtk: 100, def: 95,  spDef: 100, moves: ['Hyper Beam','Fire Blast','Thunder','Surf'],               moveTypes: ['Normal','Fire','Electric','Water'] },
+  { name: 'Slowbro',    type: 'Water',    type2: 'Psychic', hp: 95,  maxHp: 95,  attack: 75,  spAtk: 100, def: 110, spDef: 80,  moves: ['Psychic','Surf','Amnesia','Withdraw'],                    moveTypes: ['Psychic','Water','Psychic','Water'] },
+  { name: 'Vaporeon',   type: 'Water',                      hp: 130, maxHp: 130, attack: 65,  spAtk: 110, def: 60,  spDef: 95,  moves: ['Surf','Ice Beam','Acid Armor','Bite'],                    moveTypes: ['Water','Ice','Water','Dark'] },
+  { name: 'Clefable',   type: 'Normal',                     hp: 95,  maxHp: 95,  attack: 70,  spAtk: 95,  def: 73,  spDef: 90,  moves: ['Metronome','Body Slam','Moonblast','Sing'],               moveTypes: ['Normal','Normal','Fairy','Normal'] },
+  { name: 'Tauros',     type: 'Normal',                     hp: 75,  maxHp: 75,  attack: 100, spAtk: 40,  def: 95,  spDef: 70,  moves: ['Body Slam','Hyper Beam','Earthquake','Stomp'],            moveTypes: ['Normal','Normal','Ground','Normal'] },
+  { name: 'Aerodactyl', type: 'Rock',     type2: 'Flying',  hp: 80,  maxHp: 80,  attack: 105, spAtk: 60,  def: 65,  spDef: 75,  moves: ['Rock Slide','Wing Attack','Bite','Hyper Beam'],           moveTypes: ['Rock','Flying','Dark','Normal'] },
+];
+
 const PokemonGame = () => {
   const [gameState, setGameState] = useState('intro');
   // Ref that always mirrors gameState — readable from stale closures (setTimeout callbacks)
@@ -397,6 +464,37 @@ const PokemonGame = () => {
   const [tradeOffer, setTradeOffer] = useState(null);   // Bug Catcher's offered Pokémon
   const [tradeTarget, setTradeTarget] = useState(null); // Player's Pokémon being requested
   const [tradePhase, setTradePhase] = useState('offer'); // 'offer' | 'animating' | 'sliding' | 'complete'
+
+  // ── League state ──────────────────────────────────────
+  const [leagueActive, setLeagueActive] = useState(false);
+  const [leagueRound, setLeagueRound] = useState(0);           // 1=QF 2=SF 3=Final
+  const [leagueSelectedTeam, setLeagueSelectedTeam] = useState([]);
+  const [leagueOpponentFullTeam, setLeagueOpponentFullTeam] = useState([]);
+  const [leagueOpponentPokemonIdx, setLeagueOpponentPokemonIdx] = useState(0);
+  const [leagueTrainerName, setLeagueTrainerName] = useState('');
+  const [leagueTrainerTitle, setLeagueTrainerTitle] = useState('');
+  const [leagueTrainerGreeting, setLeagueTrainerGreeting] = useState('');
+  const [leagueEliteQueue, setLeagueEliteQueue] = useState([]);
+  const [leagueSnapshot, setLeagueSnapshot] = useState(null);
+  const [leagueTeamSelectCursor, setLeagueTeamSelectCursor] = useState(0);
+  const [leaguePreMartItem, setLeaguePreMartItem] = useState(null);
+  const [leagueForcedSwitch, setLeagueForcedSwitch] = useState(false);
+
+  // League refs (prevent stale closures in setTimeout callbacks)
+  const leagueActiveRef = useRef(false);
+  leagueActiveRef.current = leagueActive;
+  const leagueRoundRef = useRef(0);
+  leagueRoundRef.current = leagueRound;
+  const leagueOpponentIdxRef = useRef(0);
+  leagueOpponentIdxRef.current = leagueOpponentPokemonIdx;
+  const leagueOpponentTeamRef = useRef([]);
+  leagueOpponentTeamRef.current = leagueOpponentFullTeam;
+  const leagueTrainerNameRef = useRef('');
+  leagueTrainerNameRef.current = leagueTrainerName;
+  const leagueEliteQueueRef = useRef([]);
+  leagueEliteQueueRef.current = leagueEliteQueue;
+  const leagueSelectedTeamRef = useRef([]);
+  leagueSelectedTeamRef.current = leagueSelectedTeam;
 
   // Save settings to localStorage whenever they change
   useEffect(() => {
@@ -3053,6 +3151,28 @@ const PokemonGame = () => {
           }
 
           setTimeout(() => {
+            // League battle: advance to next opponent pokemon or round win
+            if (leagueActiveRef.current) {
+              const currentOpponentIdx = leagueOpponentIdxRef.current;
+              const opponentTeam = leagueOpponentTeamRef.current;
+              const nextIdx = currentOpponentIdx + 1;
+              if (nextIdx < opponentTeam.length) {
+                const nextOpponent = opponentTeam[nextIdx];
+                setLeagueOpponentPokemonIdx(nextIdx);
+                setWildPokemon(nextOpponent);
+                addLog(`${leagueTrainerNameRef.current} sent out ${nextOpponent.name}!`);
+                setIsPlayerTurn(true);
+                setGameState('battle');
+              } else {
+                playSound('victory');
+                if (leagueRoundRef.current < 3) {
+                  setGameState('league-round-win');
+                } else {
+                  setGameState('league-champion');
+                }
+              }
+              return;
+            }
             playSound('victory');
             if (!isRocketBattle) {
               setBattlesWon(prev => prev + 1);
@@ -3246,9 +3366,17 @@ const PokemonGame = () => {
       if (newPlayerHp <= 0) {
         totalBattles.current += 1;
         setTimeout(() => {
-          // Only transition to defeat if we're still in an active battle
-          setGameState(prev => prev === 'battle' ? 'defeat' : prev);
           addLog(`${currentName} fainted!`);
+          if (leagueActiveRef.current) {
+            const survivors = leagueSelectedTeamRef.current.filter(p => p.uid !== currentUid && p.hp > 0);
+            if (survivors.length > 0) {
+              setLeagueForcedSwitch(true);
+            } else {
+              setGameState(prev => prev === 'battle' ? 'league-defeat' : prev);
+            }
+          } else {
+            setGameState(prev => prev === 'battle' ? 'defeat' : prev);
+          }
         }, 800);
       } else {
         // Apply poison damage to player before their turn
@@ -3262,9 +3390,17 @@ const PokemonGame = () => {
             ));
             totalBattles.current += 1;
             setTimeout(() => {
-              // Only transition to defeat if still in active battle
-              setGameState(prev => prev === 'battle' ? 'defeat' : prev);
               addLog(`${currentName} fainted from poison!`);
+              if (leagueActiveRef.current) {
+                const survivors = leagueSelectedTeamRef.current.filter(p => p.uid !== currentUid && p.hp > 0);
+                if (survivors.length > 0) {
+                  setLeagueForcedSwitch(true);
+                } else {
+                  setGameState(prev => prev === 'battle' ? 'league-defeat' : prev);
+                }
+              } else {
+                setGameState(prev => prev === 'battle' ? 'defeat' : prev);
+              }
             }, 800);
             return { ...prevPlayerPokemon, hp: 0 };
           }
@@ -3472,11 +3608,20 @@ const PokemonGame = () => {
   };
 
   const switchPokemon = (newPoke) => {
-    if ((!isPlayerTurn && !teleportSwitchPending) || newPoke.uid === playerPokemon?.uid) return;
+    const isForcedSwitch = leagueForcedSwitch;
+    if ((!isPlayerTurn && !teleportSwitchPending && !isForcedSwitch) || newPoke.uid === playerPokemon?.uid) return;
     setTeleportSwitchPending(false);
-    
-    const oldUid  = playerPokemon.uid;
-    const oldName = playerPokemon.name;
+    setLeagueForcedSwitch(false);
+
+    // Also update leagueSelectedTeam HP so the ref stays current
+    if (leagueActive && playerPokemon) {
+      setLeagueSelectedTeam(prev => prev.map(p =>
+        p.uid === playerPokemon.uid ? { ...p, hp: playerPokemon.hp } : p
+      ));
+    }
+
+    const oldUid  = playerPokemon?.uid;
+    const oldName = playerPokemon?.name;
 
     // Ensure incoming Pokemon has PP initialized
     const incomingPP  = newPoke.pp    || getInitialPP(newPoke.moves || []);
@@ -3490,18 +3635,117 @@ const PokemonGame = () => {
     };
 
     // Save HP AND PP back to the outgoing pokemon so they persist when switched back in
-    setAvailableTeam(prev => prev.map(p =>
-      p.uid === oldUid
-        ? { ...p, hp: playerPokemon.hp, pp: playerPokemon.pp || getInitialPP(playerPokemon.moves), maxPp: playerPokemon.maxPp || getInitialPP(playerPokemon.moves) }
-        : p
-    ));
+    if (oldUid && playerPokemon) {
+      setAvailableTeam(prev => prev.map(p =>
+        p.uid === oldUid
+          ? { ...p, hp: playerPokemon.hp, pp: playerPokemon.pp || getInitialPP(playerPokemon.moves), maxPp: playerPokemon.maxPp || getInitialPP(playerPokemon.moves) }
+          : p
+      ));
+    }
 
     setPlayerPokemon(switchedPokemon);
     playSound('sendout');
-    addLog(`Come back, ${oldName}!`);
+    if (oldName && !isForcedSwitch) addLog(`Come back, ${oldName}!`);
     addLog(`Go, ${switchedPokemon.name}!`);
-    setIsPlayerTurn(false);
-    setTimeout(enemyAttack, 1500);
+
+    if (isForcedSwitch) {
+      // After a forced switch (player fainted), player gets to go first
+      setIsPlayerTurn(true);
+    } else {
+      setIsPlayerTurn(false);
+      setTimeout(enemyAttack, 1500);
+    }
+  };
+
+  // ── League helpers ───────────────────────────────────
+  const scaleLeaguePokemon = (pokemon, round) => {
+    const mult = round === 1 ? 1.1 : round === 2 ? 1.3 : 1.5;
+    const scaled = {
+      ...pokemon,
+      hp: Math.round(pokemon.hp * mult),
+      maxHp: Math.round(pokemon.maxHp * mult),
+      attack: Math.round(pokemon.attack * mult),
+      spAtk: Math.round((pokemon.spAtk || pokemon.attack) * mult),
+      def: Math.round((pokemon.def || 50) * mult),
+      spDef: Math.round((pokemon.spDef || 50) * mult),
+      uid: `league-${pokemon.name}-${Math.random().toString(36).slice(2)}`,
+    };
+    scaled.pp = getInitialPP(scaled.moves);
+    scaled.maxPp = getInitialPP(scaled.moves);
+    return scaled;
+  };
+
+  const startLeague = () => {
+    setLeagueSnapshot({ availableTeam, playerMoney, bag });
+    const shuffled = [...ELITE_FOUR_POOL].sort(() => Math.random() - 0.5);
+    const queue = [shuffled[0], shuffled[1]];
+    setLeagueEliteQueue(queue);
+    setLeagueRound(1);
+    setLeagueActive(true);
+    setGameState('league-intro');
+  };
+
+  const startLeagueRound = (round, eliteQueue) => {
+    let trainerName, trainerTitle, trainerGreeting, opponentTeam;
+
+    if (round === 3) {
+      trainerName = 'Blue';
+      trainerTitle = 'Champion';
+      trainerGreeting = "Smell ya later! ...Just kidding. This is it, the final battle — give it everything you've got!";
+      const shuffledPool = [...CHAMPION_POKEMON_POOL].sort(() => Math.random() - 0.5);
+      opponentTeam = shuffledPool.slice(0, 6).map(p => scaleLeaguePokemon(p, 3));
+    } else {
+      const trainerIndex = round === 1 ? 0 : 1;
+      const trainer = eliteQueue[trainerIndex];
+      trainerName = trainer.name;
+      trainerTitle = trainer.title;
+      trainerGreeting = trainer.greeting;
+      opponentTeam = trainer.team.map(p => scaleLeaguePokemon(p, round));
+    }
+
+    setLeagueTrainerName(trainerName);
+    setLeagueTrainerTitle(trainerTitle);
+    setLeagueTrainerGreeting(trainerGreeting);
+    setLeagueOpponentFullTeam(opponentTeam);
+    setLeagueOpponentPokemonIdx(0);
+    setLeagueForcedSwitch(false);
+    setLeagueSelectedTeam([]);
+    setLeagueTeamSelectCursor(0);
+    setGameState('league-team-select');
+  };
+
+  const startLeagueBattle = (selectedTeam, opponentTeam, trainerName) => {
+    const firstOpponent = opponentTeam[0];
+    setWildPokemon(firstOpponent);
+    setLeagueOpponentPokemonIdx(0);
+    const firstPlayer = selectedTeam[0];
+    setPlayerPokemon(firstPlayer);
+    setIsPoisoned({ player: false, enemy: false });
+    setIsSleeping({ player: 0, enemy: 0 });
+    setBattleLog([`${trainerName} wants to battle!`, `${trainerName} sent out ${firstOpponent.name}!`, `Go, ${firstPlayer.name}!`]);
+    setIsPlayerTurn(true);
+    setPotionUsed(false);
+    setShowBag(false);
+    setGameState('battle');
+  };
+
+  const restartLeague = () => {
+    if (leagueSnapshot) {
+      setAvailableTeam(leagueSnapshot.availableTeam);
+      setPlayerMoney(leagueSnapshot.playerMoney);
+      setBag(leagueSnapshot.bag);
+      setPlayerPokemon(leagueSnapshot.availableTeam[0]);
+    }
+    // Pick a fresh elite queue for the retry
+    const reshuffled = [...ELITE_FOUR_POOL].sort(() => Math.random() - 0.5);
+    setLeagueEliteQueue([reshuffled[0], reshuffled[1]]);
+    setLeagueRound(1);
+    setLeagueActive(true);
+    setLeagueSelectedTeam([]);
+    setLeagueOpponentFullTeam([]);
+    setLeagueForcedSwitch(false);
+    setLeaguePreMartItem(null);
+    setGameState('league-intro');
   };
 
   const startNewBattle = () => {
@@ -4439,7 +4683,7 @@ const PokemonGame = () => {
                   })()}
                 </div>
 
-                {!isRocketBattle && (
+                {!isRocketBattle && !leagueActive && (
                 <button
                   data-action-index={5}
                   onClick={() => catchPokemon()}
@@ -4458,44 +4702,50 @@ const PokemonGame = () => {
                 )}
               </div>
             
-              {availableTeam.length > 1 && (
-                <div className={`border-t-4 pt-2 mt-2 ${teleportSwitchPending ? 'border-purple-500' : 'border-black'}`}>
-                  <p className="text-xs font-bold mb-2 retro-text" style={{color: teleportSwitchPending ? '#7c3aed' : '#000'}}>
-                    {teleportSwitchPending ? '✨ TELEPORT — PICK A POKEMON:' : 'SWITCH:'}
-                  </p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {availableTeam.map((pokemon, index) => (
-                      <button
-                        key={pokemon.uid ?? index}
-                        onClick={() => switchPokemon(pokemon)}
-                        disabled={((!isPlayerTurn && !teleportSwitchPending)) || pokemon.uid === playerPokemon.uid || pokemon.hp <= 0}
-                        className={`border-3 py-1 px-1 transition-all ${
-                          pokemon.uid === playerPokemon.uid || pokemon.hp <= 0 ? 'cursor-not-allowed opacity-50' :
-                          (isPlayerTurn || teleportSwitchPending) ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
-                        } ${teleportSwitchPending && pokemon.uid !== playerPokemon.uid && pokemon.hp > 0 ? 'border-purple-500' : 'border-black'}`}
-                        style={{
-                          backgroundColor: pokemon.uid === playerPokemon.uid || pokemon.hp <= 0 ? '#9ca3af' : (teleportSwitchPending ? '#e9d5ff' : '#fbbf24'),
-                          boxShadow: (isPlayerTurn || teleportSwitchPending) && pokemon.uid !== playerPokemon.uid && pokemon.hp > 0 ? '2px 2px 0px #000' : 'none'
-                        }}
-                      >
-                        <div className="mb-1 flex justify-center bg-white border-2 border-black p-1">
-                          <img
-                            src={getPokemonSprite(pokemon.name)}
-                            alt={pokemon.name}
-                            style={{
-                              imageRendering: 'pixelated',
-                              width: `${getSpriteSize(48)}px`,
-                              height: `${getSpriteSize(48)}px`
-                            }}
-                          />
-                        </div>
-                        <p className="text-xs font-bold truncate uppercase retro-text" style={{color: '#000', fontSize: '8px'}}>{pokemon.name}</p>
-                        <p className="text-xs font-bold retro-text" style={{color: '#000', fontSize: '8px'}}>{pokemon.hp}/{pokemon.maxHp}</p>
-                      </button>
-                    ))}
+              {(() => {
+                // In league battles, show only the selected team. In normal battles, show full availableTeam.
+                const switchPool = leagueActive ? leagueSelectedTeam : availableTeam;
+                const canSwitch = switchPool.length > 1 || leagueForcedSwitch;
+                const isActiveSwitchMode = isPlayerTurn || teleportSwitchPending || leagueForcedSwitch;
+                return canSwitch ? (
+                  <div className={`border-t-4 pt-2 mt-2 ${teleportSwitchPending ? 'border-purple-500' : leagueForcedSwitch ? 'border-red-500' : 'border-black'}`}>
+                    <p className="text-xs font-bold mb-2 retro-text" style={{color: teleportSwitchPending ? '#7c3aed' : leagueForcedSwitch ? '#dc2626' : '#000'}}>
+                      {teleportSwitchPending ? '✨ TELEPORT — PICK A POKEMON:' : leagueForcedSwitch ? '⚠️ FAINTED! CHOOSE NEXT POKEMON:' : 'SWITCH:'}
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {switchPool.map((pokemon, index) => (
+                        <button
+                          key={pokemon.uid ?? index}
+                          onClick={() => switchPokemon(pokemon)}
+                          disabled={(!isActiveSwitchMode) || pokemon.uid === playerPokemon?.uid || pokemon.hp <= 0}
+                          className={`border-3 py-1 px-1 transition-all ${
+                            pokemon.uid === playerPokemon?.uid || pokemon.hp <= 0 ? 'cursor-not-allowed opacity-50' :
+                            isActiveSwitchMode ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
+                          } ${(teleportSwitchPending || leagueForcedSwitch) && pokemon.uid !== playerPokemon?.uid && pokemon.hp > 0 ? (leagueForcedSwitch ? 'border-red-500' : 'border-purple-500') : 'border-black'}`}
+                          style={{
+                            backgroundColor: pokemon.uid === playerPokemon?.uid || pokemon.hp <= 0 ? '#9ca3af' : (leagueForcedSwitch ? '#fee2e2' : teleportSwitchPending ? '#e9d5ff' : '#fbbf24'),
+                            boxShadow: isActiveSwitchMode && pokemon.uid !== playerPokemon?.uid && pokemon.hp > 0 ? '2px 2px 0px #000' : 'none'
+                          }}
+                        >
+                          <div className="mb-1 flex justify-center bg-white border-2 border-black p-1">
+                            <img
+                              src={getPokemonSprite(pokemon.name)}
+                              alt={pokemon.name}
+                              style={{
+                                imageRendering: 'pixelated',
+                                width: `${getSpriteSize(48)}px`,
+                                height: `${getSpriteSize(48)}px`
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs font-bold truncate uppercase retro-text" style={{color: '#000', fontSize: '8px'}}>{pokemon.name}</p>
+                          <p className="text-xs font-bold retro-text" style={{color: '#000', fontSize: '8px'}}>{pokemon.hp}/{pokemon.maxHp}</p>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null;
+              })()}
             </div>
           </div>
 
@@ -5173,9 +5423,20 @@ const PokemonGame = () => {
                 {pendingBirds.join(' · ')} — defeated!
               </p>
               <p className="text-xs retro-text mt-1" style={{color: '#6b7280'}}>Bird Keeper Badge awarded</p>
+              <p className="retro-text font-bold mt-2" style={{color: '#15803d'}}>+$750 prize money!</p>
             </div>
             <button
-              onClick={() => { awardBadge('birdkeeper'); startNewBattle(); }}
+              onClick={() => {
+                awardBadge('birdkeeper');
+                setPlayerMoney(prev => prev + 750);
+                const allSixBadges = ['catcher','explorer','evolution','legend','master','birdkeeper'];
+                const willHaveAll = allSixBadges.every(b => earnedBadgeSetRef.current.has(b) || b === 'birdkeeper');
+                if (willHaveAll) {
+                  startLeague();
+                } else {
+                  startNewBattle();
+                }
+              }}
               className="w-full border-4 border-black hover:scale-105 font-bold py-3 px-6 retro-text transition-all"
               style={{backgroundColor: '#fbbf24', color: '#000', boxShadow: '4px 4px 0px #000'}}
             >
@@ -5469,6 +5730,378 @@ const PokemonGame = () => {
           </div>
 
           {/* Game Boy Controls */}
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  // ── POKEMON LEAGUE SCREENS ────────────────────────────────────────────────
+
+  if (gameState === 'league-intro') {
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
+        <SettingsModal />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen text-center p-4">
+            <div className="border-4 border-black p-4 mb-4" style={{backgroundColor:'#1e40af'}}>
+              <h2 className="text-2xl font-bold retro-text" style={{color:'#fbbf24'}}>POKEMON LEAGUE</h2>
+              <p className="text-xs retro-text mt-1" style={{color:'#bfdbfe'}}>The ultimate challenge awaits!</p>
+            </div>
+            <div className="border-4 border-black p-3 mb-3 text-left" style={{backgroundColor:'#fef3c7'}}>
+              <p className="retro-text text-xs font-bold mb-2" style={{color:'#000'}}>RULES:</p>
+              <p className="retro-text" style={{fontSize:9,color:'#374151',lineHeight:1.8}}>
+                Quarter Final &amp; Semi Final: 3v3<br/>
+                Final: 6v6<br/>
+                No Legendaries (Mewtwo, Mew, Birds)<br/>
+                Choose your team before each battle<br/>
+                Opponent team is unknown<br/>
+                Shop available before each battle<br/>
+                Lose = restart from this screen
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-2 mb-4 text-center">
+              {['Quarter Final','Semi Final','FINAL'].map((r,i) => (
+                <div key={i} className="border-2 border-black p-2" style={{backgroundColor: i===2?'#7c3aed':'#6b7280'}}>
+                  <p className="retro-text font-bold" style={{fontSize:8,color:'#fff'}}>{r}</p>
+                  <p className="retro-text" style={{fontSize:7,color:'#e5e7eb'}}>{i===2?'6v6':'3v3'}</p>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => startLeagueRound(leagueRound, leagueEliteQueue)}
+              className="w-full border-4 border-black hover:scale-105 font-bold py-3 retro-text transition-all"
+              style={{backgroundColor:'#fbbf24',color:'#000',boxShadow:'4px 4px 0px #000'}}
+            >
+              ENTER THE LEAGUE
+            </button>
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'league-team-select') {
+    const maxPicks = leagueRound === 3 ? 6 : 3;
+    const eligible = availableTeam.filter(p => !LEAGUE_LEGENDARY_BAN.includes(p.name));
+    const banned   = availableTeam.filter(p =>  LEAGUE_LEGENDARY_BAN.includes(p.name));
+    const canProceed = leagueSelectedTeam.length === maxPicks;
+
+    const togglePick = (pokemon) => {
+      if (LEAGUE_LEGENDARY_BAN.includes(pokemon.name)) return;
+      setLeagueSelectedTeam(prev => {
+        const already = prev.find(p => p.uid === pokemon.uid);
+        if (already) return prev.filter(p => p.uid !== pokemon.uid);
+        if (prev.length >= maxPicks) return prev;
+        return [...prev, pokemon];
+      });
+    };
+
+    const roundLabel = leagueRound === 1 ? 'QUARTER FINAL' : leagueRound === 2 ? 'SEMI FINAL' : 'FINAL';
+
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
+        <SettingsModal />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen p-3">
+            <div className="border-4 border-black p-3 mb-3 text-center" style={{backgroundColor:'#1e40af'}}>
+              <p className="retro-text font-bold" style={{color:'#fbbf24',fontSize:12}}>{roundLabel}</p>
+              <p className="retro-text" style={{color:'#bfdbfe',fontSize:9}}>Choose {maxPicks} Pokemon — Opponent unknown</p>
+            </div>
+            {/* Selected slots */}
+            <div className="flex gap-1 mb-3 justify-center flex-wrap">
+              {Array.from({length: maxPicks}).map((_, i) => {
+                const p = leagueSelectedTeam[i];
+                return (
+                  <div key={i} className="border-2 border-black text-center" style={{width:52,padding:2,backgroundColor:p?'#dcfce7':'#f3f4f6',minHeight:52,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                    {p ? (
+                      <>
+                        <img src={getPokemonSprite(p.name)} alt={p.name} style={{width:28,height:28,imageRendering:'pixelated'}} />
+                        <p style={{fontSize:6,color:'#000'}} className="retro-text">{p.name.slice(0,7)}</p>
+                      </>
+                    ) : (
+                      <p style={{fontSize:8,color:'#9ca3af'}} className="retro-text">?</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {/* Team list */}
+            <div className="overflow-y-auto" style={{maxHeight:200}}>
+              {eligible.map((p, i) => {
+                const isPicked = leagueSelectedTeam.find(s => s.uid === p.uid);
+                const isDisabled = !isPicked && leagueSelectedTeam.length >= maxPicks;
+                return (
+                  <button key={p.uid || i} onClick={() => togglePick(p)} disabled={isDisabled}
+                    className="w-full border-2 border-black mb-1 flex items-center gap-2 p-2 transition-all hover:scale-[1.01]"
+                    style={{backgroundColor: isPicked ? '#dcfce7' : isDisabled ? '#f3f4f6' : '#fff', opacity: isDisabled ? 0.5 : 1, cursor: isDisabled ? 'not-allowed' : 'pointer'}}>
+                    <img src={getPokemonSprite(p.name)} alt={p.name} style={{width:28,height:28,imageRendering:'pixelated'}} />
+                    <div className="text-left flex-1">
+                      <p className="retro-text font-bold" style={{fontSize:10,color:'#000'}}>{isPicked ? '+ ' : ''}{p.name}</p>
+                      <p className="retro-text" style={{fontSize:8,color:'#6b7280'}}>HP {p.hp}/{p.maxHp}</p>
+                    </div>
+                    {isPicked && <span style={{fontSize:9,color:'#16a34a'}} className="retro-text">#{leagueSelectedTeam.indexOf(leagueSelectedTeam.find(s=>s.uid===p.uid))+1}</span>}
+                  </button>
+                );
+              })}
+              {banned.length > 0 && (
+                <div className="border-2 border-red-400 p-2 mt-2 text-center" style={{backgroundColor:'#fee2e2'}}>
+                  <p className="retro-text" style={{fontSize:8,color:'#dc2626'}}>BANNED: {banned.map(p=>p.name).join(', ')} (Legendary)</p>
+                </div>
+              )}
+            </div>
+            <button onClick={() => {
+              if (!canProceed) return;
+              setLeaguePreMartItem(null);
+              setGameState('league-pre-mart');
+            }}
+              disabled={!canProceed}
+              className="w-full border-4 border-black mt-3 py-2 font-bold retro-text hover:scale-105 transition-all disabled:opacity-40"
+              style={{backgroundColor: canProceed ? '#22c55e' : '#9ca3af', color:'#fff', boxShadow: canProceed ? '3px 3px 0px #000' : 'none'}}>
+              {canProceed ? 'CONFIRM TEAM' : `SELECT ${maxPicks - leagueSelectedTeam.length} MORE`}
+            </button>
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'league-pre-mart') {
+    const leagueMartItems = [
+      { id: 'full-restore', name: 'FULL RESTORE', desc: 'Restore 1 Pokemon to full HP', price: 200, img: '/potion.png' },
+      { id: 'max-ether',    name: 'MAX ETHER',    desc: 'Restore all PP (1 Pokemon)',   price: 150, img: '/ether.png' },
+      { id: 'revive',       name: 'REVIVE',       desc: 'Revive fainted Pokemon (50%)', price: 300, img: '/great-ball.png' },
+    ];
+
+    const applyLeagueItem = (item, target) => {
+      if (item.id === 'full-restore') {
+        setLeagueSelectedTeam(prev => prev.map(p => p.uid === target.uid ? {...p, hp: p.maxHp} : p));
+        setAvailableTeam(prev => prev.map(p => p.uid === target.uid ? {...p, hp: p.maxHp} : p));
+      } else if (item.id === 'max-ether') {
+        setLeagueSelectedTeam(prev => prev.map(p => p.uid === target.uid ? {...p, pp: p.maxPp} : p));
+        setAvailableTeam(prev => prev.map(p => p.uid === target.uid ? {...p, pp: p.maxPp} : p));
+      } else if (item.id === 'revive') {
+        const halfHp = Math.ceil(target.maxHp / 2);
+        setLeagueSelectedTeam(prev => prev.map(p => p.uid === target.uid ? {...p, hp: halfHp} : p));
+        setAvailableTeam(prev => prev.map(p => p.uid === target.uid ? {...p, hp: halfHp} : p));
+      }
+      setPlayerMoney(prev => prev - item.price);
+      setLeaguePreMartItem(null);
+    };
+
+    const roundLabel = leagueRound === 1 ? 'QUARTER FINAL' : leagueRound === 2 ? 'SEMI FINAL' : 'FINAL';
+
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
+        <SettingsModal />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen p-3">
+            <div className="border-4 border-black p-3 mb-3 text-center" style={{backgroundColor:'#15803d'}}>
+              <p className="retro-text font-bold" style={{color:'#fff',fontSize:12}}>PRE-BATTLE SHOP</p>
+              <p className="retro-text" style={{color:'#bbf7d0',fontSize:9}}>{roundLabel} — Money: ${playerMoney}</p>
+            </div>
+
+            {leaguePreMartItem ? (
+              <>
+                <p className="retro-text font-bold text-center mb-2" style={{fontSize:10,color:'#000'}}>
+                  Apply {leagueMartItems.find(i=>i.id===leaguePreMartItem)?.name} to:
+                </p>
+                {leagueSelectedTeam.map((p, i) => {
+                  const item = leagueMartItems.find(it=>it.id===leaguePreMartItem);
+                  const canApply = item?.id === 'revive' ? p.hp <= 0 : item?.id === 'full-restore' ? p.hp < p.maxHp : true;
+                  return (
+                    <button key={p.uid || i} onClick={() => canApply && applyLeagueItem(item, p)} disabled={!canApply}
+                      className="w-full border-2 border-black mb-1 flex items-center gap-2 p-2 hover:scale-[1.01] transition-all"
+                      style={{backgroundColor: canApply ? '#fef3c7' : '#f3f4f6', opacity: canApply ? 1 : 0.5, cursor: canApply ? 'pointer' : 'not-allowed'}}>
+                      <img src={getPokemonSprite(p.name)} alt={p.name} style={{width:28,height:28,imageRendering:'pixelated'}} />
+                      <div className="text-left flex-1">
+                        <p className="retro-text font-bold" style={{fontSize:10,color:'#000'}}>{p.name}</p>
+                        <p className="retro-text" style={{fontSize:8,color:'#6b7280'}}>HP {p.hp}/{p.maxHp}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+                <button onClick={() => setLeaguePreMartItem(null)}
+                  className="w-full border-2 border-black mt-2 py-1 retro-text font-bold"
+                  style={{backgroundColor:'#e5e7eb',color:'#000',fontSize:9}}>
+                  CANCEL
+                </button>
+              </>
+            ) : (
+              <>
+                {leagueMartItems.map(item => {
+                  const canAfford = playerMoney >= item.price;
+                  return (
+                    <button key={item.id} onClick={() => canAfford && setLeaguePreMartItem(item.id)} disabled={!canAfford}
+                      className="w-full border-2 border-black mb-2 flex items-center gap-2 p-2 hover:scale-[1.01] transition-all"
+                      style={{backgroundColor: canAfford ? '#fff' : '#f3f4f6', opacity: canAfford ? 1 : 0.5, cursor: canAfford ? 'pointer' : 'not-allowed'}}>
+                      <img src={item.img} alt={item.name} style={{width:24,height:24,imageRendering:'pixelated'}} />
+                      <div className="text-left flex-1">
+                        <p className="retro-text font-bold" style={{fontSize:10,color:'#000'}}>{item.name}</p>
+                        <p className="retro-text" style={{fontSize:8,color:'#6b7280'}}>{item.desc}</p>
+                      </div>
+                      <p className="retro-text font-bold" style={{fontSize:9,color: canAfford ? '#15803d' : '#dc2626'}}>${item.price}</p>
+                    </button>
+                  );
+                })}
+                <button
+                  onClick={() => {
+                    // Sync leagueSelectedTeam HP from availableTeam (items may have updated availableTeam)
+                    const refreshed = leagueSelectedTeam.map(p => {
+                      const live = availableTeam.find(a => a.uid === p.uid);
+                      return live ? { ...p, hp: live.hp, pp: live.pp || p.pp, maxPp: live.maxPp || p.maxPp } : p;
+                    });
+                    startLeagueBattle(refreshed, leagueOpponentFullTeam, leagueTrainerName);
+                  }}
+                  className="w-full border-4 border-black mt-3 py-3 font-bold retro-text hover:scale-105 transition-all"
+                  style={{backgroundColor:'#3b82f6',color:'#fff',boxShadow:'4px 4px 0px #000'}}>
+                  BATTLE! vs {leagueTrainerName}
+                </button>
+              </>
+            )}
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'league-round-win') {
+    const nextRound = leagueRound + 1;
+    const roundLabel = leagueRound === 1 ? 'QUARTER FINAL' : 'SEMI FINAL';
+    const nextLabel = nextRound === 3 ? 'FINAL' : 'NEXT ROUND';
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
+        <SettingsModal />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen text-center p-4">
+            <div className="border-4 border-black p-4 mb-4" style={{backgroundColor:'#15803d'}}>
+              <h2 className="text-xl font-bold retro-text" style={{color:'#fbbf24'}}>{roundLabel} — VICTORY!</h2>
+              <p className="text-xs retro-text mt-1" style={{color:'#bbf7d0'}}>You defeated {leagueTrainerName}!</p>
+            </div>
+            <div className="border-4 border-black p-3 mb-4" style={{backgroundColor:'#fef3c7'}}>
+              <p className="text-sm retro-text font-bold" style={{color:'#000'}}>
+                {nextRound === 3 ? 'The Champion awaits...' : 'On to the Semi Final!'}
+              </p>
+              <p className="text-xs retro-text mt-1" style={{color:'#6b7280'}}>
+                {nextRound === 3 ? '6v6 battle • Scaled ×1.5' : '3v3 battle • Scaled ×1.3'}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setLeagueRound(nextRound);
+                startLeagueRound(nextRound, leagueEliteQueue);
+              }}
+              className="w-full border-4 border-black hover:scale-105 font-bold py-3 retro-text transition-all"
+              style={{backgroundColor:'#fbbf24',color:'#000',boxShadow:'4px 4px 0px #000'}}
+            >
+              CONTINUE TO {nextLabel}
+            </button>
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'league-champion') {
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
+        <SettingsModal />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen text-center p-4">
+            <div className="border-4 border-black p-4 mb-4" style={{backgroundColor:'#7c3aed'}}>
+              <h2 className="text-2xl font-bold retro-text" style={{color:'#fbbf24'}}>POKEMON CHAMPION!</h2>
+              <p className="text-xs retro-text mt-1" style={{color:'#e9d5ff'}}>You defeated the Pokemon League!</p>
+            </div>
+            <div className="border-4 border-black p-4 mb-4" style={{backgroundColor:'#fef3c7'}}>
+              <p className="text-sm font-bold retro-text mb-2" style={{color:'#000'}}>
+                You defeated Champion Blue!
+              </p>
+              <p className="text-xs retro-text" style={{color:'#6b7280'}}>
+                You are the new Pokemon Champion!<br/>
+                Congratulations, trainer!
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                // Reset league state and return to normal game
+                setLeagueActive(false);
+                setLeagueRound(0);
+                setLeagueSelectedTeam([]);
+                setLeagueOpponentFullTeam([]);
+                setLeagueForcedSwitch(false);
+                setLeagueSnapshot(null);
+                setLeagueEliteQueue([]);
+                startNewBattle();
+              }}
+              className="w-full border-4 border-black hover:scale-105 font-bold py-3 retro-text transition-all"
+              style={{backgroundColor:'#fbbf24',color:'#000',boxShadow:'4px 4px 0px #000'}}
+            >
+              CONTINUE ADVENTURE
+            </button>
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'league-defeat') {
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <SettingsButton />
+        <BadgeAcquiredPopup />
+        <BadgeCaseModal />
+        <SettingsModal />
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen text-center p-4">
+            <div className="border-4 border-black p-4 mb-4" style={{backgroundColor:'#dc2626'}}>
+              <h2 className="text-xl font-bold retro-text" style={{color:'#fff'}}>DEFEATED!</h2>
+              <p className="text-xs retro-text mt-1" style={{color:'#fca5a5'}}>
+                {leagueTrainerName} won the battle!
+              </p>
+            </div>
+            <div className="border-4 border-black p-3 mb-4" style={{backgroundColor:'#fef3c7'}}>
+              <p className="text-sm retro-text font-bold mb-1" style={{color:'#000'}}>
+                All your Pokemon fainted!
+              </p>
+              <p className="text-xs retro-text" style={{color:'#6b7280'}}>
+                Your pre-league team will be restored.<br/>
+                Train harder and try again!
+              </p>
+            </div>
+            <button
+              onClick={restartLeague}
+              className="w-full border-4 border-black hover:scale-105 font-bold py-3 retro-text transition-all"
+              style={{backgroundColor:'#fbbf24',color:'#000',boxShadow:'4px 4px 0px #000'}}
+            >
+              RETRY LEAGUE
+            </button>
+          </div>
           <GameboyControlsComponent />
           <Footer />
         </div>
