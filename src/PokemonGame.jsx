@@ -93,7 +93,7 @@ const BADGE_DATA = [
     palette: { 3:'#150800', 4:'#0a0a00', 7:'#f0f0f0', 9:'#9040c8' },
   },
   {
-    id: 'master', name: 'MASTER', description: 'Catch 30+ species',
+    id: 'master', name: 'MASTER', description: 'Catch 15+ species',
     pixels: [
       [0,3,3,3,3,3,3,3,3,3,3,3,3,3,0,0],
       [3,1,1,1,1,1,1,1,1,1,1,1,1,1,3,0],
@@ -537,9 +537,9 @@ const PokemonGame = () => {
     if (availableTeam.some(p => p.defeatedMewtwo)) awardBadge('legend');
   }, [availableTeam, awardBadge]);
 
-  // MASTER: 30+ unique species caught
+  // MASTER: 15+ unique species caught
   useEffect(() => {
-    if (pokedex.length >= 30) awardBadge('master');
+    if (pokedex.length >= 15) awardBadge('master');
   }, [pokedex.length, awardBadge]);
 
   // Bird goes first: fire enemyAttack on the render after wildPokemon is set
