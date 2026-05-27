@@ -1239,48 +1239,47 @@ const PokemonGame = () => {
       setPokemartRareCandyQty(1);
     };
 
+    const isMobile = displayMode === 'mobile';
     const MartItem = ({ img, name, desc, basePrice, effectPrice, qty, setQty, canAfford, onBuy, total, soldOut, discount }) => (
       <div className="border-4 border-black" style={{ backgroundColor: soldOut ? '#f3f4f6' : '#fff', opacity: soldOut ? 0.75 : 1 }}>
-        <div className="flex gap-3 items-center p-3 border-b-2 border-black">
-          <img src={img} alt={name} style={{ width: 40, height: 40, imageRendering: 'pixelated', filter: soldOut ? 'grayscale(1)' : 'none' }} />
-          <div className="flex-1">
-            <div className="retro-text font-bold text-xs" style={{ color: '#000' }}>{name}</div>
-            <div className="retro-text" style={{ fontSize: 8, color: '#555' }}>{desc}</div>
+        <div className="flex items-center border-b-2 border-black" style={{ gap: isMobile ? 6 : 10, padding: isMobile ? '6px 8px' : '10px 12px' }}>
+          <img src={img} alt={name} style={{ width: isMobile ? 32 : 40, height: isMobile ? 32 : 40, flexShrink: 0, imageRendering: 'pixelated', filter: soldOut ? 'grayscale(1)' : 'none' }} />
+          <div className="flex-1 min-w-0">
+            <div className="retro-text font-bold" style={{ fontSize: isMobile ? 9 : 11, color: '#000', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{name}</div>
+            <div className="retro-text" style={{ fontSize: isMobile ? 7 : 8, color: '#555', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{desc}</div>
             {discount && !soldOut && (
-              <div className="retro-text" style={{ fontSize: 7, color: '#16a34a', marginTop: 2 }}>
-                🏷 SALE! ${DISCOUNT_OFF} OFF
-              </div>
+              <div className="retro-text" style={{ fontSize: 7, color: '#16a34a', marginTop: 1 }}>🏷 SALE! ${DISCOUNT_OFF} OFF</div>
             )}
           </div>
           {/* Price display */}
           {soldOut ? (
-            <div className="retro-text font-bold text-xs px-2 py-1 border-2 border-red-600"
-              style={{ color: '#dc2626', backgroundColor: '#fee2e2' }}>SOLD OUT</div>
+            <div className="retro-text font-bold px-1 py-1 border-2 border-red-600 flex-shrink-0"
+              style={{ fontSize: isMobile ? 7 : 9, color: '#dc2626', backgroundColor: '#fee2e2' }}>SOLD OUT</div>
           ) : discount ? (
-            <div className="text-right">
-              <div className="retro-text line-through" style={{ fontSize: 8, color: '#9ca3af' }}>${basePrice}</div>
-              <div className="retro-text font-bold text-xs" style={{ color: '#16a34a' }}>${effectPrice}</div>
+            <div className="text-right flex-shrink-0">
+              <div className="retro-text line-through" style={{ fontSize: 7, color: '#9ca3af' }}>${basePrice}</div>
+              <div className="retro-text font-bold" style={{ fontSize: isMobile ? 9 : 11, color: '#16a34a' }}>${effectPrice}</div>
             </div>
           ) : (
-            <div className="retro-text font-bold text-xs" style={{ color: '#dc2626' }}>${basePrice}</div>
+            <div className="retro-text font-bold flex-shrink-0" style={{ fontSize: isMobile ? 9 : 11, color: '#dc2626' }}>${basePrice}</div>
           )}
         </div>
         {!soldOut && (
-          <div className="flex items-center gap-2 p-2 justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between" style={{ padding: isMobile ? '4px 6px' : '6px 8px', gap: 4 }}>
+            <div className="flex items-center" style={{ gap: isMobile ? 3 : 6 }}>
               <button onClick={() => setQty(q => Math.max(1, q - 1))}
-                className="border-2 border-black w-7 h-7 font-bold retro-text hover:scale-105 transition-all"
-                style={{ backgroundColor: '#fbbf24', fontSize: 14 }}>−</button>
-              <span className="retro-text font-bold w-6 text-center" style={{ color: '#000', fontSize: 12 }}>{qty}</span>
+                className="border-2 border-black font-bold retro-text hover:scale-105 transition-all flex-shrink-0"
+                style={{ backgroundColor: '#fbbf24', fontSize: 12, width: isMobile ? 22 : 28, height: isMobile ? 22 : 28 }}>−</button>
+              <span className="retro-text font-bold text-center" style={{ color: '#000', fontSize: 11, minWidth: isMobile ? 16 : 20 }}>{qty}</span>
               <button onClick={() => setQty(q => Math.min(99, q + 1))}
-                className="border-2 border-black w-7 h-7 font-bold retro-text hover:scale-105 transition-all"
-                style={{ backgroundColor: '#fbbf24', fontSize: 14 }}>+</button>
+                className="border-2 border-black font-bold retro-text hover:scale-105 transition-all flex-shrink-0"
+                style={{ backgroundColor: '#fbbf24', fontSize: 12, width: isMobile ? 22 : 28, height: isMobile ? 22 : 28 }}>+</button>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="retro-text font-bold" style={{ fontSize: 9, color: canAfford ? '#15803d' : '#dc2626' }}>${total}</span>
+            <div className="flex items-center" style={{ gap: isMobile ? 4 : 8 }}>
+              <span className="retro-text font-bold" style={{ fontSize: isMobile ? 8 : 9, color: canAfford ? '#15803d' : '#dc2626' }}>${total}</span>
               <button onClick={onBuy} disabled={!canAfford}
-                className="border-2 border-black px-3 py-1 font-bold retro-text transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ backgroundColor: canAfford ? '#22c55e' : '#9ca3af', color: '#fff', fontSize: 9, boxShadow: canAfford ? '2px 2px 0px #000' : 'none' }}>
+                className="border-2 border-black font-bold retro-text transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                style={{ backgroundColor: canAfford ? '#22c55e' : '#9ca3af', color: '#fff', fontSize: isMobile ? 8 : 9, padding: isMobile ? '3px 8px' : '4px 12px', boxShadow: canAfford ? '2px 2px 0px #000' : 'none' }}>
                 BUY
               </button>
             </div>
@@ -1298,8 +1297,8 @@ const PokemonGame = () => {
             <div className="retro-text text-xs mt-1" style={{ color: '#555' }}>Welcome, trainer!</div>
             <div className="retro-text text-xs font-bold mt-1" style={{ color: '#15803d' }}>Balance: ${playerMoney}</div>
           </div>
-          {/* 2-column grid for items */}
-          <div className="grid grid-cols-2 gap-3 mb-3">
+          {/* Responsive grid: 2-col on PC, 1-col on mobile */}
+          <div className={`grid gap-3 mb-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
             <MartItem
               img="/potion.png" name="POTION" desc="Full heal (extra use)"
               basePrice={basePrices.potion} effectPrice={potPrice}
@@ -1328,8 +1327,8 @@ const PokemonGame = () => {
               canAfford={canAffordEther} onBuy={handleBuyEther} total={etherTotal}
               soldOut={pokemartOffers.ether.soldOut} discount={pokemartOffers.ether.discount}
             />
-            {/* Rare Candy spans both columns */}
-            <div className="col-span-2">
+            {/* Rare Candy spans both columns on PC, full width on mobile */}
+            <div className={isMobile ? '' : 'col-span-2'}>
               <MartItem
                 img="/rare-candy.png" name="RARE CANDY" desc="+1 EXP, may trigger evolution"
                 basePrice={basePrices.rareCandy} effectPrice={rcPrice}
