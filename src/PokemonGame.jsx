@@ -539,7 +539,7 @@ const PokemonGame = () => {
 
   // MASTER: 15+ unique species caught
   useEffect(() => {
-    if (pokedex.length >= 15) awardBadge('master');
+    if (pokedex.length >= 10) awardBadge('master');
   }, [pokedex.length, awardBadge]);
 
   // Bird goes first: fire enemyAttack on the render after wildPokemon is set
@@ -639,8 +639,8 @@ const PokemonGame = () => {
 
       // Quick menu navigation when focused
       if (quickMenuFocused) {
-        // 0: Settings, 1: How to Play, 2: Pokedex, 3: Save, 4: Badges, 5: Debug (if on)
-        const maxIndex = debugMode ? 5 : 4;
+        // 0: Settings, 1: How to Play, 2: Pokedex, 3: Save, 4: Badges, 5: Debug EXP→19 (if on), 6: Debug League (if on)
+        const maxIndex = debugMode ? 6 : 4;
         if (e.key === 'ArrowUp') {
           setQuickMenuIndex(prev => (prev - 1 + maxIndex + 1) % (maxIndex + 1));
         } else if (e.key === 'ArrowDown') {
@@ -664,6 +664,10 @@ const PokemonGame = () => {
           } else if (quickMenuIndex === 5 && debugMode) {
             const debugBtn = document.querySelector('[data-debug-button]');
             if (debugBtn) debugBtn.click();
+            setQuickMenuFocused(false); setMenuOpen(false);
+          } else if (quickMenuIndex === 6 && debugMode) {
+            const debugLeagueBtn = document.querySelector('[data-debug-league-button]');
+            if (debugLeagueBtn) debugLeagueBtn.click();
             setQuickMenuFocused(false); setMenuOpen(false);
           }
         } else if (e.key === 'Escape' || e.key === ' ') {
@@ -1008,6 +1012,57 @@ const PokemonGame = () => {
               }}
             >
               DEBUG: EXP→19
+            </button>
+          )}
+          {debugMode && (
+            <button
+              data-debug-league-button
+              onClick={() => {
+                // Award all 6 badges silently (no popups)
+                const allBadgeIds = ['catcher','explorer','evolution','legend','master','birdkeeper'];
+                allBadgeIds.forEach(id => {
+                  if (!earnedBadgeSetRef.current.has(id)) {
+                    earnedBadgeSetRef.current.add(id);
+                  }
+                });
+                setEarnedBadges(allBadgeIds);
+                // Give the player $3000
+                setPlayerMoney(3000);
+                // Build a debug team of 6 strong Pokémon
+                const debugTeamBase = [
+                  { name: 'Charizard',  type: 'Fire',    type2: 'Flying', hp: 78, maxHp: 78, attack: 84,  spAtk: 109, def: 78,  spDef: 85,  moves: ['Flamethrower','Wing Attack','Slash','Dragon Rage'],    moveTypes: ['Fire','Flying','Normal','Dragon'] },
+                  { name: 'Blastoise',  type: 'Water',   type2: null,     hp: 79, maxHp: 79, attack: 83,  spAtk: 85,  def: 100, spDef: 105, moves: ['Surf','Blizzard','Withdraw','Bite'],                    moveTypes: ['Water','Ice','Water','Dark'] },
+                  { name: 'Venusaur',   type: 'Grass',   type2: 'Poison', hp: 80, maxHp: 80, attack: 82,  spAtk: 100, def: 83,  spDef: 100, moves: ['Solar Beam','Sleep Powder','Sludge Bomb','Synthesis'],   moveTypes: ['Grass','Grass','Poison','Grass'] },
+                  { name: 'Gyarados',   type: 'Water',   type2: 'Flying', hp: 95, maxHp: 95, attack: 125, spAtk: 60,  def: 79,  spDef: 100, moves: ['Hydro Pump','Bite','Thrash','Dragon Rage'],               moveTypes: ['Water','Dark','Normal','Dragon'] },
+                  { name: 'Lapras',     type: 'Water',   type2: 'Ice',    hp: 130,maxHp: 130,attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Thunder','Psychic'],                    moveTypes: ['Water','Ice','Electric','Psychic'] },
+                  { name: 'Snorlax',    type: 'Normal',  type2: null,     hp: 160,maxHp: 160,attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Rest','Earthquake','Hyper Beam'],             moveTypes: ['Normal','Normal','Ground','Normal'] },
+                ];
+                const debugTeam = debugTeamBase.map((p, i) => {
+                  const freshPP = getInitialPP(p.moves);
+                  return { ...p, uid: `debug-${i}-${Date.now()}`, pp: freshPP, maxPp: freshPP, exp: 0, defeatedMewtwo: true };
+                });
+                setAvailableTeam(debugTeam);
+                setPokedex(prev => {
+                  const existing = new Set(prev.map(p => p.name));
+                  const toAdd = debugTeam.filter(p => !existing.has(p.name));
+                  return [...prev, ...toAdd];
+                });
+                // Mark gauntlet flags
+                hasCompletedGauntlet.current = true;
+                hasDefeatedMewtwo.current = true;
+                setMenuOpen(false);
+                // Small delay so state updates flush before league starts
+                setTimeout(() => startLeague(), 50);
+              }}
+              className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
+                quickMenuFocused && quickMenuIndex === 6 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
+              }`}
+              style={{
+                backgroundColor: '#7c3aed', color: '#fff',
+                boxShadow: quickMenuFocused && quickMenuIndex === 6 ? '4px 4px 0px #eab308' : '4px 4px 0px #000'
+              }}
+            >
+              DEBUG: 6 BADGES + LEAGUE
             </button>
           )}
           {quickMenuFocused && (
