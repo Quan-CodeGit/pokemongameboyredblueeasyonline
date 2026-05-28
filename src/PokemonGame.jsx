@@ -1417,16 +1417,6 @@ const PokemonGame = () => {
     );
   };
 
-  // ── Solar Beam auto-fire: when player's turn comes back and they were charging, fire automatically ──
-  useEffect(() => {
-    if (isPlayerTurn && gameState === 'battle' && !isEvolving && isChargingSolarBeam.player) {
-      const mi = isChargingSolarBeam.moveIndex;
-      const t = setTimeout(() => playerAttack(mi), 700);
-      return () => clearTimeout(t);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlayerTurn]);
-
   // ── Badge sound — lives in parent so it doesn't double-fire on every re-render ──
   useEffect(() => {
     if (badgePopupQueue.length > 0) {
@@ -4649,6 +4639,15 @@ const PokemonGame = () => {
             </div>
 
             <div className="space-y-2">
+              {/* Solar Beam charging banner */}
+              {isChargingSolarBeam.player && (
+                <div className="flex items-center justify-center mb-1 px-1 border-2 border-yellow-400 animate-pulse"
+                  style={{ backgroundColor: '#fef9c3', padding: '4px 6px' }}>
+                  <span className="retro-text font-bold" style={{ fontSize: 9, color: '#92400e' }}>
+                    ☀️ SOLAR BEAM CHARGED — CLICK TO FIRE!
+                  </span>
+                </div>
+              )}
               {/* Ether target mode banner */}
               {etherTargetPending && (
                 <div className="flex items-center justify-between mb-1 px-1">
@@ -4671,9 +4670,14 @@ const PokemonGame = () => {
                   const ppEmpty = curPP <= 0;
                   const isEtherMode = etherTargetPending;
                   const ppFull  = curPP >= maxPP;
+                  // Solar Beam charging: only the charging move is clickable, all others locked
+                  const isSolarCharging = isChargingSolarBeam.player;
+                  const isSolarFireSlot = isSolarCharging && isChargingSolarBeam.moveIndex === index;
+                  const isSolarLockedSlot = isSolarCharging && !isSolarFireSlot;
                   const btnDisabled = isEtherMode
-                    ? ppFull                                            // grey out full-PP moves in ether mode
-                    : (!isPlayerTurn || teleportSwitchPending || ppEmpty);
+                    ? ppFull
+                    : isSolarLockedSlot                                // locked while Solar Beam is charging
+                    || (!isPlayerTurn || teleportSwitchPending || ppEmpty);
                   return (
                   <button
                     key={index}
@@ -4682,13 +4686,20 @@ const PokemonGame = () => {
                     disabled={btnDisabled}
                     className={`border-4 px-2 font-bold transition-all retro-text ${
                       !btnDisabled ? 'hover:scale-105' : 'cursor-not-allowed opacity-50'
-                    } ${selectedActionIndex === index && isPlayerTurn && !teleportSwitchPending && !isEtherMode ? 'border-blue-500 ring-2 ring-blue-300' : (isEtherMode && !ppFull ? 'border-purple-500' : 'border-black')}`}
+                    } ${
+                      isSolarFireSlot ? 'border-yellow-400 ring-2 ring-yellow-300 animate-pulse'
+                      : selectedActionIndex === index && isPlayerTurn && !teleportSwitchPending && !isEtherMode ? 'border-blue-500 ring-2 ring-blue-300'
+                      : (isEtherMode && !ppFull ? 'border-purple-500' : 'border-black')
+                    }`}
                     style={{
-                      backgroundColor: isEtherMode
+                      backgroundColor: isSolarFireSlot
+                        ? '#fde047'                                     // bright yellow = ready to fire
+                        : isEtherMode
                         ? (ppFull ? '#9ca3af' : '#ddd6fe')
                         : (ppEmpty ? '#9ca3af' : (isPlayerTurn && !teleportSwitchPending ? '#fbbf24' : '#9ca3af')),
                       color: '#000',
-                      boxShadow: isEtherMode && !ppFull ? '3px 3px 0px #7c3aed'
+                      boxShadow: isSolarFireSlot ? '3px 3px 0px #ca8a04'
+                               : isEtherMode && !ppFull ? '3px 3px 0px #7c3aed'
                                : (selectedActionIndex === index && isPlayerTurn ? '3px 3px 0px #3b82f6'
                                : (!btnDisabled ? '3px 3px 0px #000' : 'none')),
                       paddingTop: 5, paddingBottom: 5,
@@ -4697,7 +4708,8 @@ const PokemonGame = () => {
                     {/* Move name + PP */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
                       <div style={{ fontSize: 10, fontWeight: 'bold', lineHeight: 1.2 }}>
-                        {isEtherMode && !ppFull ? '🧪 ' : ''}{move.toUpperCase()}
+                        {isSolarFireSlot ? '☀️ ' : isEtherMode && !ppFull ? '🧪 ' : ''}{move.toUpperCase()}
+                        {isSolarFireSlot && <span style={{ fontSize: 8, color: '#92400e', marginLeft: 3 }}>FIRE!</span>}
                       </div>
                       <div style={{
                         fontSize: 8, fontWeight: 'bold',
@@ -5943,11 +5955,11 @@ const PokemonGame = () => {
                   Lose = restart
                 </p>
               </div>
-              <div className="border-l-4 border-black overflow-hidden flex-shrink-0" style={{width: 130, backgroundColor:'#fff'}}>
+              <div className="border-l-4 border-black flex-shrink-0 flex items-center justify-center" style={{width: '42%', backgroundColor:'#fff'}}>
                 <img
                   src="/elite-4.png"
                   alt="Elite Four"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', imageRendering: 'pixelated', display: 'block' }}
+                  style={{ width: '100%', height: 'auto', display: 'block', imageRendering: 'pixelated' }}
                 />
               </div>
             </div>
