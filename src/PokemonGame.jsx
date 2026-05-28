@@ -326,7 +326,7 @@ const CHAMPION_POKEMON_POOL = [
   { name: 'Gengar',     type: 'Ghost',    type2: 'Poison',  hp: 60,  maxHp: 60,  attack: 65,  spAtk: 130, def: 60,  spDef: 75,  moves: ['Shadow Ball','Thunderbolt','Psychic','Toxic'],            moveTypes: ['Ghost','Electric','Psychic','Poison'] },
   { name: 'Gyarados',   type: 'Water',    type2: 'Flying',  hp: 95,  maxHp: 95,  attack: 125, spAtk: 60,  def: 79,  spDef: 100, moves: ['Hydro Pump','Bite','Thrash','Dragon Rage'],               moveTypes: ['Water','Dark','Normal','Dragon'] },
   { name: 'Lapras',     type: 'Water',    type2: 'Ice',     hp: 130, maxHp: 130, attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Thunder','Psychic'],                    moveTypes: ['Water','Ice','Electric','Psychic'] },
-  { name: 'Snorlax',    type: 'Normal',                     hp: 160, maxHp: 160, attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Rest','Earthquake','Hyper Beam'],             moveTypes: ['Normal','Normal','Ground','Normal'] },
+  { name: 'Snorlax',    type: 'Normal',                     hp: 160, maxHp: 160, attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Psychic','Earthquake','Hyper Beam'],          moveTypes: ['Normal','Psychic','Ground','Normal'] },
   { name: 'Nidoking',   type: 'Poison',   type2: 'Ground',  hp: 81,  maxHp: 81,  attack: 102, spAtk: 85,  def: 77,  spDef: 75,  moves: ['Earthquake','Sludge Bomb','Rock Slide','Hyper Beam'],     moveTypes: ['Ground','Poison','Rock','Normal'] },
   { name: 'Starmie',    type: 'Water',    type2: 'Psychic', hp: 60,  maxHp: 60,  attack: 75,  spAtk: 100, def: 85,  spDef: 85,  moves: ['Surf','Psychic','Ice Beam','Thunderbolt'],                moveTypes: ['Water','Psychic','Ice','Electric'] },
   { name: 'Dragonite',  type: 'Dragon',   type2: 'Flying',  hp: 91,  maxHp: 91,  attack: 134, spAtk: 100, def: 95,  spDef: 100, moves: ['Hyper Beam','Fire Blast','Thunder','Surf'],               moveTypes: ['Normal','Fire','Electric','Water'] },
@@ -358,6 +358,9 @@ const PokemonGame = () => {
   const [isEvolving, setIsEvolving] = useState(false);
   const [isPoisoned, setIsPoisoned] = useState({ player: false, enemy: false });
   const [isSleeping, setIsSleeping] = useState({ player: 0, enemy: 0 }); // turns remaining
+  const [isRecharging, setIsRecharging] = useState({ player: false, enemy: false }); // Hyper Beam recharge
+  const isRechargingRef = useRef({ player: false, enemy: false });
+  isRechargingRef.current = isRecharging;
   const [selectedStarterIndex, setSelectedStarterIndex] = useState(0);
   const [selectedMoveIndex, setSelectedMoveIndex] = useState(0);
   const [selectedActionIndex, setSelectedActionIndex] = useState(0); // 0-3: moves, 4: potion, 5: catch, 6: switch
@@ -1035,7 +1038,7 @@ const PokemonGame = () => {
                   { name: 'Venusaur',   type: 'Grass',   type2: 'Poison', hp: 80, maxHp: 80, attack: 82,  spAtk: 100, def: 83,  spDef: 100, moves: ['Solar Beam','Sleep Powder','Sludge Bomb','Synthesis'],   moveTypes: ['Grass','Grass','Poison','Grass'] },
                   { name: 'Gyarados',   type: 'Water',   type2: 'Flying', hp: 95, maxHp: 95, attack: 125, spAtk: 60,  def: 79,  spDef: 100, moves: ['Hydro Pump','Bite','Thrash','Dragon Rage'],               moveTypes: ['Water','Dark','Normal','Dragon'] },
                   { name: 'Lapras',     type: 'Water',   type2: 'Ice',    hp: 130,maxHp: 130,attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Thunder','Psychic'],                    moveTypes: ['Water','Ice','Electric','Psychic'] },
-                  { name: 'Snorlax',    type: 'Normal',  type2: null,     hp: 160,maxHp: 160,attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Rest','Earthquake','Hyper Beam'],             moveTypes: ['Normal','Normal','Ground','Normal'] },
+                  { name: 'Snorlax',    type: 'Normal',  type2: null,     hp: 160,maxHp: 160,attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Psychic','Earthquake','Hyper Beam'],          moveTypes: ['Normal','Psychic','Ground','Normal'] },
                 ];
                 const debugTeam = debugTeamBase.map((p, i) => {
                   const freshPP = getInitialPP(p.moves);
@@ -2205,7 +2208,7 @@ const PokemonGame = () => {
     { name: 'Weedle', type: 'Bug', type2: 'Poison', hp: 40, maxHp: 40, attack: 35, spAtk: 20, def: 30, spDef: 20, color: '🐝', moves: ['Poison Sting', 'String Shot', 'Bug Bite'], moveTypes: ['Poison', 'Bug', 'Bug'] },
     { name: 'Pidgey', type: 'Normal', type2: 'Flying', hp: 40, maxHp: 40, attack: 45, spAtk: 35, def: 40, spDef: 35, color: '🐦', moves: ['Peck', 'Gust', 'Sand Attack', 'Wing Attack'], moveTypes: ['Flying', 'Flying', 'Ground', 'Flying'] },
     { name: 'Rattata', type: 'Normal', type2: null, hp: 30, maxHp: 30, attack: 56, spAtk: 25, def: 35, spDef: 35, color: '🐀', moves: ['Tackle', 'Quick Attack', 'Bite', 'Hyper Fang'], moveTypes: ['Normal', 'Normal', 'Dark', 'Normal'] },
-    { name: 'Snorlax', type: 'Normal', type2: null, hp: 160, maxHp: 160, attack: 110, spAtk: 65, def: 65, spDef: 110, color: '😴', moves: ['Body Slam', 'Rest', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] },
+    { name: 'Snorlax', type: 'Normal', type2: null, hp: 160, maxHp: 160, attack: 110, spAtk: 65, def: 65, spDef: 110, color: '😴', moves: ['Body Slam', 'Psychic', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] },
 
     // Common (attack 31-50) - Medium-high encounter rate
     { name: 'Clefairy', type: 'Normal', type2: null, hp: 70, maxHp: 70, attack: 45, spAtk: 60, def: 48, spDef: 65, color: '🌙', moves: ['Pound', 'Sing', 'Double Slap', 'Moonblast'], moveTypes: ['Normal', 'Normal', 'Normal', 'Normal'] },
@@ -2934,6 +2937,7 @@ const PokemonGame = () => {
     // Reset enemy status only
     setIsPoisoned(prev => ({ ...prev, enemy: false }));
     setIsSleeping(prev => ({ ...prev, enemy: 0 }));
+    setIsRecharging(prev => ({ ...prev, enemy: false }));
     addLog(`Teleported to a new area!`);
     addLog(`A wild ${wild.name} appeared!`);
     setIsPlayerTurn(true);
@@ -3012,6 +3016,16 @@ const PokemonGame = () => {
     // but the ref is set to false synchronously so the second click is blocked.
     if (!isPlayerTurnRef.current || gameStateRef.current !== 'battle' || isEvolving) return;
     isPlayerTurnRef.current = false; // synchronous lock — blocks any concurrent call immediately
+
+    // Check if player must recharge from Hyper Beam
+    if (isRechargingRef.current.player) {
+      isRechargingRef.current = { ...isRechargingRef.current, player: false };
+      setIsRecharging(prev => ({ ...prev, player: false }));
+      addLog(`${playerPokemon.name} must recharge!`);
+      setIsPlayerTurn(false);
+      setTimeout(enemyAttack, 1500);
+      return;
+    }
 
     // Check PP — prevent using a depleted move
     // Use closure value only for the early-return check (UI feedback)
@@ -3276,6 +3290,10 @@ const PokemonGame = () => {
           return;
         }
       }
+      if (moveName === 'Hyper Beam') {
+        isRechargingRef.current = { ...isRechargingRef.current, player: true };
+        setIsRecharging(prev => ({ ...prev, player: true }));
+      }
       setIsPlayerTurn(false);
       setTimeout(enemyAttack, effectiveness > 1 ? 1800 : 1200);
     }
@@ -3309,6 +3327,15 @@ const PokemonGame = () => {
         addLog(`${wildPokemon.name} woke up!`);
         // Continue to attack normally below
       }
+    }
+
+    // Check if enemy must recharge from Hyper Beam
+    if (isRechargingRef.current.enemy) {
+      isRechargingRef.current = { ...isRechargingRef.current, enemy: false };
+      setIsRecharging(prev => ({ ...prev, enemy: false }));
+      addLog(`${wildPokemon.name} must recharge!`);
+      setIsPlayerTurn(true);
+      return;
     }
 
     // Use functional setState to ensure we get the most current state
@@ -3464,6 +3491,10 @@ const PokemonGame = () => {
           setTimeout(() => setIsPlayerTurn(true), hitDelay);
           return { ...prevPlayerPokemon, hp: poisonHp };
         }
+        if (moveName === 'Hyper Beam') {
+          isRechargingRef.current = { ...isRechargingRef.current, enemy: true };
+          setIsRecharging(prev => ({ ...prev, enemy: true }));
+        }
         setTimeout(() => setIsPlayerTurn(true), hitDelay);
       }
 
@@ -3577,6 +3608,7 @@ const PokemonGame = () => {
       setPotionUsed(false);
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
+      setIsRecharging({ player: false, enemy: false });
       setIsPlayerTurn(true);
     }, 1200);
   };
@@ -3776,6 +3808,7 @@ const PokemonGame = () => {
     setPlayerPokemon(firstPlayer);
     setIsPoisoned({ player: false, enemy: false });
     setIsSleeping({ player: 0, enemy: 0 });
+    setIsRecharging({ player: false, enemy: false });
     setBattleLog([`${trainerName} wants to battle!`, `${trainerName} sent out ${firstOpponent.name}!`, `Go, ${firstPlayer.name}!`]);
     setIsPlayerTurn(true);
     setPotionUsed(false);
@@ -3821,6 +3854,7 @@ const PokemonGame = () => {
       ));
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
+      setIsRecharging({ player: false, enemy: false });
       if (triggerRocketEvent()) return;
     }
 
@@ -3842,6 +3876,7 @@ const PokemonGame = () => {
     // Reset status effects
     setIsPoisoned({ player: false, enemy: false });
     setIsSleeping({ player: 0, enemy: 0 });
+    setIsRecharging({ player: false, enemy: false });
 
     // Preserve live pp — closures here can be stale
     setPlayerPokemon(prev => ({ ...healedPokemon, pp: prev.pp || healedPokemon.pp, maxPp: prev.maxPp || healedPokemon.maxPp }));
@@ -4095,6 +4130,7 @@ const PokemonGame = () => {
     setShowBag(false);
     setIsPoisoned({ player: false, enemy: false });
     setIsSleeping({ player: 0, enemy: 0 });
+    setIsRecharging({ player: false, enemy: false });
   };
 
   const resetGame = () => {
@@ -4118,6 +4154,7 @@ const PokemonGame = () => {
     setCurrentBirdIndex(0);
     setIsPoisoned({ player: false, enemy: false });
     setIsSleeping({ player: 0, enemy: 0 });
+    setIsRecharging({ player: false, enemy: false });
     setRocketPhase('');
     setStolenPokemonIndex(-1);
     setIsRocketBattle(false);
@@ -5322,6 +5359,7 @@ const PokemonGame = () => {
       setShowBag(false);
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
+      setIsRecharging({ player: false, enemy: false });
       setGameState('battle');
     };
     return (
@@ -5374,6 +5412,7 @@ const PokemonGame = () => {
       setShowBag(false);
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
+      setIsRecharging({ player: false, enemy: false });
       setGameState('battle');
     };
     return (
@@ -5695,6 +5734,7 @@ const PokemonGame = () => {
       setAvailableTeam(prev => prev.map(p => p.uid === healed.uid ? { ...healed, pp: p.pp || healed.pp, maxPp: p.maxPp || healed.maxPp } : p));
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
+      setIsRecharging({ player: false, enemy: false });
       setGameState('bird-gauntlet-intro');
     };
 
