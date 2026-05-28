@@ -290,7 +290,7 @@ const ELITE_FOUR_POOL = [
     team: [
       { name: 'Dewgong',  type: 'Water', type2: 'Ice',  hp: 90,  maxHp: 90,  attack: 70,  spAtk: 70,  def: 65,  spDef: 95,  moves: ['Ice Beam','Surf','Rest','Body Slam'],           moveTypes: ['Ice','Water','Normal','Normal'] },
       { name: 'Cloyster', type: 'Water', type2: 'Ice',  hp: 50,  maxHp: 50,  attack: 95,  spAtk: 85,  def: 180, spDef: 45,  moves: ['Blizzard','Ice Beam','Clamp','Withdraw'],        moveTypes: ['Ice','Ice','Water','Water'] },
-      { name: 'Lapras',   type: 'Water', type2: 'Ice',  hp: 130, maxHp: 130, attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Thunder','Body Slam'],         moveTypes: ['Water','Ice','Electric','Normal'] },
+      { name: 'Lapras',   type: 'Water', type2: 'Ice',  hp: 130, maxHp: 130, attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Body Slam','Sing'],            moveTypes: ['Water','Ice','Normal','Normal'] },
     ]
   },
   {
@@ -333,8 +333,8 @@ const CHAMPION_POKEMON_POOL = [
   { name: 'Machamp',    type: 'Fighting',                   hp: 90,  maxHp: 90,  attack: 130, spAtk: 65,  def: 80,  spDef: 85,  moves: ['Cross Chop','Submission','Leer','Seismic Toss'],          moveTypes: ['Fighting','Fighting','Normal','Fighting'] },
   { name: 'Gengar',     type: 'Ghost',    type2: 'Poison',  hp: 60,  maxHp: 60,  attack: 65,  spAtk: 130, def: 60,  spDef: 75,  moves: ['Shadow Ball','Thunderbolt','Psychic','Toxic'],            moveTypes: ['Ghost','Electric','Psychic','Poison'] },
   { name: 'Gyarados',   type: 'Water',    type2: 'Flying',  hp: 95,  maxHp: 95,  attack: 125, spAtk: 60,  def: 79,  spDef: 100, moves: ['Hydro Pump','Bite','Thrash','Dragon Rage'],               moveTypes: ['Water','Dark','Normal','Dragon'] },
-  { name: 'Lapras',     type: 'Water',    type2: 'Ice',     hp: 130, maxHp: 130, attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Thunder','Psychic'],                    moveTypes: ['Water','Ice','Electric','Psychic'] },
-  { name: 'Snorlax',    type: 'Normal',                     hp: 160, maxHp: 160, attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Psychic','Earthquake','Hyper Beam'],          moveTypes: ['Normal','Psychic','Ground','Normal'] },
+  { name: 'Lapras',     type: 'Water',    type2: 'Ice',     hp: 130, maxHp: 130, attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Body Slam','Thunderbolt'],              moveTypes: ['Water','Ice','Normal','Electric'] },
+  { name: 'Snorlax',    type: 'Normal',                     hp: 160, maxHp: 160, attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Rest','Earthquake','Hyper Beam'],             moveTypes: ['Normal','Psychic','Ground','Normal'] },
   { name: 'Nidoking',   type: 'Poison',   type2: 'Ground',  hp: 81,  maxHp: 81,  attack: 102, spAtk: 85,  def: 77,  spDef: 75,  moves: ['Earthquake','Sludge Bomb','Rock Slide','Hyper Beam'],     moveTypes: ['Ground','Poison','Rock','Normal'] },
   { name: 'Starmie',    type: 'Water',    type2: 'Psychic', hp: 60,  maxHp: 60,  attack: 75,  spAtk: 100, def: 85,  spDef: 85,  moves: ['Surf','Psychic','Ice Beam','Thunderbolt'],                moveTypes: ['Water','Psychic','Ice','Electric'] },
   { name: 'Dragonite',  type: 'Dragon',   type2: 'Flying',  hp: 91,  maxHp: 91,  attack: 134, spAtk: 100, def: 95,  spDef: 100, moves: ['Hyper Beam','Fire Blast','Thunder','Surf'],               moveTypes: ['Normal','Fire','Electric','Water'] },
@@ -369,6 +369,9 @@ const PokemonGame = () => {
   const [isRecharging, setIsRecharging] = useState({ player: false, enemy: false }); // Hyper Beam recharge
   const isRechargingRef = useRef({ player: false, enemy: false });
   isRechargingRef.current = isRecharging;
+  const [isChargingSolarBeam, setIsChargingSolarBeam] = useState({ player: false, moveIndex: null, enemy: false, enemyMoveIndex: null });
+  const isChargingSolarBeamRef = useRef({ player: false, moveIndex: null, enemy: false, enemyMoveIndex: null });
+  isChargingSolarBeamRef.current = isChargingSolarBeam;
   const [selectedStarterIndex, setSelectedStarterIndex] = useState(0);
   const [selectedMoveIndex, setSelectedMoveIndex] = useState(0);
   const [selectedActionIndex, setSelectedActionIndex] = useState(0); // 0-3: moves, 4: potion, 5: catch, 6: switch
@@ -1045,8 +1048,8 @@ const PokemonGame = () => {
                   { name: 'Blastoise',  type: 'Water',   type2: null,     hp: 79, maxHp: 79, attack: 83,  spAtk: 85,  def: 100, spDef: 105, moves: ['Surf','Blizzard','Withdraw','Bite'],                    moveTypes: ['Water','Ice','Water','Dark'] },
                   { name: 'Venusaur',   type: 'Grass',   type2: 'Poison', hp: 80, maxHp: 80, attack: 82,  spAtk: 100, def: 83,  spDef: 100, moves: ['Solar Beam','Sleep Powder','Sludge Bomb','Synthesis'],   moveTypes: ['Grass','Grass','Poison','Grass'] },
                   { name: 'Gyarados',   type: 'Water',   type2: 'Flying', hp: 95, maxHp: 95, attack: 125, spAtk: 60,  def: 79,  spDef: 100, moves: ['Hydro Pump','Bite','Thrash','Dragon Rage'],               moveTypes: ['Water','Dark','Normal','Dragon'] },
-                  { name: 'Lapras',     type: 'Water',   type2: 'Ice',    hp: 130,maxHp: 130,attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Thunder','Psychic'],                    moveTypes: ['Water','Ice','Electric','Psychic'] },
-                  { name: 'Snorlax',    type: 'Normal',  type2: null,     hp: 160,maxHp: 160,attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Psychic','Earthquake','Hyper Beam'],          moveTypes: ['Normal','Psychic','Ground','Normal'] },
+                  { name: 'Lapras',     type: 'Water',   type2: 'Ice',    hp: 130,maxHp: 130,attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Body Slam','Thunderbolt'],              moveTypes: ['Water','Ice','Normal','Electric'] },
+                  { name: 'Snorlax',    type: 'Normal',  type2: null,     hp: 160,maxHp: 160,attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Rest','Earthquake','Hyper Beam'],             moveTypes: ['Normal','Psychic','Ground','Normal'] },
                 ];
                 const debugTeam = debugTeamBase.map((p, i) => {
                   const freshPP = getInitialPP(p.moves);
@@ -1413,6 +1416,16 @@ const PokemonGame = () => {
       </div>
     );
   };
+
+  // ── Solar Beam auto-fire: when player's turn comes back and they were charging, fire automatically ──
+  useEffect(() => {
+    if (isPlayerTurn && gameState === 'battle' && !isEvolving && isChargingSolarBeam.player) {
+      const mi = isChargingSolarBeam.moveIndex;
+      const t = setTimeout(() => playerAttack(mi), 700);
+      return () => clearTimeout(t);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlayerTurn]);
 
   // ── Badge sound — lives in parent so it doesn't double-fire on every re-render ──
   useEffect(() => {
@@ -2216,7 +2229,7 @@ const PokemonGame = () => {
     { name: 'Weedle', type: 'Bug', type2: 'Poison', hp: 40, maxHp: 40, attack: 35, spAtk: 20, def: 30, spDef: 20, color: '🐝', moves: ['Poison Sting', 'String Shot', 'Bug Bite'], moveTypes: ['Poison', 'Bug', 'Bug'] },
     { name: 'Pidgey', type: 'Normal', type2: 'Flying', hp: 40, maxHp: 40, attack: 45, spAtk: 35, def: 40, spDef: 35, color: '🐦', moves: ['Peck', 'Gust', 'Sand Attack', 'Wing Attack'], moveTypes: ['Flying', 'Flying', 'Ground', 'Flying'] },
     { name: 'Rattata', type: 'Normal', type2: null, hp: 30, maxHp: 30, attack: 56, spAtk: 25, def: 35, spDef: 35, color: '🐀', moves: ['Tackle', 'Quick Attack', 'Bite', 'Hyper Fang'], moveTypes: ['Normal', 'Normal', 'Dark', 'Normal'] },
-    { name: 'Snorlax', type: 'Normal', type2: null, hp: 160, maxHp: 160, attack: 110, spAtk: 65, def: 65, spDef: 110, color: '😴', moves: ['Body Slam', 'Psychic', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] },
+    { name: 'Snorlax', type: 'Normal', type2: null, hp: 160, maxHp: 160, attack: 110, spAtk: 65, def: 65, spDef: 110, color: '😴', moves: ['Body Slam', 'Rest', 'Crunch', 'Hyper Beam'], moveTypes: ['Normal', 'Psychic', 'Dark', 'Normal'] },
 
     // Common (attack 31-50) - Medium-high encounter rate
     { name: 'Clefairy', type: 'Normal', type2: null, hp: 70, maxHp: 70, attack: 45, spAtk: 60, def: 48, spDef: 65, color: '🌙', moves: ['Pound', 'Sing', 'Double Slap', 'Moonblast'], moveTypes: ['Normal', 'Normal', 'Normal', 'Normal'] },
@@ -2957,6 +2970,7 @@ const PokemonGame = () => {
     setIsPoisoned(prev => ({ ...prev, enemy: false }));
     setIsSleeping(prev => ({ ...prev, enemy: 0 }));
     setIsRecharging(prev => ({ ...prev, enemy: false }));
+    setIsChargingSolarBeam(prev => ({ ...prev, enemy: false, enemyMoveIndex: null }));
     addLog(`Teleported to a new area!`);
     addLog(`A wild ${wild.name} appeared!`);
     setIsPlayerTurn(true);
@@ -3046,28 +3060,35 @@ const PokemonGame = () => {
       return;
     }
 
+    // Solar Beam auto-fire flag: turn 2 doesn't consume PP again
+    const isSolarBeamAutoFire = playerPokemon.moves[moveIndex] === 'Solar Beam' && isChargingSolarBeamRef.current.player;
+
     // Check PP — prevent using a depleted move
     // Use closure value only for the early-return check (UI feedback)
-    const curPPCheck = playerPokemon.pp || getInitialPP(playerPokemon.moves);
-    if (curPPCheck[moveIndex] <= 0) {
-      addLog(`${playerPokemon.moves[moveIndex]} has no PP left!`);
-      return;
+    if (!isSolarBeamAutoFire) {
+      const curPPCheck = playerPokemon.pp || getInitialPP(playerPokemon.moves);
+      if (curPPCheck[moveIndex] <= 0) {
+        addLog(`${playerPokemon.moves[moveIndex]} has no PP left!`);
+        isPlayerTurnRef.current = true; // release lock so player can pick another move
+        setIsPlayerTurn(true);
+        return;
+      }
+      // Decrement PP inside functional updaters so we always read the LIVE state,
+      // never a stale closure snapshot — this is the fix for PP "auto-refill" bug.
+      setPlayerPokemon(prev => {
+        const livePP = prev.pp || getInitialPP(prev.moves || []);
+        const newPP  = [...livePP];
+        newPP[moveIndex] = Math.max(0, (newPP[moveIndex] ?? 0) - 1);
+        return { ...prev, pp: newPP };
+      });
+      setAvailableTeam(prev => prev.map(p => {
+        if (p.uid !== playerPokemon.uid) return p;
+        const livePP = p.pp || getInitialPP(p.moves || []);
+        const newPP  = [...livePP];
+        newPP[moveIndex] = Math.max(0, (newPP[moveIndex] ?? 0) - 1);
+        return { ...p, pp: newPP };
+      }));
     }
-    // Decrement PP inside functional updaters so we always read the LIVE state,
-    // never a stale closure snapshot — this is the fix for PP "auto-refill" bug.
-    setPlayerPokemon(prev => {
-      const livePP = prev.pp || getInitialPP(prev.moves || []);
-      const newPP  = [...livePP];
-      newPP[moveIndex] = Math.max(0, (newPP[moveIndex] ?? 0) - 1);
-      return { ...prev, pp: newPP };
-    });
-    setAvailableTeam(prev => prev.map(p => {
-      if (p.uid !== playerPokemon.uid) return p;
-      const livePP = p.pp || getInitialPP(p.moves || []);
-      const newPP  = [...livePP];
-      newPP[moveIndex] = Math.max(0, (newPP[moveIndex] ?? 0) - 1);
-      return { ...p, pp: newPP };
-    }));
 
     // Check if player is asleep
     if (isSleeping.player > 0) {
@@ -3085,6 +3106,23 @@ const PokemonGame = () => {
     }
 
     const moveName = playerPokemon.moves[moveIndex];
+
+    // ── Solar Beam two-turn logic ────────────────────────────────────────────
+    if (moveName === 'Solar Beam') {
+      if (!isChargingSolarBeamRef.current.player) {
+        // Turn 1: charge — PP was already decremented, just show message and hand off to enemy
+        isChargingSolarBeamRef.current = { ...isChargingSolarBeamRef.current, player: true, moveIndex };
+        setIsChargingSolarBeam(prev => ({ ...prev, player: true, moveIndex }));
+        addLog(`${playerPokemon.name} is charging its Solar Beam!`);
+        setIsPlayerTurn(false);
+        setTimeout(enemyAttack, 1500);
+        return;
+      }
+      // Turn 2: auto-fired — clear charging flag and fall through to damage calculation
+      isChargingSolarBeamRef.current = { ...isChargingSolarBeamRef.current, player: false, moveIndex: null };
+      setIsChargingSolarBeam(prev => ({ ...prev, player: false, moveIndex: null }));
+    }
+
     const result = calculateDamage(playerPokemon, wildPokemon, moveIndex);
 
     playSound('attack');
@@ -3357,12 +3395,32 @@ const PokemonGame = () => {
       return;
     }
 
+    // Determine enemy move — forced if finishing Solar Beam charge, otherwise random
+    const enemyMoveIndex = isChargingSolarBeamRef.current.enemy
+      ? isChargingSolarBeamRef.current.enemyMoveIndex
+      : Math.floor(Math.random() * wildPokemon.moves.length);
+    const enemyMoveName = wildPokemon.moves[enemyMoveIndex];
+
+    // Enemy Solar Beam turn 1: start charging, give player their turn
+    if (enemyMoveName === 'Solar Beam' && !isChargingSolarBeamRef.current.enemy) {
+      isChargingSolarBeamRef.current = { ...isChargingSolarBeamRef.current, enemy: true, enemyMoveIndex };
+      setIsChargingSolarBeam(prev => ({ ...prev, enemy: true, enemyMoveIndex }));
+      addLog(`${wildPokemon.name} is charging its Solar Beam!`);
+      setIsPlayerTurn(true);
+      return;
+    }
+    // Enemy Solar Beam turn 2: clear and fall through
+    if (isChargingSolarBeamRef.current.enemy) {
+      isChargingSolarBeamRef.current = { ...isChargingSolarBeamRef.current, enemy: false, enemyMoveIndex: null };
+      setIsChargingSolarBeam(prev => ({ ...prev, enemy: false, enemyMoveIndex: null }));
+    }
+
     // Use functional setState to ensure we get the most current state
     setPlayerPokemon(prevPlayerPokemon => {
       if (!wildPokemon || !prevPlayerPokemon) return prevPlayerPokemon;
 
-      const moveIndex = Math.floor(Math.random() * wildPokemon.moves.length);
-      const moveName = wildPokemon.moves[moveIndex];
+      const moveIndex = enemyMoveIndex;
+      const moveName = enemyMoveName;
 
       // Calculate damage using the CURRENT playerPokemon from state
       const result = calculateDamage(wildPokemon, prevPlayerPokemon, moveIndex, true);
@@ -3628,6 +3686,7 @@ const PokemonGame = () => {
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
       setIsRecharging({ player: false, enemy: false });
+      setIsChargingSolarBeam({ player: false, moveIndex: null, enemy: false, enemyMoveIndex: null });
       setIsPlayerTurn(true);
     }, 1200);
   };
@@ -3874,6 +3933,7 @@ const PokemonGame = () => {
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
       setIsRecharging({ player: false, enemy: false });
+      setIsChargingSolarBeam({ player: false, moveIndex: null, enemy: false, enemyMoveIndex: null });
       if (triggerRocketEvent()) return;
     }
 
@@ -5379,6 +5439,7 @@ const PokemonGame = () => {
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
       setIsRecharging({ player: false, enemy: false });
+      setIsChargingSolarBeam({ player: false, moveIndex: null, enemy: false, enemyMoveIndex: null });
       setGameState('battle');
     };
     return (
@@ -5432,6 +5493,7 @@ const PokemonGame = () => {
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
       setIsRecharging({ player: false, enemy: false });
+      setIsChargingSolarBeam({ player: false, moveIndex: null, enemy: false, enemyMoveIndex: null });
       setGameState('battle');
     };
     return (
@@ -5754,6 +5816,7 @@ const PokemonGame = () => {
       setIsPoisoned({ player: false, enemy: false });
       setIsSleeping({ player: 0, enemy: 0 });
       setIsRecharging({ player: false, enemy: false });
+      setIsChargingSolarBeam({ player: false, moveIndex: null, enemy: false, enemyMoveIndex: null });
       setGameState('bird-gauntlet-intro');
     };
 
@@ -6035,7 +6098,16 @@ const PokemonGame = () => {
                 </p>
                 {leagueSelectedTeam.map((p, i) => {
                   const item = leagueMartItems.find(it=>it.id===leaguePreMartItem);
-                  const canApply = item?.id === 'revive' ? p.hp <= 0 : item?.id === 'full-restore' ? p.hp < p.maxHp : true;
+                  const ppNums = p.pp || getInitialPP(p.moves || []);
+                  const ppMax  = p.maxPp || getInitialPP(p.moves || []);
+                  const ppFull = ppNums.every((v, i) => v >= ppMax[i]);
+                  const canApply = item?.id === 'revive'
+                    ? p.hp <= 0
+                    : item?.id === 'full-restore'
+                    ? p.hp < p.maxHp
+                    : item?.id === 'max-ether'
+                    ? !ppFull
+                    : true;
                   return (
                     <button key={p.uid || i} onClick={() => canApply && applyLeagueItem(item, p)} disabled={!canApply}
                       className="w-full border-2 border-black mb-1 flex items-center gap-2 p-2 hover:scale-[1.01] transition-all"
@@ -6044,7 +6116,28 @@ const PokemonGame = () => {
                       <div className="text-left flex-1">
                         <p className="retro-text font-bold" style={{fontSize:10,color:'#000'}}>{p.name}</p>
                         <p className="retro-text" style={{fontSize:8,color:'#6b7280'}}>HP {p.hp}/{p.maxHp}</p>
+                        {item?.id === 'max-ether' && (
+                          <div className="flex gap-1 flex-wrap mt-0.5">
+                            {(p.moves || []).map((mv, mi) => {
+                              const cur = ppNums[mi] ?? 0;
+                              const max = ppMax[mi] ?? 10;
+                              const low = cur < max;
+                              return (
+                                <span key={mi} className="retro-text" style={{
+                                  fontSize: 7,
+                                  color: low ? '#dc2626' : '#6b7280',
+                                  fontWeight: low ? 'bold' : 'normal',
+                                }}>
+                                  {mv.toUpperCase()} {cur}/{max}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
+                      {item?.id === 'max-ether' && ppFull && (
+                        <span className="retro-text" style={{fontSize:7,color:'#9ca3af'}}>FULL PP</span>
+                      )}
                     </button>
                   );
                 })}
