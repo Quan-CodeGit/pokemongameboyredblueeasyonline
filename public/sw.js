@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pokemon-game-v7';
+const CACHE_NAME = 'pokemon-game-v8';
 
 // Install: cache all game assets
 self.addEventListener('install', (event) => {
@@ -34,6 +34,8 @@ self.addEventListener('install', (event) => {
         '/bug-catcher.png',
         '/type-chart.png',
         '/rare-candy.png',
+        '/elite-4.png',
+        '/blue.png',
 
         // Eevee evolution stones
         '/stones/water-stone.webp',

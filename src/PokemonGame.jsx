@@ -5924,9 +5924,17 @@ const PokemonGame = () => {
         <SettingsModal />
         <div className={`gameboy-console ${getContainerClass()} w-full`}>
           <div className="gameboy-screen text-center p-4">
-            <div className="border-4 border-black p-4 mb-4" style={{backgroundColor:'#1e40af'}}>
+            <div className="border-4 border-black p-4 mb-3" style={{backgroundColor:'#1e40af'}}>
               <h2 className="text-2xl font-bold retro-text" style={{color:'#fbbf24'}}>POKEMON LEAGUE</h2>
               <p className="text-xs retro-text mt-1" style={{color:'#bfdbfe'}}>The ultimate challenge awaits!</p>
+            </div>
+            {/* Elite Four artwork */}
+            <div className="border-4 border-black mb-3 overflow-hidden" style={{backgroundColor:'#000'}}>
+              <img
+                src="/elite-4.png"
+                alt="Elite Four"
+                style={{ width: '100%', maxHeight: 140, objectFit: 'cover', objectPosition: 'top', imageRendering: 'pixelated', display: 'block' }}
+              />
             </div>
             <div className="border-4 border-black p-3 mb-3 text-left" style={{backgroundColor:'#fef3c7'}}>
               <p className="retro-text text-xs font-bold mb-2" style={{color:'#000'}}>RULES:</p>
@@ -6203,12 +6211,22 @@ const PokemonGame = () => {
               <h2 className="text-xl font-bold retro-text" style={{color:'#fbbf24'}}>{roundLabel} — VICTORY!</h2>
               <p className="text-xs retro-text mt-1" style={{color:'#bbf7d0'}}>You defeated {leagueTrainerName}!</p>
             </div>
-            <div className="border-4 border-black p-3 mb-4" style={{backgroundColor:'#fef3c7'}}>
+            {/* Blue's image — only shown before the champion battle */}
+            {nextRound === 3 && (
+              <div className="border-4 border-black mb-3 overflow-hidden" style={{backgroundColor:'#000'}}>
+                <img
+                  src="/blue.png"
+                  alt="Champion Blue"
+                  style={{ width: '100%', maxHeight: 150, objectFit: 'contain', imageRendering: 'pixelated', display: 'block' }}
+                />
+              </div>
+            )}
+            <div className="border-4 border-black p-3 mb-4" style={{backgroundColor: nextRound === 3 ? '#ede9fe' : '#fef3c7'}}>
               <p className="text-sm retro-text font-bold" style={{color:'#000'}}>
-                {nextRound === 3 ? 'The Champion awaits...' : 'On to the Semi Final!'}
+                {nextRound === 3 ? '⚔️ The Champion awaits...' : 'On to the Semi Final!'}
               </p>
-              <p className="text-xs retro-text mt-1" style={{color:'#6b7280'}}>
-                {nextRound === 3 ? '6v6 battle • Scaled ×1.5' : '3v3 battle • Scaled ×1.3'}
+              <p className="text-xs retro-text mt-1" style={{color: nextRound === 3 ? '#7c3aed' : '#6b7280', fontWeight: nextRound === 3 ? 'bold' : 'normal'}}>
+                {nextRound === 3 ? 'Champion Blue — 6v6 • Scaled ×1.5' : '3v3 battle • Scaled ×1.3'}
               </p>
             </div>
             <button
