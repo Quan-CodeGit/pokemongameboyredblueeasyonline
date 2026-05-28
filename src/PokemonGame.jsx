@@ -155,12 +155,15 @@ const MOVE_POWER = {
   'Stun Spore':null,'Spore':null,'Poison Powder':null,'Focus Energy':null,
   'Dragon Dance':null,'Teleport':null,'Transform':null,'Leech Seed':null,
   'Rest':null,'Softboiled':null,'Roost':null,'Self-Destruct':null,'Agility':null,
+  'Sleep Powder':null,'Synthesis':null,'Recover':null,'Toxic':null,
+  'Acid Armor':null,'Amnesia':null,'Glare':null,'Leer':null,
+  'Metronome':null,'Smokescreen':null,
   // FIRE
-  'Ember':40,'Flame Burst':70,'Flame Charge':50,'Flame Wheel':60,
+  'Ember':40,'Fire Spin':35,'Flame Burst':70,'Flame Charge':50,'Flame Wheel':60,
   'Fire Fang':65,'Fire Punch':75,'Flamethrower':90,'Fire Blast':110,'Blaze Kick':85,
   // WATER
   'Bubble':40,'Aqua Jet':40,'Water Gun':40,'Clamp':35,'Bubble Beam':65,
-  'Waterfall':80,'Aqua Tail':90,'Crabhammer':100,'Hydro Pump':110,
+  'Surf':90,'Waterfall':80,'Aqua Tail':90,'Crabhammer':100,'Hydro Pump':110,
   // ELECTRIC
   'Thunder Shock':40,'Thundershock':40,'Spark':65,'Thunder Punch':75,
   'Thunderbolt':90,'Thunder':110,
@@ -170,7 +173,7 @@ const MOVE_POWER = {
   // ICE
   'Icy Wind':55,'Aurora Beam':65,'Ice Punch':75,'Ice Beam':90,'Blizzard':110,
   // PSYCHIC
-  'Confusion':50,'Psybeam':65,'Psychic':90,
+  'Confusion':50,'Psybeam':65,'Psychic':90,'Dream Eater':100,
   // DRAGON
   'Twister':40,'Dragon Rage':40,'Dragon Claw':80,'Dragon Pulse':85,'Outrage':120,
   // DARK
@@ -179,11 +182,11 @@ const MOVE_POWER = {
   'Barrage':15,'Bind':15,'Double Slap':15,'Fury Attack':15,'Wrap':15,
   'Fury Swipes':18,'Sonic Boom':20,'Quick Attack':40,'Tackle':40,'Scratch':40,
   'Pound':40,'Pay Day':40,'Stomp':65,'Horn Attack':65,'Dizzy Punch':70,
-  'Headbutt':70,'Slash':70,'Vice Grip':55,'Swift':60,'Dazzling Gleam':80,
-  'Hyper Fang':80,'Mega Punch':80,'Slam':80,'Tri Attack':80,'Body Slam':85,
+  'Headbutt':70,'Slash':70,'Vice Grip':55,'Vise Grip':55,'Swift':60,'Dazzling Gleam':80,
+  'Extreme Speed':80,'Hyper Fang':80,'Mega Punch':80,'Slam':80,'Tri Attack':80,'Body Slam':85,
   'Moonblast':95,'Take Down':90,'Return':90,'Egg Bomb':100,'Skull Bash':100,
   'Mega Kick':120,'Thrash':120,'Hyper Beam':150,'Giga Impact':150,
-  'Explosion':250,'Struggle':50,'Guillotine':0,
+  'Explosion':250,'Struggle':50,'Guillotine':0,'Horn Drill':0,
   // FLYING (Physical)
   'Peck':35,'Gust':40,'Aerial Ace':60,'Wing Attack':60,'Air Slash':75,
   'Drill Peck':80,'Hurricane':110,'Sky Attack':140,
@@ -199,7 +202,8 @@ const MOVE_POWER = {
   'Rock Blast':25,'Rock Throw':50,'Ancient Power':60,'Rock Slide':75,'Stone Edge':100,
   // FIGHTING (Physical)
   'Double Kick':30,'Mach Punch':40,'Karate Chop':50,'Low Kick':50,'Aura Sphere':80,
-  'Cross Chop':100,'Dynamic Punch':100,'Seismic Toss':100,'Superpower':120,
+  'Rolling Kick':60,'Brick Break':75,'Submission':80,
+  'Cross Chop':100,'Dynamic Punch':100,'Jump Kick':100,'Seismic Toss':100,'Superpower':120,
   'High Jump Kick':130,
   // GHOST (Physical)
   'Lick':30,'Shadow Ball':80,'Night Shade':100,
@@ -214,12 +218,15 @@ const MOVE_ACCURACY = {
   'Spore':100,'Poison Powder':75,'Focus Energy':null,'Dragon Dance':null,
   'Teleport':null,'Transform':null,'Leech Seed':90,'Rest':null,'Softboiled':null,
   'Roost':null,'Self-Destruct':100,'Agility':null,
+  'Sleep Powder':75,'Synthesis':null,'Recover':null,'Toxic':90,
+  'Acid Armor':null,'Amnesia':null,'Glare':100,'Leer':100,
+  'Metronome':null,'Smokescreen':100,
   // FIRE
-  'Ember':100,'Flame Burst':100,'Flame Charge':100,'Flame Wheel':100,
+  'Ember':100,'Fire Spin':85,'Flame Burst':100,'Flame Charge':100,'Flame Wheel':100,
   'Fire Fang':95,'Fire Punch':100,'Flamethrower':100,'Fire Blast':85,'Blaze Kick':90,
   // WATER
   'Bubble':100,'Aqua Jet':100,'Water Gun':100,'Clamp':85,'Bubble Beam':100,
-  'Waterfall':100,'Aqua Tail':90,'Crabhammer':85,'Hydro Pump':80,
+  'Surf':100,'Waterfall':100,'Aqua Tail':90,'Crabhammer':85,'Hydro Pump':80,
   // ELECTRIC
   'Thunder Shock':100,'Thundershock':100,'Spark':100,'Thunder Punch':100,
   'Thunderbolt':100,'Thunder':70,
@@ -229,7 +236,7 @@ const MOVE_ACCURACY = {
   // ICE
   'Icy Wind':95,'Aurora Beam':100,'Ice Punch':100,'Ice Beam':100,'Blizzard':70,
   // PSYCHIC
-  'Confusion':100,'Psybeam':100,'Psychic':100,
+  'Confusion':100,'Psybeam':100,'Psychic':100,'Dream Eater':100,
   // DRAGON
   'Twister':100,'Dragon Rage':100,'Dragon Claw':100,'Dragon Pulse':100,'Outrage':100,
   // DARK
@@ -238,11 +245,11 @@ const MOVE_ACCURACY = {
   'Barrage':85,'Bind':85,'Double Slap':85,'Fury Attack':85,'Wrap':90,
   'Fury Swipes':80,'Sonic Boom':90,'Quick Attack':100,'Tackle':100,'Scratch':100,
   'Pound':100,'Pay Day':100,'Stomp':100,'Horn Attack':100,'Dizzy Punch':100,
-  'Headbutt':100,'Slash':100,'Vice Grip':100,'Swift':null,'Dazzling Gleam':100,
-  'Hyper Fang':90,'Mega Punch':85,'Slam':75,'Tri Attack':100,'Body Slam':100,
+  'Headbutt':100,'Slash':100,'Vice Grip':100,'Vise Grip':100,'Swift':null,'Dazzling Gleam':100,
+  'Extreme Speed':100,'Hyper Fang':90,'Mega Punch':85,'Slam':75,'Tri Attack':100,'Body Slam':100,
   'Moonblast':100,'Take Down':85,'Return':100,'Egg Bomb':75,'Skull Bash':100,
   'Mega Kick':75,'Thrash':100,'Hyper Beam':90,'Giga Impact':90,
-  'Explosion':100,'Struggle':100,'Guillotine':30,
+  'Explosion':100,'Struggle':100,'Guillotine':30,'Horn Drill':30,
   // FLYING
   'Peck':100,'Gust':100,'Aerial Ace':null,'Wing Attack':100,'Air Slash':95,
   'Drill Peck':100,'Hurricane':70,'Sky Attack':90,
@@ -258,6 +265,7 @@ const MOVE_ACCURACY = {
   'Rock Blast':90,'Rock Throw':90,'Ancient Power':100,'Rock Slide':90,'Stone Edge':80,
   // FIGHTING
   'Double Kick':100,'Mach Punch':100,'Karate Chop':100,'Low Kick':100,
+  'Rolling Kick':85,'Brick Break':100,'Submission':80,'Jump Kick':95,
   'Aura Sphere':null,'Cross Chop':80,'Dynamic Punch':50,'Seismic Toss':100,
   'Superpower':100,'High Jump Kick':90,
   // GHOST
@@ -2696,6 +2704,17 @@ const PokemonGame = () => {
     'Roost': { effect: 'heal_half', message: ' roosted and restored HP!' },
     'Self-Destruct': { effect: 'self_destruct', message: '' },
     'Agility': { effect: 'raise_attack', message: "'s speed sharply rose!" },
+    // Additional status moves
+    'Sleep Powder': { effect: 'sleep', message: ' fell asleep!' },
+    'Synthesis': { effect: 'heal_half', message: ' absorbed sunlight and restored HP!' },
+    'Recover': { effect: 'heal_half', message: ' recovered HP!' },
+    'Toxic': { effect: 'poison', message: ' was badly poisoned!' },
+    'Acid Armor': { effect: 'raise_defense', message: "'s defense sharply rose!" },
+    'Amnesia': { effect: 'raise_defense', message: ' blanked its mind and raised its defenses!' },
+    'Glare': { effect: 'nothing', message: ' was paralyzed with fear!' },
+    'Leer': { effect: 'lower_attack', message: "'s guard dropped!" },
+    'Metronome': { effect: 'nothing', message: ' used Metronome! But nothing happened!' },
+    'Smokescreen': { effect: 'nothing', message: "'s accuracy fell!" },
   };
 
   // Helper: get display info for a move (category, power string, accuracy string, type color)
