@@ -5928,25 +5928,28 @@ const PokemonGame = () => {
               <h2 className="text-2xl font-bold retro-text" style={{color:'#fbbf24'}}>POKEMON LEAGUE</h2>
               <p className="text-xs retro-text mt-1" style={{color:'#bfdbfe'}}>The ultimate challenge awaits!</p>
             </div>
-            {/* Elite Four artwork */}
-            <div className="border-4 border-black mb-3 overflow-hidden" style={{backgroundColor:'#000'}}>
-              <img
-                src="/elite-4.png"
-                alt="Elite Four"
-                style={{ width: '100%', maxHeight: 140, objectFit: 'cover', objectPosition: 'top', imageRendering: 'pixelated', display: 'block' }}
-              />
-            </div>
-            <div className="border-4 border-black p-3 mb-3 text-left" style={{backgroundColor:'#fef3c7'}}>
-              <p className="retro-text text-xs font-bold mb-2" style={{color:'#000'}}>RULES:</p>
-              <p className="retro-text" style={{fontSize:9,color:'#374151',lineHeight:1.8}}>
-                Quarter Final &amp; Semi Final: 3v3<br/>
-                Final: 6v6<br/>
-                No Legendaries (Mewtwo, Mew, Birds)<br/>
-                Choose your team before each battle<br/>
-                Opponent team is unknown<br/>
-                Shop available before each battle<br/>
-                Lose = restart from this screen
-              </p>
+            {/* Rules + Elite Four side by side */}
+            <div className="border-4 border-black mb-3 flex overflow-hidden" style={{backgroundColor:'#fef3c7'}}>
+              <div className="flex-1 p-3 text-left">
+                <p className="retro-text text-xs font-bold mb-2" style={{color:'#000'}}>RULES:</p>
+                <p className="retro-text" style={{fontSize:9,color:'#374151',lineHeight:1.9}}>
+                  Quarter Final &amp; Semi Final: 3v3<br/>
+                  Final: 6v6<br/>
+                  No Legendaries<br/>
+                  (Mewtwo, Mew, Birds)<br/>
+                  Choose team each round<br/>
+                  Opponent team unknown<br/>
+                  Shop before each battle<br/>
+                  Lose = restart
+                </p>
+              </div>
+              <div className="border-l-4 border-black overflow-hidden flex-shrink-0" style={{width: 130, backgroundColor:'#fff'}}>
+                <img
+                  src="/elite-4.png"
+                  alt="Elite Four"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', imageRendering: 'pixelated', display: 'block' }}
+                />
+              </div>
             </div>
             <div className="grid grid-cols-3 gap-2 mb-4 text-center">
               {['Quarter Final','Semi Final','FINAL'].map((r,i) => (
@@ -6213,7 +6216,7 @@ const PokemonGame = () => {
             </div>
             {/* Blue's image — only shown before the champion battle */}
             {nextRound === 3 && (
-              <div className="border-4 border-black mb-3 overflow-hidden" style={{backgroundColor:'#000'}}>
+              <div className="border-4 border-black mb-3 overflow-hidden" style={{backgroundColor:'#fff'}}>
                 <img
                   src="/blue.png"
                   alt="Champion Blue"
