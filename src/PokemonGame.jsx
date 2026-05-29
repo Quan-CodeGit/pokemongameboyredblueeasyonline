@@ -369,8 +369,8 @@ const PokemonGame = () => {
   const [isRecharging, setIsRecharging] = useState({ player: false, enemy: false }); // Hyper Beam recharge
   const isRechargingRef = useRef({ player: false, enemy: false });
   isRechargingRef.current = isRecharging;
-  const [isChargingSolarBeam, setIsChargingSolarBeam] = useState({ player: false, moveIndex: null, enemy: false, enemyMoveIndex: null });
-  const isChargingSolarBeamRef = useRef({ player: false, moveIndex: null, enemy: false, enemyMoveIndex: null });
+  const [isChargingSolarBeam, setIsChargingSolarBeam] = useState({ player: false, moveIndex: null, playerUid: null, enemy: false, enemyMoveIndex: null });
+  const isChargingSolarBeamRef = useRef({ player: false, moveIndex: null, playerUid: null, enemy: false, enemyMoveIndex: null });
   isChargingSolarBeamRef.current = isChargingSolarBeam;
   const [selectedStarterIndex, setSelectedStarterIndex] = useState(0);
   const [selectedMoveIndex, setSelectedMoveIndex] = useState(0);
@@ -555,6 +555,21 @@ const PokemonGame = () => {
   useEffect(() => {
     if (pokedex.length >= 10) awardBadge('master');
   }, [pokedex.length, awardBadge]);
+
+  // Clear Solar Beam charge (and recharge) whenever the active Pokémon changes.
+  // This catches ALL switch paths — manual switch, forced switch after faint, league switch —
+  // so a charged Solar Beam from Pokémon A can never bleed onto Pokémon B.
+  useEffect(() => {
+    if (!playerPokemon?.uid) return;
+    if (isChargingSolarBeamRef.current.player && isChargingSolarBeamRef.current.playerUid !== playerPokemon.uid) {
+      isChargingSolarBeamRef.current = { ...isChargingSolarBeamRef.current, player: false, moveIndex: null, playerUid: null };
+      setIsChargingSolarBeam(prev => ({ ...prev, player: false, moveIndex: null, playerUid: null }));
+    }
+    if (isRechargingRef.current.player) {
+      isRechargingRef.current = { ...isRechargingRef.current, player: false };
+      setIsRecharging(prev => ({ ...prev, player: false }));
+    }
+  }, [playerPokemon?.uid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Bird goes first: fire enemyAttack on the render after wildPokemon is set
   useEffect(() => {
@@ -2781,7 +2796,7 @@ const PokemonGame = () => {
         playSound('victory');
         setBattlesWon(prev => prev + 1);
         setPlayerMoney(prev => prev + getMoneyReward(pokemon));
-        setGameState('victory'); // prevent "undefined wants to evolve" glitch
+        setGameState(prev => prev === 'battle' ? 'victory' : prev); // prevent "undefined wants to evolve" glitch
 
         if (eeveeResolveRef.current) {
           eeveeResolveRef.current(evolvedPokemon);
@@ -3051,7 +3066,7 @@ const PokemonGame = () => {
     }
 
     // Solar Beam auto-fire flag: turn 2 doesn't consume PP again
-    const isSolarBeamAutoFire = playerPokemon.moves[moveIndex] === 'Solar Beam' && isChargingSolarBeamRef.current.player;
+    const isSolarBeamAutoFire = playerPokemon.moves[moveIndex] === 'Solar Beam' && isChargingSolarBeamRef.current.player && isChargingSolarBeamRef.current.playerUid === playerPokemon.uid;
 
     // Check PP — prevent using a depleted move
     // Use closure value only for the early-return check (UI feedback)
@@ -3099,18 +3114,18 @@ const PokemonGame = () => {
 
     // ── Solar Beam two-turn logic ────────────────────────────────────────────
     if (moveName === 'Solar Beam') {
-      if (!isChargingSolarBeamRef.current.player) {
+      if (!isChargingSolarBeamRef.current.player || isChargingSolarBeamRef.current.playerUid !== playerPokemon.uid) {
         // Turn 1: charge — PP was already decremented, just show message and hand off to enemy
-        isChargingSolarBeamRef.current = { ...isChargingSolarBeamRef.current, player: true, moveIndex };
-        setIsChargingSolarBeam(prev => ({ ...prev, player: true, moveIndex }));
+        isChargingSolarBeamRef.current = { ...isChargingSolarBeamRef.current, player: true, moveIndex, playerUid: playerPokemon.uid };
+        setIsChargingSolarBeam(prev => ({ ...prev, player: true, moveIndex, playerUid: playerPokemon.uid }));
         addLog(`${playerPokemon.name} is charging its Solar Beam!`);
         setIsPlayerTurn(false);
         setTimeout(enemyAttack, 1500);
         return;
       }
       // Turn 2: auto-fired — clear charging flag and fall through to damage calculation
-      isChargingSolarBeamRef.current = { ...isChargingSolarBeamRef.current, player: false, moveIndex: null };
-      setIsChargingSolarBeam(prev => ({ ...prev, player: false, moveIndex: null }));
+      isChargingSolarBeamRef.current = { ...isChargingSolarBeamRef.current, player: false, moveIndex: null, playerUid: null };
+      setIsChargingSolarBeam(prev => ({ ...prev, player: false, moveIndex: null, playerUid: null }));
     }
 
     const result = calculateDamage(playerPokemon, wildPokemon, moveIndex);
@@ -3310,7 +3325,7 @@ const PokemonGame = () => {
                 return next;
               });
             } else {
-              setTimeout(() => setGameState('victory'), 1500);
+              setTimeout(() => setGameState(prev => prev === 'battle' ? 'victory' : prev), 1500);
             }
           }, 1200);
         }, 300);
@@ -3332,7 +3347,7 @@ const PokemonGame = () => {
               setBattlesWon(prev => prev + 1);
               setPlayerMoney(prev => prev + getMoneyReward(wildPokemon));
             }
-            setTimeout(() => setGameState('victory'), 1500);
+            setTimeout(() => setGameState(prev => prev === 'battle' ? 'victory' : prev), 1500);
           }, 500);
           return;
         }
@@ -3364,7 +3379,7 @@ const PokemonGame = () => {
           setWildPokemon(prev => ({ ...prev, hp: Math.max(0, prev.hp - 10) }));
           addLog(`${wildPokemon.name} took ${poisonDmg} poison damage!`);
           if (wildPokemon.hp - 10 <= 0) {
-            setTimeout(() => setGameState('victory'), 1000);
+            setTimeout(() => setGameState(prev => prev === 'battle' ? 'victory' : prev), 1000);
             return;
           }
         }
@@ -3430,7 +3445,7 @@ const PokemonGame = () => {
           setAvailableTeam(prev => prev.map(p =>
             p.uid === prevPlayerPokemon.uid ? { ...p, hp: newHp } : p
           ));
-          setTimeout(() => setGameState('victory'), 1500);
+          setTimeout(() => setGameState(prev => prev === 'battle' ? 'victory' : prev), 1500);
           return { ...prevPlayerPokemon, hp: newHp };
         }
 
@@ -3796,6 +3811,13 @@ const PokemonGame = () => {
           : p
       ));
     }
+
+    // Clear player Solar Beam charge on switch — a different Pokémon shouldn't inherit it
+    isChargingSolarBeamRef.current = { ...isChargingSolarBeamRef.current, player: false, moveIndex: null, playerUid: null };
+    setIsChargingSolarBeam(prev => ({ ...prev, player: false, moveIndex: null, playerUid: null }));
+    // Clear player recharge state on switch too
+    isRechargingRef.current = { ...isRechargingRef.current, player: false };
+    setIsRecharging(prev => ({ ...prev, player: false }));
 
     setPlayerPokemon(switchedPokemon);
     playSound('sendout');
@@ -4639,8 +4661,8 @@ const PokemonGame = () => {
             </div>
 
             <div className="space-y-2">
-              {/* Solar Beam charging banner */}
-              {isChargingSolarBeam.player && (
+              {/* Solar Beam charging banner — only show if THIS pokemon is the one that charged */}
+              {isChargingSolarBeam.player && isChargingSolarBeam.playerUid === playerPokemon.uid && (
                 <div className="flex items-center justify-center mb-1 px-1 border-2 border-yellow-400 animate-pulse"
                   style={{ backgroundColor: '#fef9c3', padding: '4px 6px' }}>
                   <span className="retro-text font-bold" style={{ fontSize: 9, color: '#92400e' }}>
@@ -4671,7 +4693,8 @@ const PokemonGame = () => {
                   const isEtherMode = etherTargetPending;
                   const ppFull  = curPP >= maxPP;
                   // Solar Beam charging: only the charging move is clickable, all others locked
-                  const isSolarCharging = isChargingSolarBeam.player;
+                  // Only applies if the CURRENT pokemon is the one that charged (UID check)
+                  const isSolarCharging = isChargingSolarBeam.player && isChargingSolarBeam.playerUid === playerPokemon.uid;
                   const isSolarFireSlot = isSolarCharging && isChargingSolarBeam.moveIndex === index;
                   const isSolarLockedSlot = isSolarCharging && !isSolarFireSlot;
                   const btnDisabled = isEtherMode
