@@ -421,7 +421,23 @@ const PokemonGame = () => {
     earnedBadgeSetRef.current.add(id);
     setEarnedBadges(prev => [...prev, id]);
     setBadgePopupQueue(prev => [...prev, id]);
-  }, []);
+
+    // Auto-start league when ALL 6 badges are collected, regardless of order.
+    // Use a delay so the badge popup can show first. Guard against being in
+    // battle or already in the league (use refs to avoid stale closures).
+    const allSix = ['catcher','explorer','evolution','legend','master','birdkeeper'];
+    const nowHaveAll = allSix.every(b => earnedBadgeSetRef.current.has(b));
+    if (nowHaveAll && !leagueActiveRef.current) {
+      const gs = gameStateRef.current;
+      // Only auto-start from non-battle screens (victory, overworld, etc.)
+      if (gs !== 'battle' && gs !== 'league-intro' && !gs.startsWith('league-')) {
+        setTimeout(() => {
+          // Re-check with latest ref values in case something changed during the delay
+          if (!leagueActiveRef.current) startLeague();
+        }, 2000); // give badge popup time to display
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [rocketPhase, setRocketPhase] = useState(''); // '', 'video', 'intro', 'walking', 'grabbing', 'leaving', 'done'
   const [stolenPokemonIndex, setStolenPokemonIndex] = useState(-1);
@@ -1057,31 +1073,40 @@ const PokemonGame = () => {
                 setEarnedBadges(allBadgeIds);
                 // Give the player $3000
                 setPlayerMoney(3000);
-                // Build a debug team of 6 strong Pokémon
-                const debugTeamBase = [
-                  { name: 'Charizard',  type: 'Fire',    type2: 'Flying', hp: 78, maxHp: 78, attack: 84,  spAtk: 109, def: 78,  spDef: 85,  moves: ['Flamethrower','Wing Attack','Slash','Dragon Rage'],    moveTypes: ['Fire','Flying','Normal','Dragon'] },
-                  { name: 'Blastoise',  type: 'Water',   type2: null,     hp: 79, maxHp: 79, attack: 83,  spAtk: 85,  def: 100, spDef: 105, moves: ['Surf','Blizzard','Withdraw','Bite'],                    moveTypes: ['Water','Ice','Water','Dark'] },
-                  { name: 'Venusaur',   type: 'Grass',   type2: 'Poison', hp: 80, maxHp: 80, attack: 82,  spAtk: 100, def: 83,  spDef: 100, moves: ['Solar Beam','Sleep Powder','Sludge Bomb','Synthesis'],   moveTypes: ['Grass','Grass','Poison','Grass'] },
-                  { name: 'Gyarados',   type: 'Water',   type2: 'Flying', hp: 95, maxHp: 95, attack: 125, spAtk: 60,  def: 79,  spDef: 100, moves: ['Hydro Pump','Bite','Thrash','Dragon Rage'],               moveTypes: ['Water','Dark','Normal','Dragon'] },
-                  { name: 'Lapras',     type: 'Water',   type2: 'Ice',    hp: 130,maxHp: 130,attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Body Slam','Thunderbolt'],              moveTypes: ['Water','Ice','Normal','Electric'] },
-                  { name: 'Snorlax',    type: 'Normal',  type2: null,     hp: 160,maxHp: 160,attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Rest','Earthquake','Hyper Beam'],             moveTypes: ['Normal','Psychic','Ground','Normal'] },
-                ];
-                const debugTeam = debugTeamBase.map((p, i) => {
-                  const freshPP = getInitialPP(p.moves);
-                  return { ...p, uid: `debug-${i}-${Date.now()}`, pp: freshPP, maxPp: freshPP, exp: 0, defeatedMewtwo: true };
-                });
-                setAvailableTeam(debugTeam);
-                setPokedex(prev => {
-                  const existing = new Set(prev.map(p => p.name));
-                  const toAdd = debugTeam.filter(p => !existing.has(p.name));
-                  return [...prev, ...toAdd];
-                });
                 // Mark gauntlet flags
                 hasCompletedGauntlet.current = true;
                 hasDefeatedMewtwo.current = true;
-                setMenuOpen(false);
-                // Small delay so state updates flush before league starts
-                setTimeout(() => startLeague(), 50);
+
+                // If the player already has 6 Pokémon in their team, use THEIR team.
+                // Otherwise, fill in a full debug team of 6 strong Pokémon.
+                const currentTeam = availableTeam.filter(p => p.hp > 0 || p.maxHp > 0);
+                if (currentTeam.length >= 6) {
+                  // Player has enough — just go straight to league with their own team
+                  setMenuOpen(false);
+                  setTimeout(() => startLeague(), 50);
+                } else {
+                  // Not enough Pokémon — build a debug team of 6
+                  const debugTeamBase = [
+                    { name: 'Charizard',  type: 'Fire',    type2: 'Flying', hp: 78, maxHp: 78, attack: 84,  spAtk: 109, def: 78,  spDef: 85,  moves: ['Flamethrower','Wing Attack','Slash','Dragon Rage'],    moveTypes: ['Fire','Flying','Normal','Dragon'] },
+                    { name: 'Blastoise',  type: 'Water',   type2: null,     hp: 79, maxHp: 79, attack: 83,  spAtk: 85,  def: 100, spDef: 105, moves: ['Surf','Blizzard','Withdraw','Bite'],                    moveTypes: ['Water','Ice','Water','Dark'] },
+                    { name: 'Venusaur',   type: 'Grass',   type2: 'Poison', hp: 80, maxHp: 80, attack: 82,  spAtk: 100, def: 83,  spDef: 100, moves: ['Solar Beam','Sleep Powder','Sludge Bomb','Synthesis'],   moveTypes: ['Grass','Grass','Poison','Grass'] },
+                    { name: 'Gyarados',   type: 'Water',   type2: 'Flying', hp: 95, maxHp: 95, attack: 125, spAtk: 60,  def: 79,  spDef: 100, moves: ['Hydro Pump','Bite','Thrash','Dragon Rage'],               moveTypes: ['Water','Dark','Normal','Dragon'] },
+                    { name: 'Lapras',     type: 'Water',   type2: 'Ice',    hp: 130,maxHp: 130,attack: 85,  spAtk: 85,  def: 80,  spDef: 95,  moves: ['Surf','Ice Beam','Body Slam','Thunderbolt'],              moveTypes: ['Water','Ice','Normal','Electric'] },
+                    { name: 'Snorlax',    type: 'Normal',  type2: null,     hp: 160,maxHp: 160,attack: 110, spAtk: 65,  def: 65,  spDef: 110, moves: ['Body Slam','Rest','Earthquake','Hyper Beam'],             moveTypes: ['Normal','Psychic','Ground','Normal'] },
+                  ];
+                  const debugTeam = debugTeamBase.map((p, i) => {
+                    const freshPP = getInitialPP(p.moves);
+                    return { ...p, uid: `debug-${i}-${Date.now()}`, pp: freshPP, maxPp: freshPP, exp: 0, defeatedMewtwo: true };
+                  });
+                  setAvailableTeam(debugTeam);
+                  setPokedex(prev => {
+                    const existing = new Set(prev.map(p => p.name));
+                    const toAdd = debugTeam.filter(p => !existing.has(p.name));
+                    return [...prev, ...toAdd];
+                  });
+                  setMenuOpen(false);
+                  setTimeout(() => startLeague(), 50);
+                }
               }}
               className={`border-4 px-4 py-2 font-bold text-xs transition-all hover:scale-105 retro-text ${
                 quickMenuFocused && quickMenuIndex === 6 ? 'border-yellow-400 ring-4 ring-yellow-400 scale-110' : 'border-black'
