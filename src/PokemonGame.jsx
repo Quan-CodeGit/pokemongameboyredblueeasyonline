@@ -2621,9 +2621,19 @@ const PokemonGame = () => {
       if (lowerName === 'eevee') {
         setIsEvolving(false);
         return new Promise((resolve) => {
-          // Resolve with _eeveeHandled flag so the caller skips the normal victory flow
+          // Resolve with _eeveeHandled flag so the caller skips the normal victory flow.
+          // Also snapshot league context so confirmEeveeEvolution can route correctly.
           eeveeResolveRef.current = (p) => resolve({ ...p, _eeveeHandled: true });
-          setEeveeEvolveData({ pokemon: baseForEvolution, newExp });
+          setEeveeEvolveData({
+            pokemon: baseForEvolution,
+            newExp,
+            // League context — captured NOW before gameState changes
+            isLeague: leagueActiveRef.current,
+            leagueOpponentIdx: leagueOpponentIdxRef.current,
+            leagueOpponentTeam: [...leagueOpponentTeamRef.current],
+            leagueRound: leagueRoundRef.current,
+            leagueTrainerName: leagueTrainerNameRef.current,
+          });
           setEeveeSelectedStone(null);
           setEeveeEvolving(false);
           setGameState('eevee-evolution');
@@ -2787,7 +2797,7 @@ const PokemonGame = () => {
 
   const confirmEeveeEvolution = (stone) => {
     if (!eeveeEvolveData) return;
-    const { pokemon, newExp } = eeveeEvolveData;
+    const { pokemon, newExp, isLeague, leagueOpponentIdx, leagueOpponentTeam, leagueRound, leagueTrainerName: leagueTrainerSnap } = eeveeEvolveData;
     const chosen = EEVEELUTIONS[stone];
 
     setEeveeEvolving(true);
@@ -2813,15 +2823,37 @@ const PokemonGame = () => {
       setEeveeEvolving(false);
       setEeveeEvolved(true); // Show success screen
 
-      // After success screen → count the win, add money, go to victory
+      // After success screen → route to the right next state
       setTimeout(() => {
         setEeveeEvolveData(null);
         setEeveeSelectedStone(null);
         setEeveeEvolved(false);
-        playSound('victory');
-        setBattlesWon(prev => prev + 1);
-        setPlayerMoney(prev => prev + getMoneyReward(pokemon));
-        setGameState(prev => prev === 'battle' ? 'victory' : prev); // prevent "undefined wants to evolve" glitch
+
+        if (isLeague) {
+          // League battle: advance to next opponent Pokémon or show round-win/champion screen
+          const nextIdx = leagueOpponentIdx + 1;
+          if (leagueOpponentTeam && nextIdx < leagueOpponentTeam.length) {
+            const nextOpponent = leagueOpponentTeam[nextIdx];
+            setWildPokemon(nextOpponent);
+            setLeagueOpponentPokemonIdx(nextIdx);
+            addLog(`${leagueTrainerSnap} sent out ${nextOpponent.name}!`);
+            setIsPlayerTurn(true);
+            setGameState('battle');
+          } else {
+            playSound('victory');
+            if (leagueRound < 3) {
+              setGameState('league-round-win');
+            } else {
+              setGameState('league-champion');
+            }
+          }
+        } else {
+          // Normal wild battle victory
+          playSound('victory');
+          setBattlesWon(prev => prev + 1);
+          setPlayerMoney(prev => prev + getMoneyReward(pokemon));
+          setGameState('victory');
+        }
 
         if (eeveeResolveRef.current) {
           eeveeResolveRef.current(evolvedPokemon);
