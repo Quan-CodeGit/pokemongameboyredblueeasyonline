@@ -4253,7 +4253,7 @@ const PokemonGame = () => {
     setPvpWinner(null);
     setPvpShowdownEvents([]);
     setPvpShowdownStep(0);
-    setPvpCoverTarget('p1-plan');
+    setPvpCoverTarget('p1-next-round');
     setGameState('pvp-cover');
   };
 
@@ -4908,13 +4908,15 @@ const PokemonGame = () => {
                 ? 'Player 1 chose their starter. Pass device to Player 2!'
                 : pvpCoverTarget === 'p1-plan'
                 ? 'Player 2 chose their starter. Pass device back to Player 1!'
+                : pvpCoverTarget === 'p1-next-round'
+                ? 'Round over! Pass device to Player 1 to plan the next round.'
                 : pvpCoverTarget === 'p2-plan'
                 ? 'Player 1 finished planning. Pass device to Player 2!'
                 : 'Both players planned. Ready for the showdown?'}
             </p>
             <button onClick={() => {
               if (pvpCoverTarget === 'p2-starter') { setGameState('pvp-pick-starter-p2'); }
-              else if (pvpCoverTarget === 'p1-plan') {
+              else if (pvpCoverTarget === 'p1-plan' || pvpCoverTarget === 'p1-next-round') {
                 setPvpPlan({ player: 1, slots: [], currentPokemonIdx: pvpP1.activeIndex, movesUsedByPokemon: { 0: [], 1: [], 2: [] }, subState: null });
                 setPvpCoverTarget('p2-plan');
                 setGameState('pvp-planning-p1');
@@ -4925,7 +4927,7 @@ const PokemonGame = () => {
               className="border-4 border-black px-6 py-3 font-bold retro-text"
               style={{fontSize:'12px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
               {pvpCoverTarget === 'p2-starter' ? '▶ PLAYER 2 PICK'
-                : pvpCoverTarget === 'p1-plan' ? '▶ PLAYER 1 PLAN'
+                : (pvpCoverTarget === 'p1-plan' || pvpCoverTarget === 'p1-next-round') ? '▶ PLAYER 1 PLAN'
                 : pvpCoverTarget === 'p2-plan' ? '▶ PLAYER 2 PLAN'
                 : '⚔️ BEGIN SHOWDOWN'}
             </button>
