@@ -362,7 +362,8 @@ const PVP_TIER_RARE     = ['Charizard','Blastoise','Venusaur','Arcanine','Alakaz
 const PVP_TIER_UNCOMMON = ['Growlithe','Machop','Mankey','Ponyta','Rhyhorn','Dragonair','Sandshrew','Bellsprout','Doduo','Grimer','Weepinbell','Kabuto','Farfetchd','Tangela','Cubone','Drowzee','Spearow','Psyduck','Pikachu','Ekans','Dratini','Koffing','Voltorb'];
 const PVP_TIER_COMMON   = ['Pidgey','Clefairy','Jigglypuff','Seel','NidoranF','Gastly','Vulpix','Meowth','Zubat','Oddish','Poliwag','Venonat','Krabby','Horsea','Goldeen','Staryu','Slowpoke','Shellder','Geodude','Omanyte'];
 const PVP_ITEMS_LIST    = ['potion','rarecandy','ether','repel'];
-const PVP_ITEM_LABEL    = { potion:'🧪 Potion (+30 HP)', rarecandy:'🍬 Rare Candy (+10% stats)', ether:'✨ Ether (restore a move PP)', repel:'🚫 Repel (force enemy switch)' };
+const PVP_ITEM_LABEL    = { potion:'Potion (+30 HP)', rarecandy:'Rare Candy (+10% stats)', ether:'Ether (restore PP)', repel:'Repel (force switch)' };
+const PVP_ITEM_SPRITE   = { potion:'/potion.png', rarecandy:'/rare-candy.png', ether:'/ether.png', repel:'/repel.png' };
 
 const PokemonGame = () => {
   const [gameState, setGameState] = useState('intro');
@@ -4858,10 +4859,12 @@ const PokemonGame = () => {
                     </div>
                   ))}
                 </div>
-                <div className="text-right border-l-2 border-black pl-2">
-                  <div style={{fontSize:'8px',color:'#374151',fontWeight:'bold'}}>ITEM:</div>
-                  <div style={{fontSize:'7px',color:'#000'}}>{PVP_ITEM_LABEL[curPlayer.item]?.split(' ').slice(0,2).join(' ')||curPlayer.item}</div>
-                  {curPlayer.itemUsed && <div style={{fontSize:'7px',color:'#dc2626',fontWeight:'bold'}}>USED ✗</div>}
+                <div className="text-center border-l-2 border-black pl-2" style={{opacity: curPlayer.itemUsed ? 0.4 : 1}}>
+                  <img src={PVP_ITEM_SPRITE[curPlayer.item]} alt={curPlayer.item}
+                    style={{width:'32px',height:'32px',imageRendering:'pixelated',margin:'0 auto',display:'block',
+                      filter: curPlayer.itemUsed ? 'grayscale(1)' : 'none'}} />
+                  <div style={{fontSize:'7px',color:'#374151',marginTop:'2px'}}>{PVP_ITEM_LABEL[curPlayer.item]?.split('(')[0].trim()}</div>
+                  {curPlayer.itemUsed && <div style={{fontSize:'7px',color:'#dc2626',fontWeight:'bold'}}>USED</div>}
                   {itemAlreadyPlanned && !curPlayer.itemUsed && <div style={{fontSize:'7px',color:'#d97706'}}>QUEUED</div>}
                 </div>
               </div>
@@ -4912,8 +4915,11 @@ const PokemonGame = () => {
                     style={{fontSize:'9px',background:'#dbeafe'}}>🛡 Dodge (50%)</button>
                   {!itemAlreadyPlanned && !curPlayer.itemUsed && (
                     <button onClick={() => pvpAddSlot({type:'item',pokemonIndex:plan.currentPokemonIdx})}
-                      className="border-2 border-black px-2 py-1 retro-text"
-                      style={{fontSize:'9px',background:'#fef9c3'}}>🎒 Item</button>
+                      className="border-2 border-black px-2 py-1 retro-text flex items-center gap-1"
+                      style={{fontSize:'9px',background:'#fef9c3'}}>
+                      <img src={PVP_ITEM_SPRITE[curPlayer.item]} alt={curPlayer.item} style={{width:'16px',height:'16px',imageRendering:'pixelated'}} />
+                      {PVP_ITEM_LABEL[curPlayer.item]?.split('(')[0].trim()}
+                    </button>
                   )}
                   {aliveTeammates.length > 0 && (
                     <button onClick={() => setPvpPlan(p => ({...p,subState:'pick-switch-target'}))}
