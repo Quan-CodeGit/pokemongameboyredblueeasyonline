@@ -4219,12 +4219,11 @@ const PokemonGame = () => {
       roundWinner = 'p2';
       addEv("Player 1's team has been knocked out! PLAYER 2 WINS!", 'ko');
     } else {
-      // Both alive: calculate remaining HP totals
+      // Both have survivors — battle continues next round
       const p1TotalHp = p1.team.reduce((s, p) => s + p.hp, 0);
       const p2TotalHp = p2.team.reduce((s, p) => s + p.hp, 0);
-      if (p1TotalHp > p2TotalHp) { roundWinner = 'p1'; addEv(`Round over! Player 1 leads on HP (${p1TotalHp} vs ${p2TotalHp})!`, 'normal'); }
-      else if (p2TotalHp > p1TotalHp) { roundWinner = 'p2'; addEv(`Round over! Player 2 leads on HP (${p2TotalHp} vs ${p1TotalHp})!`, 'normal'); }
-      else { roundWinner = 'draw'; addEv("Round over! Both players have equal HP remaining — it's a draw!", 'normal'); }
+      roundWinner = null; // No winner yet; game continues
+      addEv(`Round over! P1: ${p1TotalHp} HP remaining | P2: ${p2TotalHp} HP remaining. Plan next round!`, 'normal');
     }
 
     // Find next alive active index for each player
@@ -4606,9 +4605,9 @@ const PokemonGame = () => {
     );
   };
 
-  // Party icons: show pokéball for hidden, small sprite for revealed, faded for fainted
+  // Party icons: pokéball for unrevealed, sprite for revealed, greyed for fainted
   const PvpPartyIcons = ({ team, hpArr, activeIdx, revealedSet }) => (
-    <div className="flex gap-1 justify-center mt-2">
+    <div className="flex gap-1 justify-center mt-1">
       {team.map((p, i) => {
         const hp = hpArr?.[i] ?? p.hp;
         const fainted = hp <= 0;
@@ -4618,15 +4617,13 @@ const PokemonGame = () => {
           <div key={i} style={{textAlign:'center',opacity:fainted?0.35:1}}>
             {isActive || revealed ? (
               <img src={getPokemonSprite(p.name)} alt={p.name}
-                style={{width:'32px',height:'32px',imageRendering:'pixelated',
-                  filter: fainted ? 'grayscale(1)' : isActive ? 'none' : 'brightness(0.85)',
+                style={{width:'28px',height:'28px',imageRendering:'pixelated',
+                  filter: fainted ? 'grayscale(1)' : 'none',
                   border: isActive ? '2px solid #000' : '2px solid transparent'}} />
             ) : (
-              <img src="/sprites/pokeball.png" alt="???"
-                onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='inline'; }}
-                style={{width:'32px',height:'32px',imageRendering:'pixelated'}} />
+              <img src="/poke_ball.png" alt="???"
+                style={{width:'28px',height:'28px',imageRendering:'pixelated',opacity:0.7}} />
             )}
-            {(!isActive && !revealed) && <span style={{display:'none',fontSize:'20px'}}>🔴</span>}
           </div>
         );
       })}
@@ -4658,155 +4655,159 @@ const PokemonGame = () => {
     };
 
     return (
-      <div className="min-h-screen flex items-center justify-center p-2" style={{fontFamily:'monospace',background:'#1a1a2e'}}>
-        <div className="w-full max-w-sm">
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen" style={{backgroundColor:'#ffffff',padding:'8px',overflowY:'auto'}}>
 
-          {/* Header */}
-          <div className="border-4 border-black p-2 mb-2 text-center" style={{background:headerBg}}>
-            <div className="text-lg font-bold retro-text" style={{color:'#fff',textShadow:'2px 2px 0 #000'}}>
-              {isP1Turn ? 'PLAYER 1' : 'PLAYER 2'} — ROUND {pvpRoundNum}
+            {/* Header */}
+            <div className="border-4 border-black p-2 mb-2 text-center" style={{background:headerBg}}>
+              <div className="text-sm font-bold retro-text" style={{color:'#fff',textShadow:'2px 2px 0 #000'}}>
+                {isP1Turn ? 'PLAYER 1' : 'PLAYER 2'} — ROUND {pvpRoundNum}
+              </div>
+              <div style={{fontSize:'9px',color:'#fef08a'}} className="retro-text">Plan 4 secret actions</div>
             </div>
-            <div className="text-xs retro-text" style={{color:'#fef08a'}}>Plan your {4} actions secretly</div>
-          </div>
 
-          {/* Active Pokémon card */}
-          <div className="border-4 border-black p-3 mb-2" style={{background:playerBg}}>
-            <div className="flex items-center gap-3">
-              <img src={getPokemonSprite(curPokemon?.name||'')} alt={curPokemon?.name}
-                style={{width:'96px',height:'96px',imageRendering:'pixelated',flexShrink:0}} />
-              <div className="flex-1">
-                <div className="font-bold retro-text mb-1" style={{color:'#000',fontSize:'13px'}}>{curPokemon?.name}</div>
-                <div className="flex gap-1 mb-2 flex-wrap">
-                  <span className="border-2 border-black px-1 retro-text" style={{fontSize:'8px',background:'#dc2626',color:'#fff'}}>{curPokemon?.type}</span>
-                  {curPokemon?.type2 && <span className="border-2 border-black px-1 retro-text" style={{fontSize:'8px',background:'#7c3aed',color:'#fff'}}>{curPokemon.type2}</span>}
-                  <span className="border-2 border-black px-1 retro-text" style={{fontSize:'8px',background:'#e5e7eb',color:'#000'}}>SPD {PVP_SPEED[curPokemon?.name]||'?'}</span>
+            {/* Active Pokémon card (like original battle card) */}
+            <div className="border-4 border-black p-2 mb-2" style={{background:playerBg}}>
+              <div className="flex items-center gap-2">
+                <img src={getPokemonSprite(curPokemon?.name||'')} alt={curPokemon?.name}
+                  style={{width:'80px',height:'80px',imageRendering:'pixelated',flexShrink:0}} />
+                <div className="flex-1">
+                  <div className="font-bold retro-text mb-1" style={{color:'#000',fontSize:'12px',textTransform:'uppercase'}}>{curPokemon?.name}</div>
+                  <div className="flex gap-1 mb-1 flex-wrap">
+                    <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#dc2626',color:'#fff'}}>{curPokemon?.type}</span>
+                    {curPokemon?.type2 && <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#7c3aed',color:'#fff'}}>{curPokemon.type2}</span>}
+                    <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#e5e7eb',color:'#000'}}>SPD {PVP_SPEED[curPokemon?.name]||'?'}</span>
+                  </div>
+                  {curPokemon && <PvpHpBar p={curPokemon} hp={curPokemon.hp} />}
                 </div>
-                {curPokemon && <PvpHpBar p={curPokemon} hp={curPokemon.hp} />}
+              </div>
+              {/* Team row */}
+              <div className="border-t-2 border-black mt-2 pt-2 flex gap-2 items-end justify-between">
+                <div className="flex gap-2">
+                  {team.map((p, i) => (
+                    <div key={i} className="text-center" style={{opacity:p.hp<=0?0.4:1}}>
+                      <img src={getPokemonSprite(p.name)} alt={p.name}
+                        style={{width:'36px',height:'36px',imageRendering:'pixelated',
+                          border: i===plan.currentPokemonIdx?'2px solid #000':'2px solid transparent',
+                          filter:p.hp<=0?'grayscale(1)':'none'}} />
+                      <div style={{fontSize:'7px',color:'#374151'}}>{p.name.slice(0,5)}</div>
+                      <div style={{fontSize:'7px',color:p.hp<=0?'#dc2626':'#16a34a'}}>{p.hp<=0?'✝':`${p.hp}`}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-right border-l-2 border-black pl-2">
+                  <div style={{fontSize:'8px',color:'#374151',fontWeight:'bold'}}>ITEM:</div>
+                  <div style={{fontSize:'7px',color:'#000'}}>{PVP_ITEM_LABEL[curPlayer.item]?.split(' ').slice(0,2).join(' ')||curPlayer.item}</div>
+                  {curPlayer.itemUsed && <div style={{fontSize:'7px',color:'#dc2626',fontWeight:'bold'}}>USED ✗</div>}
+                  {itemAlreadyPlanned && !curPlayer.itemUsed && <div style={{fontSize:'7px',color:'#d97706'}}>QUEUED</div>}
+                </div>
               </div>
             </div>
-            {/* Party icons */}
-            <div className="border-t-2 border-black mt-2 pt-2">
-              <div className="text-xs retro-text mb-1" style={{color:'#374151'}}>YOUR TEAM:</div>
-              <div className="flex gap-2 items-end">
-                {team.map((p, i) => (
-                  <div key={i} className="text-center" style={{opacity:p.hp<=0?0.4:1}}>
-                    <img src={getPokemonSprite(p.name)} alt={p.name}
-                      style={{width:'40px',height:'40px',imageRendering:'pixelated',
-                        border: i===plan.currentPokemonIdx ? '2px solid #000' : '2px solid transparent',
-                        filter: p.hp<=0 ? 'grayscale(1)' : 'none'}} />
-                    <div style={{fontSize:'7px',color:'#374151',fontWeight: i===plan.currentPokemonIdx?'bold':'normal'}}>{p.name.slice(0,6)}</div>
-                    <div style={{fontSize:'7px',color: p.hp<=0?'#dc2626':'#16a34a'}}>{p.hp<=0?'✝':`${p.hp}/${p.maxHp}`}</div>
+
+            {/* Plan slots */}
+            <div className="border-4 border-black p-2 mb-2" style={{background:'#f8fafc'}}>
+              <div style={{fontSize:'9px',fontWeight:'bold',color:'#000',marginBottom:'4px'}} className="retro-text">PLAN ({plan.slots.length}/4):</div>
+              <div className="flex gap-1">
+                {[0,1,2,3].map(i => (
+                  <div key={i} className="flex-1 border-2 p-1 text-center" style={{
+                    borderColor:i<plan.slots.length?'#16a34a':i===plan.slots.length?'#eab308':'#9ca3af',
+                    background:i<plan.slots.length?'#f0fdf4':i===plan.slots.length?'#fefce8':'#f9fafb',
+                    minHeight:'28px',
+                  }}>
+                    <div style={{fontSize:'7px',color:'#6b7280',fontWeight:'bold'}}>T{i+1}</div>
+                    <div style={{fontSize:'7px',color:'#000',wordBreak:'break-all'}}>{i<plan.slots.length?slotLabel(plan.slots[i]):i===plan.slots.length?'▼':''}</div>
                   </div>
                 ))}
-                <div className="flex-1" />
-                <div className="text-right">
-                  <div style={{fontSize:'8px',color:'#374151',fontWeight:'bold'}}>ITEM:</div>
-                  <div style={{fontSize:'8px',color:'#000'}}>{PVP_ITEM_LABEL[curPlayer.item]?.split(' ')[0]||curPlayer.item}</div>
-                  {curPlayer.itemUsed && <div style={{fontSize:'7px',color:'#dc2626'}}>USED</div>}
-                  {itemAlreadyPlanned && !curPlayer.itemUsed && <div style={{fontSize:'7px',color:'#d97706'}}>PLANNED</div>}
-                </div>
               </div>
             </div>
-          </div>
 
-          {/* Plan slots */}
-          <div className="border-4 border-black p-2 mb-2" style={{background:'#f8fafc'}}>
-            <div className="text-xs font-bold retro-text mb-1" style={{color:'#000'}}>ACTION PLAN ({plan.slots.length}/4):</div>
-            <div className="flex gap-1">
-              {[0,1,2,3].map(i => (
-                <div key={i} className="flex-1 border-2 p-1 text-center" style={{
-                  borderColor: i<plan.slots.length?'#16a34a': i===plan.slots.length?'#eab308':'#9ca3af',
-                  background: i<plan.slots.length?'#f0fdf4': i===plan.slots.length?'#fefce8':'#f9fafb',
-                  minHeight:'32px',
-                }}>
-                  <div style={{fontSize:'7px',color:'#6b7280',fontWeight:'bold'}}>T{i+1}</div>
-                  <div style={{fontSize:'7px',color:'#000',wordBreak:'break-all'}}>{i<plan.slots.length?slotLabel(plan.slots[i]):i===plan.slots.length?'▼':''}</div>
+            {/* Action picker */}
+            {!allFilled && plan.subState === null && (
+              <div className="border-4 border-black p-2 mb-2" style={{background:'#fff'}}>
+                <div style={{fontSize:'9px',fontWeight:'bold',color:'#000',marginBottom:'6px'}} className="retro-text">
+                  TURN {plan.slots.length+1} — {curPokemon?.name}:
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Action picker */}
-          {!allFilled && plan.subState === null && (
-            <div className="border-4 border-black p-2 mb-2" style={{background:'#fff'}}>
-              <div className="text-xs font-bold retro-text mb-2" style={{color:'#000'}}>
-                TURN {plan.slots.length+1} — {curPokemon?.name}:
+                <div className="grid grid-cols-2 gap-1 mb-2">
+                  {curPokemon?.moves?.map((moveName, mi) => {
+                    const used = usedMoves.includes(mi);
+                    const ppLeft = curPlayer.pp[plan.currentPokemonIdx]?.[mi] ?? 0;
+                    const disabled = used || ppLeft <= 0;
+                    return (
+                      <button key={mi} onClick={() => !disabled && pvpAddSlot({type:'move',moveIndex:mi,pokemonIndex:plan.currentPokemonIdx})}
+                        disabled={disabled}
+                        className="border-2 border-black p-1 text-left retro-text"
+                        style={{fontSize:'9px',background:disabled?'#e5e7eb':'#fff',opacity:disabled?0.5:1,cursor:disabled?'not-allowed':'pointer'}}>
+                        <span style={{color:'#dc2626'}}>⚔</span> {moveName}
+                        <br/><span style={{color:'#6b7280',fontSize:'7px'}}>{curPokemon.moveTypes?.[mi]} PP:{ppLeft}{used?' ✗':''}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                  <button onClick={() => pvpAddSlot({type:'dodge',pokemonIndex:plan.currentPokemonIdx})}
+                    className="border-2 border-black px-2 py-1 retro-text"
+                    style={{fontSize:'9px',background:'#dbeafe'}}>🛡 Dodge (50%)</button>
+                  {!itemAlreadyPlanned && !curPlayer.itemUsed && (
+                    <button onClick={() => pvpAddSlot({type:'item',pokemonIndex:plan.currentPokemonIdx})}
+                      className="border-2 border-black px-2 py-1 retro-text"
+                      style={{fontSize:'9px',background:'#fef9c3'}}>🎒 Item</button>
+                  )}
+                  {aliveTeammates.length > 0 && (
+                    <button onClick={() => setPvpPlan(p => ({...p,subState:'pick-switch-target'}))}
+                      className="border-2 border-black px-2 py-1 retro-text"
+                      style={{fontSize:'9px',background:'#f0fdf4'}}>🔄 Switch</button>
+                  )}
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-1 mb-2">
-                {curPokemon?.moves?.map((moveName, mi) => {
-                  const used = usedMoves.includes(mi);
-                  const ppLeft = curPlayer.pp[plan.currentPokemonIdx]?.[mi] ?? 0;
-                  const disabled = used || ppLeft <= 0;
-                  return (
-                    <button key={mi} onClick={() => !disabled && pvpAddSlot({type:'move',moveIndex:mi,pokemonIndex:plan.currentPokemonIdx})}
-                      disabled={disabled}
-                      className="border-2 border-black p-1 text-left retro-text"
-                      style={{fontSize:'9px',background:disabled?'#e5e7eb':'#fff',opacity:disabled?0.5:1,cursor:disabled?'not-allowed':'pointer'}}>
-                      <span style={{color:'#dc2626'}}>⚔</span> {moveName}
-                      <br/><span style={{color:'#6b7280',fontSize:'7px'}}>{curPokemon.moveTypes?.[mi]} PP:{ppLeft}{used?' ✗':''}</span>
+            )}
+
+            {/* Switch picker */}
+            {plan.subState === 'pick-switch-target' && (
+              <div className="border-4 border-black p-2 mb-2" style={{background:'#f0fdf4'}}>
+                <div style={{fontSize:'9px',fontWeight:'bold',color:'#000',marginBottom:'4px'}} className="retro-text">Switch to:</div>
+                <div className="flex gap-2">
+                  {aliveTeammates.map(i => (
+                    <button key={i} onClick={() => pvpAddSlot({type:'switch',fromIdx:plan.currentPokemonIdx,toIdx:i})}
+                      className="flex-1 border-2 border-black p-1 text-center retro-text"
+                      style={{fontSize:'8px',background:'#fff'}}>
+                      <img src={getPokemonSprite(team[i].name)} alt={team[i].name}
+                        style={{width:'40px',height:'40px',imageRendering:'pixelated',margin:'0 auto',display:'block'}} />
+                      <div>{team[i].name}</div>
+                      <div style={{color:'#16a34a'}}>{team[i].hp}/{team[i].maxHp}</div>
                     </button>
-                  );
-                })}
+                  ))}
+                  <button onClick={() => setPvpPlan(p => ({...p,subState:null}))}
+                    className="border-2 border-black px-2 py-1 retro-text self-start"
+                    style={{fontSize:'9px',background:'#fecaca'}}>✕</button>
+                </div>
               </div>
-              <div className="flex gap-1 flex-wrap">
-                <button onClick={() => pvpAddSlot({type:'dodge',pokemonIndex:plan.currentPokemonIdx})}
-                  className="border-2 border-black px-2 py-1 retro-text"
-                  style={{fontSize:'9px',background:'#dbeafe'}}>🛡 Dodge (50%)</button>
-                {!itemAlreadyPlanned && !curPlayer.itemUsed && (
-                  <button onClick={() => pvpAddSlot({type:'item',pokemonIndex:plan.currentPokemonIdx})}
-                    className="border-2 border-black px-2 py-1 retro-text"
-                    style={{fontSize:'9px',background:'#fef9c3'}}>🎒 Item</button>
-                )}
-                {aliveTeammates.length > 0 && (
-                  <button onClick={() => setPvpPlan(p => ({...p,subState:'pick-switch-target'}))}
-                    className="border-2 border-black px-2 py-1 retro-text"
-                    style={{fontSize:'9px',background:'#f0fdf4'}}>🔄 Switch</button>
-                )}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Switch picker */}
-          {plan.subState === 'pick-switch-target' && (
-            <div className="border-4 border-black p-2 mb-2" style={{background:'#f0fdf4'}}>
-              <div className="text-xs font-bold retro-text mb-1" style={{color:'#000'}}>Switch to:</div>
-              <div className="flex gap-2">
-                {aliveTeammates.map(i => (
-                  <button key={i} onClick={() => pvpAddSlot({type:'switch',fromIdx:plan.currentPokemonIdx,toIdx:i})}
-                    className="flex-1 border-2 border-black p-1 text-center retro-text"
-                    style={{fontSize:'8px',background:'#fff'}}>
-                    <img src={getPokemonSprite(team[i].name)} alt={team[i].name} style={{width:'40px',height:'40px',imageRendering:'pixelated',margin:'0 auto'}} />
-                    <div>{team[i].name}</div>
-                    <div style={{color:'#16a34a'}}>{team[i].hp}/{team[i].maxHp}</div>
-                  </button>
-                ))}
-                <button onClick={() => setPvpPlan(p => ({...p,subState:null}))}
-                  className="border-2 border-black px-2 py-1 retro-text self-start"
-                  style={{fontSize:'9px',background:'#fecaca'}}>✕</button>
-              </div>
-            </div>
-          )}
+            {allFilled && (
+              <button onClick={pvpConfirmPlan}
+                className="w-full border-4 border-black p-2 retro-text font-bold text-center"
+                style={{fontSize:'13px',background:'#16a34a',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
+                ✅ CONFIRM PLAN
+              </button>
+            )}
+            {plan.slots.length > 0 && !allFilled && plan.subState === null && (
+              <button onClick={() => setPvpPlan(p => {
+                const newSlots = p.slots.slice(0,-1);
+                let curIdx = isP1Turn ? pvpP1.activeIndex : pvpP2.activeIndex;
+                const newUsed = {0:[],1:[],2:[]};
+                newSlots.forEach(s => {
+                  if (s.type==='switch') curIdx=s.toIdx;
+                  if (s.type==='move') newUsed[s.pokemonIndex]=[...(newUsed[s.pokemonIndex]||[]),s.moveIndex];
+                });
+                return {...p,slots:newSlots,currentPokemonIdx:curIdx,movesUsedByPokemon:newUsed,subState:null};
+              })} className="w-full border-2 border-black p-1 retro-text text-center mt-2"
+                style={{fontSize:'9px',background:'#fef3c7',color:'#000'}}>← Undo Last</button>
+            )}
 
-          {allFilled && (
-            <button onClick={pvpConfirmPlan}
-              className="w-full border-4 border-black p-3 retro-text font-bold text-center"
-              style={{fontSize:'14px',background:'#16a34a',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
-              ✅ CONFIRM PLAN
-            </button>
-          )}
-          {plan.slots.length > 0 && !allFilled && plan.subState === null && (
-            <button onClick={() => setPvpPlan(p => {
-              const newSlots = p.slots.slice(0,-1);
-              let curIdx = isP1Turn ? pvpP1.activeIndex : pvpP2.activeIndex;
-              const newUsed = {0:[],1:[],2:[]};
-              newSlots.forEach(s => {
-                if (s.type==='switch') curIdx=s.toIdx;
-                if (s.type==='move') newUsed[s.pokemonIndex]=[...(newUsed[s.pokemonIndex]||[]),s.moveIndex];
-              });
-              return {...p,slots:newSlots,currentPokemonIdx:curIdx,movesUsedByPokemon:newUsed,subState:null};
-            })} className="w-full border-2 border-black p-2 retro-text text-center mt-2"
-              style={{fontSize:'10px',background:'#fef3c7',color:'#000'}}>← Undo Last</button>
-          )}
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
         </div>
       </div>
     );
@@ -4814,22 +4815,24 @@ const PokemonGame = () => {
 
   if (gameState === 'pvp-cover') {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{fontFamily:'monospace',background:'#1a1a2e'}}>
-        <div className="w-full max-w-sm text-center">
-          <div className="border-4 border-black p-8" style={{background:'#1e293b'}}>
-            <div style={{fontSize:'64px',marginBottom:'16px'}}>🙈</div>
-            <h2 className="text-2xl font-bold retro-text mb-4" style={{color:'#fbbf24',textShadow:'2px 2px 0 #000'}}>COVER YOUR EYES!</h2>
-            <p className="retro-text mb-6" style={{color:'#94a3b8',fontSize:'11px',lineHeight:'1.8'}}>
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen flex flex-col items-center justify-center" style={{backgroundColor:'#ffffff'}}>
+            <div style={{fontSize:'56px',marginBottom:'12px'}}>🙈</div>
+            <h2 className="text-xl font-bold retro-text mb-3" style={{color:'#000',textShadow:'2px 2px 0 #888'}}>COVER YOUR EYES!</h2>
+            <p className="retro-text mb-6 text-center" style={{color:'#374151',fontSize:'11px',lineHeight:'1.8',maxWidth:'200px'}}>
               {pvpCoverTarget === 'p2-plan'
-                ? 'Player 1 done planning.\nPass to Player 2!'
-                : 'Both players planned.\nReady for showdown?'}
+                ? 'Player 1 finished planning. Pass device to Player 2!'
+                : 'Both players planned their moves. Ready for the showdown?'}
             </p>
             <button onClick={() => setGameState(pvpCoverTarget === 'p2-plan' ? 'pvp-planning-p2' : 'pvp-showdown')}
               className="border-4 border-black px-6 py-3 font-bold retro-text"
-              style={{fontSize:'13px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
+              style={{fontSize:'12px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
               {pvpCoverTarget === 'p2-plan' ? '▶ PLAYER 2 PLAN' : '⚔️ BEGIN SHOWDOWN'}
             </button>
           </div>
+          <GameboyControlsComponent />
+          <Footer />
         </div>
       </div>
     );
@@ -4841,12 +4844,11 @@ const PokemonGame = () => {
     const step = Math.min(pvpShowdownStep, totalSteps - 1);
     const ev = pvpShowdownEvents[step];
     const isLast = step >= totalSteps - 1;
-    const evHighlight = ev?.highlight || 'normal';
     const logBg = { damage:'#7f1d1d', dodge:'#1e3a5f', switch:'#14532d', ko:'#3b0764', item:'#78350f', miss:'#374151', normal:'#1e293b' };
 
-    // Which opponent Pokémon have been revealed up to this step
-    const p1Revealed = new Set(); // P1's Pokémon revealed to P2's view
-    const p2Revealed = new Set(); // P2's Pokémon revealed to P1's view
+    // Track revealed Pokémon for each side up to current step
+    const p1Revealed = new Set();
+    const p2Revealed = new Set();
     for (let i = 0; i <= step && i < pvpShowdownEvents.length; i++) {
       const e = pvpShowdownEvents[i];
       if (e) { p1Revealed.add(e.p1Active); p2Revealed.add(e.p2Active); }
@@ -4856,96 +4858,94 @@ const PokemonGame = () => {
     const p2Hp = ev?.p2Hp || pvpP2.team.map(p => p.hp);
     const p1Active = ev?.p1Active ?? pvpP1.activeIndex;
     const p2Active = ev?.p2Active ?? pvpP2.activeIndex;
-
-    // Battle log: show all events up to current step
     const logEvents = pvpShowdownEvents.slice(0, step + 1);
 
-    const renderBattleCard = (label, player, team, hpArr, activeIdx, revealedSet, bg) => {
+    const renderBattleCard = (label, team, hpArr, activeIdx, revealedSet, bg) => {
       const p = team[activeIdx];
       const hp = hpArr?.[activeIdx] ?? p?.hp ?? 0;
       return (
-        <div className="border-4 border-black p-2" style={{background:bg,flex:1}}>
-          <div className="text-center mb-1">
-            <div className="font-bold retro-text" style={{color:'#000',fontSize:'10px'}}>{label}</div>
-          </div>
+        <div className="border-4 border-black p-2" style={{background:bg}}>
+          <div className="text-center font-bold retro-text mb-1" style={{color:'#000',fontSize:'9px'}}>{label}</div>
           <div className="flex justify-center mb-1">
             <img src={getPokemonSprite(p?.name||'')} alt={p?.name}
-              style={{width:'96px',height:'96px',imageRendering:'pixelated',filter:hp<=0?'grayscale(1)':'none'}} />
+              style={{width:'80px',height:'80px',imageRendering:'pixelated',filter:hp<=0?'grayscale(1)':'none'}} />
           </div>
-          <h3 className="font-bold retro-text text-center mb-1" style={{color:'#000',fontSize:'11px'}}>{p?.name}</h3>
-          <div className="flex items-center justify-center gap-1 mb-2 flex-wrap">
-            {p?.type && <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#dc2626',color:'#fff'}}>{p.type}</span>}
-            {p?.type2 && <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#7c3aed',color:'#fff'}}>{p.type2}</span>}
+          <div className="font-bold retro-text text-center mb-1" style={{color:'#000',fontSize:'10px',textTransform:'uppercase'}}>{p?.name}</div>
+          <div className="flex items-center justify-center gap-1 mb-1 flex-wrap">
+            {p?.type && <span className="border-2 border-black px-1 retro-text" style={{fontSize:'6px',background:'#dc2626',color:'#fff'}}>{p.type}</span>}
+            {p?.type2 && <span className="border-2 border-black px-1 retro-text" style={{fontSize:'6px',background:'#7c3aed',color:'#fff'}}>{p.type2}</span>}
           </div>
           {p && <PvpHpBar p={p} hp={hp} />}
-          {/* Party row */}
           <PvpPartyIcons team={team} hpArr={hpArr} activeIdx={activeIdx} revealedSet={revealedSet} />
-          <div className="flex justify-center gap-1 mt-1">
-            {team.map((pk,i) => {
-              const pkHp = hpArr?.[i] ?? pk.hp;
-              return <span key={i} style={{fontSize:'7px',color: i===activeIdx?'#000':'#6b7280',fontWeight:i===activeIdx?'bold':'normal'}}>{pkHp<=0?'✝':pkHp}</span>;
-            })}
-          </div>
         </div>
       );
     };
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-start p-2" style={{fontFamily:'monospace',background:'#1a1a2e'}}>
-        <div className="w-full max-w-lg">
-          {/* Header */}
-          <div className="border-4 border-black p-2 mb-2 text-center" style={{background:'#7c3aed'}}>
-            <div className="font-bold retro-text" style={{color:'#fbbf24',fontSize:'14px',textShadow:'2px 2px 0 #000'}}>
-              ⚔️ SHOWDOWN — ROUND {pvpRoundNum}
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen" style={{backgroundColor:'#ffffff',padding:'6px'}}>
+
+            {/* Round header */}
+            <div className="border-4 border-black p-1 mb-2 text-center" style={{background:'#7c3aed'}}>
+              <div className="font-bold retro-text" style={{color:'#fbbf24',fontSize:'12px',textShadow:'2px 2px 0 #000'}}>
+                ⚔️ SHOWDOWN — ROUND {pvpRoundNum}
+              </div>
             </div>
-          </div>
 
-          {/* Battle area: P2 left (enemy), P1 right (player) — like original */}
-          <div className="flex gap-2 mb-2">
-            {renderBattleCard('PLAYER 2', pvpP2, pvpP2.team, p2Hp, p2Active, p2Revealed, '#dbeafe')}
-            {renderBattleCard('PLAYER 1', pvpP1, pvpP1.team, p1Hp, p1Active, p1Revealed, '#fef3c7')}
-          </div>
-
-          {/* Battle log — all events up to this point */}
-          <div className="border-4 border-black mb-2" style={{background:'#000',minHeight:'120px',maxHeight:'200px',overflowY:'auto'}}>
-            <div className="p-1">
-              {logEvents.map((e, idx) => (
-                <div key={idx} className="retro-text py-1 px-2 mb-1"
-                  style={{background: idx===step ? (logBg[e.highlight]||logBg.normal) : 'transparent',
-                    color: idx===step?'#fff':'#9ca3af', fontSize:'11px',
-                    borderLeft: idx===step ? '3px solid #fbbf24' : '3px solid transparent'}}>
-                  {e.text}
-                </div>
-              ))}
+            {/* Two-column battle area */}
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              {renderBattleCard('PLAYER 2', pvpP2.team, p2Hp, p2Active, p2Revealed, '#dbeafe')}
+              {renderBattleCard('PLAYER 1', pvpP1.team, p1Hp, p1Active, p1Revealed, '#fef3c7')}
             </div>
-          </div>
 
-          {/* Navigation */}
-          <div className="flex gap-2">
-            <button onClick={() => setPvpShowdownStep(s => Math.max(0,s-1))} disabled={step===0}
-              className="border-2 border-black px-3 py-2 retro-text"
-              style={{fontSize:'10px',background:'#f1f5f9',color:'#000',opacity:step===0?0.4:1}}>◀ Prev</button>
-            {!isLast ? (
-              <button onClick={() => setPvpShowdownStep(s => s+1)}
-                className="flex-1 border-4 border-black p-2 retro-text font-bold"
-                style={{fontSize:'13px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
-                NEXT ▶
-              </button>
-            ) : (
-              <button onClick={() => {
-                const lastEv = pvpShowdownEvents[pvpShowdownEvents.length-1];
-                const winner = lastEv?.roundWinner || pvpWinner;
-                const allKO = pvpP1?.team.every(p=>p.hp<=0) || pvpP2?.team.every(p=>p.hp<=0);
-                if (winner === 'p1' || winner === 'p2' || winner === 'draw' || allKO) {
-                  setPvpWinner(winner||'draw'); setGameState('pvp-result');
-                } else { pvpStartNextRound(); }
-              }}
-                className="flex-1 border-4 border-black p-2 retro-text font-bold"
-                style={{fontSize:'13px',background:'#16a34a',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
-                {(pvpP1?.team.every(p=>p.hp<=0)||pvpP2?.team.every(p=>p.hp<=0)||pvpWinner)?'🏆 RESULTS':'⚔️ NEXT ROUND'}
-              </button>
-            )}
+            {/* Battle log */}
+            <div className="border-4 border-black mb-2" style={{background:'#000',minHeight:'80px',maxHeight:'150px',overflowY:'auto'}}>
+              <div className="p-1">
+                {logEvents.map((e, idx) => (
+                  <div key={idx} className="retro-text py-1 px-2 mb-1"
+                    style={{
+                      background:idx===step?(logBg[e.highlight]||logBg.normal):'transparent',
+                      color:idx===step?'#fff':'#6b7280', fontSize:'10px',
+                      borderLeft:idx===step?'3px solid #fbbf24':'3px solid transparent'
+                    }}>
+                    {e.text}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex gap-2">
+              <button onClick={() => setPvpShowdownStep(s => Math.max(0,s-1))} disabled={step===0}
+                className="border-2 border-black px-2 py-1 retro-text"
+                style={{fontSize:'9px',background:'#f1f5f9',color:'#000',opacity:step===0?0.4:1}}>◀</button>
+              {!isLast ? (
+                <button onClick={() => setPvpShowdownStep(s => s+1)}
+                  className="flex-1 border-4 border-black p-2 retro-text font-bold"
+                  style={{fontSize:'12px',background:'#dc2626',color:'#fff',boxShadow:'3px 3px 0 #000'}}>
+                  NEXT ▶
+                </button>
+              ) : (
+                <button onClick={() => {
+                  const lastEv = pvpShowdownEvents[pvpShowdownEvents.length-1];
+                  const winner = lastEv?.roundWinner;
+                  if (winner === 'p1' || winner === 'p2' || winner === 'draw') {
+                    setPvpWinner(winner); setGameState('pvp-result');
+                  } else {
+                    pvpStartNextRound();
+                  }
+                }}
+                  className="flex-1 border-4 border-black p-2 retro-text font-bold"
+                  style={{fontSize:'12px',background:'#16a34a',color:'#fff',boxShadow:'3px 3px 0 #000'}}>
+                  {pvpShowdownEvents[pvpShowdownEvents.length-1]?.roundWinner ? '🏆 RESULTS' : '⚔️ NEXT ROUND'}
+                </button>
+              )}
+            </div>
+
           </div>
+          <GameboyControlsComponent />
+          <Footer />
         </div>
       </div>
     );
@@ -4955,36 +4955,45 @@ const PokemonGame = () => {
     const winnerLabel = pvpWinner==='p1'?'🏆 PLAYER 1 WINS!': pvpWinner==='p2'?'🏆 PLAYER 2 WINS!':"🤝 IT'S A DRAW!";
     const winnerBg = pvpWinner==='p1'?'#dc2626':pvpWinner==='p2'?'#2563eb':'#6b7280';
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={{fontFamily:'monospace',background:'#1a1a2e'}}>
-        <div className="w-full max-w-sm text-center">
-          <div className="border-4 border-black p-4 mb-4" style={{background:winnerBg}}>
-            <div className="text-2xl font-bold retro-text" style={{color:'#fff',textShadow:'3px 3px 0 #000'}}>{winnerLabel}</div>
-          </div>
-          {/* Final team comparison */}
-          <div className="flex gap-2 mb-4">
-            {[{player:pvpP1,label:'PLAYER 1',bg:'#fee2e2'},{player:pvpP2,label:'PLAYER 2',bg:'#dbeafe'}].map(({player,label,bg})=>(
-              <div key={label} className="flex-1 border-4 border-black p-2" style={{background:bg}}>
-                <div className="font-bold retro-text mb-2 text-center" style={{color:'#000',fontSize:'10px'}}>{label}</div>
-                {player?.team.map((p,i)=>(
-                  <div key={i} className="flex items-center gap-1 mb-1" style={{opacity:p.hp<=0?0.4:1}}>
-                    <img src={getPokemonSprite(p.name)} alt={p.name} style={{width:'28px',height:'28px',imageRendering:'pixelated',filter:p.hp<=0?'grayscale(1)':'none'}} />
-                    <div style={{fontSize:'8px',color:'#000'}}>
-                      <div style={{fontWeight:'bold'}}>{p.name}</div>
-                      <div style={{color:p.hp<=0?'#dc2626':'#16a34a'}}>{p.hp<=0?'FAINTED':`${p.hp}/${p.maxHp}`}</div>
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen" style={{backgroundColor:'#ffffff',padding:'8px'}}>
+
+            <div className="border-4 border-black p-3 mb-3 text-center" style={{background:winnerBg}}>
+              <div className="text-xl font-bold retro-text" style={{color:'#fff',textShadow:'3px 3px 0 #000'}}>{winnerLabel}</div>
+            </div>
+
+            {/* Final team comparison */}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {[{player:pvpP1,label:'PLAYER 1',bg:'#fef3c7'},{player:pvpP2,label:'PLAYER 2',bg:'#dbeafe'}].map(({player,label,bg})=>(
+                <div key={label} className="border-4 border-black p-2" style={{background:bg}}>
+                  <div className="font-bold retro-text mb-2 text-center" style={{color:'#000',fontSize:'9px'}}>{label}</div>
+                  {player?.team.map((p,i)=>(
+                    <div key={i} className="flex items-center gap-1 mb-1" style={{opacity:p.hp<=0?0.35:1}}>
+                      <img src={getPokemonSprite(p.name)} alt={p.name}
+                        style={{width:'32px',height:'32px',imageRendering:'pixelated',filter:p.hp<=0?'grayscale(1)':'none',flexShrink:0}} />
+                      <div style={{fontSize:'8px',color:'#000'}}>
+                        <div style={{fontWeight:'bold'}}>{p.name}</div>
+                        <div style={{color:p.hp<=0?'#dc2626':'#16a34a'}}>{p.hp<=0?'FAINTED':`${p.hp}/${p.maxHp}`}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ))}
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button onClick={pvpInitBattle} className="border-4 border-black p-2 font-bold retro-text text-center"
+                style={{fontSize:'12px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
+                🔄 REMATCH
+              </button>
+              <button onClick={()=>setGameState('intro')} className="border-2 border-black p-2 retro-text text-center"
+                style={{fontSize:'10px',background:'#f1f5f9',color:'#000'}}>← Back to Title</button>
+            </div>
+
           </div>
-          <div className="flex flex-col gap-2">
-            <button onClick={pvpInitBattle} className="border-4 border-black px-6 py-3 font-bold retro-text"
-              style={{fontSize:'13px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
-              🔄 REMATCH
-            </button>
-            <button onClick={()=>setGameState('intro')} className="border-2 border-black px-4 py-2 retro-text"
-              style={{fontSize:'11px',background:'#f1f5f9',color:'#000'}}>← Back to Title</button>
-          </div>
+          <GameboyControlsComponent />
+          <Footer />
         </div>
       </div>
     );
