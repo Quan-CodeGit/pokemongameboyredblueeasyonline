@@ -4898,13 +4898,25 @@ const PokemonGame = () => {
                     const used = usedMoves.includes(mi);
                     const ppLeft = curPlayer.pp[plan.currentPokemonIdx]?.[mi] ?? 0;
                     const disabled = used || ppLeft <= 0;
+                    const moveType = curPokemon.moveTypes?.[mi] || 'Normal';
+                    const { category, powerStr, accStr, color } = getMoveInfo(moveName, moveType);
                     return (
                       <button key={mi} onClick={() => !disabled && pvpAddSlot({type:'move',moveIndex:mi,pokemonIndex:plan.currentPokemonIdx})}
                         disabled={disabled}
-                        className="border-2 border-black p-1 text-left retro-text"
-                        style={{fontSize:'9px',background:disabled?'#e5e7eb':'#fff',opacity:disabled?0.5:1,cursor:disabled?'not-allowed':'pointer'}}>
-                        <span style={{color:'#dc2626'}}>⚔</span> {moveName}
-                        <br/><span style={{color:'#6b7280',fontSize:'7px'}}>{curPokemon.moveTypes?.[mi]} PP:{ppLeft}{used?' ✗':''}</span>
+                        className="border-2 border-black p-2 text-left retro-text"
+                        style={{background:disabled?'#9ca3af':'#f59e0b',opacity:disabled?0.6:1,cursor:disabled?'not-allowed':'pointer',position:'relative'}}>
+                        {/* Move name + PP */}
+                        <div className="flex justify-between items-start mb-1">
+                          <span style={{fontSize:'10px',fontWeight:'bold',color:'#000',textTransform:'uppercase'}}>{moveName}</span>
+                          <span style={{fontSize:'9px',color:ppLeft<=1?'#dc2626':'#16a34a',fontWeight:'bold',marginLeft:'4px',flexShrink:0}}>{ppLeft}/{curPlayer.pp[plan.currentPokemonIdx] ? (getMovePP?.(moveName)||ppLeft) : ppLeft}</span>
+                        </div>
+                        {/* Type + category + stats */}
+                        <div className="flex gap-1 items-center flex-wrap">
+                          <span className="border border-black px-1 retro-text" style={{fontSize:'7px',background:color,color:'#fff',fontWeight:'bold'}}>{moveType}</span>
+                          <span className="border border-black px-1 retro-text" style={{fontSize:'7px',background:'#374151',color:'#fff'}}>{category}</span>
+                          <span style={{fontSize:'8px',color:'#000'}}>P:{powerStr} A:{accStr}</span>
+                          {used && <span style={{fontSize:'7px',color:'#1e3a5f',fontWeight:'bold'}}>✓USED</span>}
+                        </div>
                       </button>
                     );
                   })}
