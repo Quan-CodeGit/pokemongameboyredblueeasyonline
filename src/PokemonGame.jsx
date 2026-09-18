@@ -4236,14 +4236,9 @@ const PokemonGame = () => {
       addEv(`Round over! P1: ${p1TotalHp} HP remaining | P2: ${p2TotalHp} HP remaining. Plan next round!`, 'normal');
     }
 
-    // Find next alive active index for each player
-    const nextAlive = (team, curIdx) => {
-      if (team[curIdx]?.hp > 0) return curIdx;
-      const next = team.findIndex((p, i) => i !== curIdx && p.hp > 0);
-      return next >= 0 ? next : curIdx;
-    };
-    const finalP1 = { ...p1, activeIndex: nextAlive(p1.team, p1Active), plan: undefined };
-    const finalP2 = { ...p2, activeIndex: nextAlive(p2.team, p2Active), plan: undefined };
+    // Keep the current active as-is; fainted players will pick their replacement via the switch screen
+    const finalP1 = { ...p1, activeIndex: p1Active, plan: undefined };
+    const finalP2 = { ...p2, activeIndex: p2Active, plan: undefined };
     if (events.length > 0) events[events.length - 1] = { ...events[events.length - 1], roundWinner, finalP1, finalP2 };
     return { events, finalP1, finalP2 };
   };
@@ -4253,7 +4248,16 @@ const PokemonGame = () => {
     setPvpWinner(null);
     setPvpShowdownEvents([]);
     setPvpShowdownStep(0);
-    setPvpCoverTarget('p1-next-round');
+    // Route to switch screen for any player whose active fainted but has alive bench Pokémon
+    const p1NeedsSwitch = pvpP1.team[pvpP1.activeIndex]?.hp <= 0 && pvpP1.team.some(p => p.hp > 0);
+    const p2NeedsSwitch = pvpP2.team[pvpP2.activeIndex]?.hp <= 0 && pvpP2.team.some(p => p.hp > 0);
+    if (p1NeedsSwitch) {
+      setPvpCoverTarget('p1-switch');
+    } else if (p2NeedsSwitch) {
+      setPvpCoverTarget('p2-switch');
+    } else {
+      setPvpCoverTarget('p1-next-round');
+    }
     setGameState('pvp-cover');
   };
 
@@ -4638,6 +4642,81 @@ const PokemonGame = () => {
     </div>
   );
 
+  if (gameState === 'pvp-switch-p1' || gameState === 'pvp-switch-p2') {
+    const isP1 = gameState === 'pvp-switch-p1';
+    const curPlayer = isP1 ? pvpP1 : pvpP2;
+    if (!curPlayer) return null;
+    const team = curPlayer.team;
+    const headerBg = isP1 ? '#dc2626' : '#2563eb';
+    const cardBg = isP1 ? '#fef3c7' : '#dbeafe';
+    const aliveOptions = team.map((p, i) => ({p, i})).filter(({p}) => p.hp > 0);
+
+    const pickSwitch = (i) => {
+      if (isP1) {
+        setPvpP1(p => ({...p, activeIndex: i}));
+        // Check if P2 also needs to switch
+        const p2NeedsSwitch = pvpP2.team[pvpP2.activeIndex]?.hp <= 0 && pvpP2.team.some(p => p.hp > 0);
+        if (p2NeedsSwitch) {
+          setPvpCoverTarget('p2-switch');
+          setGameState('pvp-cover');
+        } else {
+          setPvpCoverTarget('p1-next-round');
+          setGameState('pvp-cover');
+        }
+      } else {
+        setPvpP2(p => ({...p, activeIndex: i}));
+        setPvpCoverTarget('p1-next-round');
+        setGameState('pvp-cover');
+      }
+    };
+
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen" style={{backgroundColor:'#ffffff',padding:'8px'}}>
+
+            <div className="border-4 border-black p-2 mb-3 text-center" style={{background:headerBg}}>
+              <div className="font-bold retro-text" style={{color:'#fff',fontSize:'13px',textShadow:'2px 2px 0 #000'}}>
+                {isP1 ? 'PLAYER 1' : 'PLAYER 2'} — CHOOSE NEXT POKÉMON
+              </div>
+              <div style={{fontSize:'9px',color:'#fef08a'}} className="retro-text">Your active Pokémon fainted!</div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {aliveOptions.map(({p, i}) => (
+                <button key={i} onClick={() => pickSwitch(i)}
+                  className="border-4 border-black p-2 text-left w-full"
+                  style={{background:cardBg, boxShadow:'3px 3px 0 #000', cursor:'pointer'}}>
+                  <div className="flex items-center gap-3">
+                    <img src={getPokemonSprite(p.name)} alt={p.name}
+                      style={{width:'72px',height:'72px',imageRendering:'pixelated',flexShrink:0}} />
+                    <div className="flex-1">
+                      <div className="font-bold retro-text mb-1" style={{color:'#000',fontSize:'13px',textTransform:'uppercase'}}>{p.name}</div>
+                      <div className="flex gap-1 mb-2 flex-wrap">
+                        <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#dc2626',color:'#fff'}}>{p.type}</span>
+                        {p.type2 && <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#7c3aed',color:'#fff'}}>{p.type2}</span>}
+                        <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#e5e7eb',color:'#000'}}>SPD {PVP_SPEED[p.name]||'?'}</span>
+                      </div>
+                      <PvpHpBar p={p} hp={p.hp} />
+                      <div style={{fontSize:'8px',color:'#374151',marginTop:'2px'}} className="retro-text">{p.hp}/{p.maxHp} HP</div>
+                    </div>
+                    <div className="border-2 border-black px-2 py-1 retro-text font-bold"
+                      style={{fontSize:'10px',background:'#16a34a',color:'#fff',flexShrink:0}}>
+                      SEND!
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
   if (gameState === 'pvp-pick-starter-p1' || gameState === 'pvp-pick-starter-p2') {
     const isP1 = gameState === 'pvp-pick-starter-p1';
     const curPlayer = isP1 ? pvpP1 : pvpP2;
@@ -4908,6 +4987,10 @@ const PokemonGame = () => {
                 ? 'Player 1 chose their starter. Pass device to Player 2!'
                 : pvpCoverTarget === 'p1-plan'
                 ? 'Player 2 chose their starter. Pass device back to Player 1!'
+                : pvpCoverTarget === 'p1-switch'
+                ? "Player 1's Pokémon fainted! Pass device to Player 1 to choose next."
+                : pvpCoverTarget === 'p2-switch'
+                ? "Player 2's Pokémon fainted! Pass device to Player 2 to choose next."
                 : pvpCoverTarget === 'p1-next-round'
                 ? 'Round over! Pass device to Player 1 to plan the next round.'
                 : pvpCoverTarget === 'p2-plan'
@@ -4916,6 +4999,8 @@ const PokemonGame = () => {
             </p>
             <button onClick={() => {
               if (pvpCoverTarget === 'p2-starter') { setGameState('pvp-pick-starter-p2'); }
+              else if (pvpCoverTarget === 'p1-switch') { setGameState('pvp-switch-p1'); }
+              else if (pvpCoverTarget === 'p2-switch') { setGameState('pvp-switch-p2'); }
               else if (pvpCoverTarget === 'p1-plan' || pvpCoverTarget === 'p1-next-round') {
                 setPvpPlan({ player: 1, slots: [], currentPokemonIdx: pvpP1.activeIndex, movesUsedByPokemon: { 0: [], 1: [], 2: [] }, subState: null });
                 setPvpCoverTarget('p2-plan');
@@ -4927,6 +5012,8 @@ const PokemonGame = () => {
               className="border-4 border-black px-6 py-3 font-bold retro-text"
               style={{fontSize:'12px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
               {pvpCoverTarget === 'p2-starter' ? '▶ PLAYER 2 PICK'
+                : pvpCoverTarget === 'p1-switch' ? '▶ PLAYER 1 CHOOSE'
+                : pvpCoverTarget === 'p2-switch' ? '▶ PLAYER 2 CHOOSE'
                 : (pvpCoverTarget === 'p1-plan' || pvpCoverTarget === 'p1-next-round') ? '▶ PLAYER 1 PLAN'
                 : pvpCoverTarget === 'p2-plan' ? '▶ PLAYER 2 PLAN'
                 : '⚔️ BEGIN SHOWDOWN'}
