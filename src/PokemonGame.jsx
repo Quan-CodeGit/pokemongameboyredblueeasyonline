@@ -4595,7 +4595,7 @@ const PokemonGame = () => {
     const slotsLeft = slotsNeeded - plan.slots.length;
     const allFilled = plan.slots.length >= slotsNeeded;
     const usedMoves = plan.movesUsedByPokemon[plan.currentPokemonIdx] || [];
-    const aliveTeammates = team.map((p, i) => i).filter(i => i !== plan.currentPokemonIdx && p.hp > 0);
+    const aliveTeammates = team.map((_, i) => i).filter(i => i !== plan.currentPokemonIdx && team[i].hp > 0);
     // Check if item already planned
     const itemAlreadyPlanned = plan.slots.some(s => s.type === 'item');
 
