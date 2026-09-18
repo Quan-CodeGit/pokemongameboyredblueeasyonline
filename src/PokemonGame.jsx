@@ -4249,14 +4249,12 @@ const PokemonGame = () => {
   };
 
   const pvpStartNextRound = () => {
-    const p1 = pvpP1;
-    const p2 = pvpP2;
     setPvpRoundNum(r => r + 1);
     setPvpWinner(null);
     setPvpShowdownEvents([]);
     setPvpShowdownStep(0);
-    setPvpPlan({ player: 1, slots: [], currentPokemonIdx: p1.activeIndex, movesUsedByPokemon: { 0: [], 1: [], 2: [] }, subState: null });
-    setGameState('pvp-planning-p1');
+    setPvpCoverTarget('p1-plan');
+    setGameState('pvp-cover');
   };
 
   const startNewBattle = () => {
@@ -4656,10 +4654,9 @@ const PokemonGame = () => {
         setPvpCoverTarget('p2-starter');
         setGameState('pvp-cover');
       } else {
-        const updatedP2 = {...pvpP2, activeIndex: i};
-        setPvpP2(updatedP2);
-        setPvpPlan({ player: 1, slots: [], currentPokemonIdx: pvpP1.activeIndex, movesUsedByPokemon: { 0: [], 1: [], 2: [] }, subState: null });
-        setGameState('pvp-planning-p1');
+        setPvpP2(p => ({...p, activeIndex: i}));
+        setPvpCoverTarget('p1-plan');
+        setGameState('pvp-cover');
       }
     };
 
@@ -4909,14 +4906,28 @@ const PokemonGame = () => {
             <p className="retro-text mb-6 text-center" style={{color:'#374151',fontSize:'11px',lineHeight:'1.8',maxWidth:'200px'}}>
               {pvpCoverTarget === 'p2-starter'
                 ? 'Player 1 chose their starter. Pass device to Player 2!'
+                : pvpCoverTarget === 'p1-plan'
+                ? 'Player 2 chose their starter. Pass device back to Player 1!'
                 : pvpCoverTarget === 'p2-plan'
                 ? 'Player 1 finished planning. Pass device to Player 2!'
-                : 'Both players planned their moves. Ready for the showdown?'}
+                : 'Both players planned. Ready for the showdown?'}
             </p>
-            <button onClick={() => setGameState(pvpCoverTarget === 'p2-starter' ? 'pvp-pick-starter-p2' : pvpCoverTarget === 'p2-plan' ? 'pvp-planning-p2' : 'pvp-showdown')}
+            <button onClick={() => {
+              if (pvpCoverTarget === 'p2-starter') { setGameState('pvp-pick-starter-p2'); }
+              else if (pvpCoverTarget === 'p1-plan') {
+                setPvpPlan({ player: 1, slots: [], currentPokemonIdx: pvpP1.activeIndex, movesUsedByPokemon: { 0: [], 1: [], 2: [] }, subState: null });
+                setPvpCoverTarget('p2-plan');
+                setGameState('pvp-planning-p1');
+              }
+              else if (pvpCoverTarget === 'p2-plan') { setGameState('pvp-planning-p2'); }
+              else { setGameState('pvp-showdown'); }
+            }}
               className="border-4 border-black px-6 py-3 font-bold retro-text"
               style={{fontSize:'12px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
-              {pvpCoverTarget === 'p2-starter' ? '▶ PLAYER 2 PICK' : pvpCoverTarget === 'p2-plan' ? '▶ PLAYER 2 PLAN' : '⚔️ BEGIN SHOWDOWN'}
+              {pvpCoverTarget === 'p2-starter' ? '▶ PLAYER 2 PICK'
+                : pvpCoverTarget === 'p1-plan' ? '▶ PLAYER 1 PLAN'
+                : pvpCoverTarget === 'p2-plan' ? '▶ PLAYER 2 PLAN'
+                : '⚔️ BEGIN SHOWDOWN'}
             </button>
           </div>
           <GameboyControlsComponent />
@@ -4981,10 +4992,10 @@ const PokemonGame = () => {
               </div>
             </div>
 
-            {/* Two-column battle area */}
+            {/* Two-column battle area — P1 always LEFT, P2 always RIGHT */}
             <div className="grid grid-cols-2 gap-2 mb-2">
-              {renderBattleCard('PLAYER 2', pvpP2.team, p2Hp, p2Active, p2Revealed, '#dbeafe')}
               {renderBattleCard('PLAYER 1', pvpP1.team, p1Hp, p1Active, p1Revealed, '#fef3c7')}
+              {renderBattleCard('PLAYER 2', pvpP2.team, p2Hp, p2Active, p2Revealed, '#dbeafe')}
             </div>
 
             {/* Battle log */}
