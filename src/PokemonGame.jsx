@@ -4041,8 +4041,8 @@ const PokemonGame = () => {
     setPvpWinner(null);
     setPvpShowdownEvents([]);
     setPvpShowdownStep(0);
-    setPvpPlan({ player: 1, slots: [], currentPokemonIdx: p1.activeIndex, movesUsedByPokemon: { 0: [], 1: [], 2: [] }, subState: null });
-    setGameState('pvp-planning-p1');
+    setPvpCoverTarget('p2-starter');
+    setGameState('pvp-pick-starter-p1');
   };
 
   const pvpAddSlot = (slot) => {
@@ -4640,6 +4640,82 @@ const PokemonGame = () => {
     </div>
   );
 
+  if (gameState === 'pvp-pick-starter-p1' || gameState === 'pvp-pick-starter-p2') {
+    const isP1 = gameState === 'pvp-pick-starter-p1';
+    const curPlayer = isP1 ? pvpP1 : pvpP2;
+    if (!curPlayer) return null;
+    const team = curPlayer.team;
+    const headerBg = isP1 ? '#dc2626' : '#2563eb';
+    const cardBg = isP1 ? '#fef3c7' : '#dbeafe';
+    const tierLabel = ['RARE', 'UNCOMMON', 'COMMON'];
+    const tierColor = ['#7c3aed', '#d97706', '#16a34a'];
+
+    const pickStarter = (i) => {
+      if (isP1) {
+        setPvpP1(p => ({...p, activeIndex: i}));
+        setPvpCoverTarget('p2-starter');
+        setGameState('pvp-cover');
+      } else {
+        const updatedP2 = {...pvpP2, activeIndex: i};
+        setPvpP2(updatedP2);
+        setPvpPlan({ player: 1, slots: [], currentPokemonIdx: pvpP1.activeIndex, movesUsedByPokemon: { 0: [], 1: [], 2: [] }, subState: null });
+        setGameState('pvp-planning-p1');
+      }
+    };
+
+    return (
+      <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily:'monospace'}}>
+        <div className={`gameboy-console ${getContainerClass()} w-full`}>
+          <div className="gameboy-screen" style={{backgroundColor:'#ffffff',padding:'8px'}}>
+
+            <div className="border-4 border-black p-2 mb-3 text-center" style={{background:headerBg}}>
+              <div className="font-bold retro-text" style={{color:'#fff',fontSize:'13px',textShadow:'2px 2px 0 #000'}}>
+                {isP1 ? 'PLAYER 1' : 'PLAYER 2'} — CHOOSE STARTER
+              </div>
+              <div style={{fontSize:'9px',color:'#fef08a'}} className="retro-text">Pick your first Pokémon</div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {team.map((p, i) => (
+                <button key={i} onClick={() => pickStarter(i)}
+                  className="border-4 border-black p-2 text-left w-full"
+                  style={{background:cardBg, boxShadow:'3px 3px 0 #000', cursor:'pointer'}}>
+                  <div className="flex items-center gap-3">
+                    <img src={getPokemonSprite(p.name)} alt={p.name}
+                      style={{width:'72px',height:'72px',imageRendering:'pixelated',flexShrink:0}} />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold retro-text" style={{color:'#000',fontSize:'13px',textTransform:'uppercase'}}>{p.name}</span>
+                        <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:tierColor[i],color:'#fff'}}>{tierLabel[i]}</span>
+                      </div>
+                      <div className="flex gap-1 mb-2 flex-wrap">
+                        <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#dc2626',color:'#fff'}}>{p.type}</span>
+                        {p.type2 && <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#7c3aed',color:'#fff'}}>{p.type2}</span>}
+                        <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#e5e7eb',color:'#000'}}>SPD {PVP_SPEED[p.name]||'?'}</span>
+                        <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#e5e7eb',color:'#000'}}>HP {p.maxHp}</span>
+                      </div>
+                      <div style={{fontSize:'8px',color:'#374151'}} className="retro-text">
+                        {p.moves?.slice(0,2).join(' · ')}
+                        {p.moves?.length > 2 ? ` · +${p.moves.length-2}` : ''}
+                      </div>
+                    </div>
+                    <div className="border-2 border-black px-2 py-1 retro-text font-bold"
+                      style={{fontSize:'10px',background:'#16a34a',color:'#fff',flexShrink:0}}>
+                      GO!
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+          </div>
+          <GameboyControlsComponent />
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
   if (gameState === 'pvp-planning-p1' || gameState === 'pvp-planning-p2') {
     const isP1Turn = gameState === 'pvp-planning-p1';
     const curPlayer = isP1Turn ? pvpP1 : pvpP2;
@@ -4831,14 +4907,16 @@ const PokemonGame = () => {
             <div style={{fontSize:'56px',marginBottom:'12px'}}>🙈</div>
             <h2 className="text-xl font-bold retro-text mb-3" style={{color:'#000',textShadow:'2px 2px 0 #888'}}>COVER YOUR EYES!</h2>
             <p className="retro-text mb-6 text-center" style={{color:'#374151',fontSize:'11px',lineHeight:'1.8',maxWidth:'200px'}}>
-              {pvpCoverTarget === 'p2-plan'
+              {pvpCoverTarget === 'p2-starter'
+                ? 'Player 1 chose their starter. Pass device to Player 2!'
+                : pvpCoverTarget === 'p2-plan'
                 ? 'Player 1 finished planning. Pass device to Player 2!'
                 : 'Both players planned their moves. Ready for the showdown?'}
             </p>
-            <button onClick={() => setGameState(pvpCoverTarget === 'p2-plan' ? 'pvp-planning-p2' : 'pvp-showdown')}
+            <button onClick={() => setGameState(pvpCoverTarget === 'p2-starter' ? 'pvp-pick-starter-p2' : pvpCoverTarget === 'p2-plan' ? 'pvp-planning-p2' : 'pvp-showdown')}
               className="border-4 border-black px-6 py-3 font-bold retro-text"
               style={{fontSize:'12px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
-              {pvpCoverTarget === 'p2-plan' ? '▶ PLAYER 2 PLAN' : '⚔️ BEGIN SHOWDOWN'}
+              {pvpCoverTarget === 'p2-starter' ? '▶ PLAYER 2 PICK' : pvpCoverTarget === 'p2-plan' ? '▶ PLAYER 2 PLAN' : '⚔️ BEGIN SHOWDOWN'}
             </button>
           </div>
           <GameboyControlsComponent />
