@@ -345,6 +345,25 @@ const CHAMPION_POKEMON_POOL = [
   { name: 'Aerodactyl', type: 'Rock',     type2: 'Flying',  hp: 80,  maxHp: 80,  attack: 105, spAtk: 60,  def: 65,  spDef: 75,  moves: ['Rock Slide','Wing Attack','Bite','Hyper Beam'],           moveTypes: ['Rock','Flying','Dark','Normal'] },
 ];
 
+// ── PvP constants ──────────────────────────────────────────────────────────────
+const PVP_SPEED = {
+  Charizard:100,Blastoise:78,Venusaur:80,Rhydon:40,Arcanine:95,Exeggutor:55,Alakazam:120,Machamp:55,Gengar:110,Gyarados:81,
+  Lapras:60,Snorlax:30,Nidoking:85,Starmie:115,Dragonite:80,Slowbro:30,Vaporeon:65,Clefable:60,Tauros:110,Aerodactyl:130,
+  Magikarp:80,Metapod:30,Kakuna:35,Caterpie:45,Weedle:35,Pidgey:56,Rattata:72,Clefairy:35,Jigglypuff:20,Seel:45,
+  NidoranF:41,Gastly:80,Tentacool:70,Vulpix:65,Meowth:90,Zubat:55,Onix:70,Oddish:30,Poliwag:90,Paras:25,
+  Venonat:45,Krabby:50,Horsea:60,Goldeen:63,Staryu:85,Ekans:55,NidoranM:50,Dratini:50,Koffing:35,Psyduck:55,
+  Pikachu:90,Diglett:95,Geodude:20,Spearow:70,Magnemite:45,Cubone:35,Drowzee:42,Slowpoke:15,Shellder:40,Voltorb:100,
+  Exeggcute:40,Omanyte:35,Farfetchd:60,Grimer:25,Doduo:75,Growlithe:60,Bellsprout:40,Sandshrew:40,Machop:35,Mankey:70,
+  Ponyta:90,Rhyhorn:25,Tangela:60,Lickitung:30,Chansey:50,Dragonair:70,Weepinbell:55,Kabuto:55,Kangaskhan:90,
+  'Mr. Mime':90,Jynx:95,Abra:90,Electabuzz:105,Magmar:83,Pinsir:85,Scyther:105,Ditto:48,Eevee:55,Porygon:40,
+  Beedrill:75,Butterfree:70,Hitmonlee:87,Hitmonchan:76,
+};
+const PVP_TIER_RARE     = ['Charizard','Blastoise','Venusaur','Arcanine','Alakazam','Machamp','Gengar','Gyarados','Snorlax','Starmie','Dragonite','Kangaskhan','Electabuzz','Magmar','Pinsir','Scyther','Hitmonlee','Hitmonchan','Aerodactyl'];
+const PVP_TIER_UNCOMMON = ['Growlithe','Machop','Mankey','Ponyta','Rhyhorn','Dragonair','Sandshrew','Bellsprout','Doduo','Grimer','Weepinbell','Kabuto','Farfetchd','Tangela','Cubone','Drowzee','Spearow','Psyduck','Pikachu','Ekans','Dratini','Koffing','Voltorb'];
+const PVP_TIER_COMMON   = ['Pidgey','Clefairy','Jigglypuff','Seel','NidoranF','Gastly','Vulpix','Meowth','Zubat','Oddish','Poliwag','Venonat','Krabby','Horsea','Goldeen','Staryu','Slowpoke','Shellder','Geodude','Omanyte'];
+const PVP_ITEMS_LIST    = ['potion','rarecandy','ether','repel'];
+const PVP_ITEM_LABEL    = { potion:'🧪 Potion (+30 HP)', rarecandy:'🍬 Rare Candy (+10% stats)', ether:'✨ Ether (restore a move PP)', repel:'🚫 Repel (force enemy switch)' };
+
 const PokemonGame = () => {
   const [gameState, setGameState] = useState('intro');
   // Ref that always mirrors gameState — readable from stale closures (setTimeout callbacks)
@@ -509,6 +528,16 @@ const PokemonGame = () => {
   const [leagueTeamSelectCursor, setLeagueTeamSelectCursor] = useState(0);
   const [leaguePreMartItem, setLeaguePreMartItem] = useState(null);
   const [leagueForcedSwitch, setLeagueForcedSwitch] = useState(false);
+
+  // ── PvP state ─────────────────────────────────────────────────────────────
+  const [pvpP1, setPvpP1] = useState(null);           // { team, pp, item, itemUsed, activeIndex, statBoost, plan }
+  const [pvpP2, setPvpP2] = useState(null);
+  const [pvpPlan, setPvpPlan] = useState(null);        // current planning state
+  const [pvpShowdownEvents, setPvpShowdownEvents] = useState([]);
+  const [pvpShowdownStep, setPvpShowdownStep] = useState(0);
+  const [pvpWinner, setPvpWinner] = useState(null);   // 'p1'|'p2'|'draw'
+  const [pvpRoundNum, setPvpRoundNum] = useState(1);
+  const [pvpCoverTarget, setPvpCoverTarget] = useState('p2-plan'); // 'p2-plan'|'showdown'
 
   // League refs (prevent stale closures in setTimeout callbacks)
   const leagueActiveRef = useRef(false);
@@ -3982,6 +4011,245 @@ const PokemonGame = () => {
     setGameState('league-intro');
   };
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // PvP functions
+  // ══════════════════════════════════════════════════════════════════════════
+
+  const pvpInitBattle = () => {
+    const allPvp = [...wildPokemons, ...CHAMPION_POKEMON_POOL];
+    const findByName = (name) => { const p = allPvp.find(pk => pk.name === name); return p ? { ...p, hp: p.maxHp } : null; };
+    const pickRand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    const buildTeam = () => {
+      const rName = pickRand(PVP_TIER_RARE);
+      const uName = pickRand(PVP_TIER_UNCOMMON);
+      let cName; do { cName = pickRand(PVP_TIER_COMMON); } while (cName === uName);
+      const team = [rName, uName, cName].map((name, i) => {
+        const base = findByName(name);
+        return base ? { ...base, uid: `pvp${i}_${Math.random().toString(36).substr(2,6)}` } : null;
+      }).filter(Boolean);
+      const pp = team.map(p => getInitialPP(p.moves));
+      const item = pickRand(PVP_ITEMS_LIST);
+      return { team, pp, item, itemUsed: false, activeIndex: 0, statBoost: 1.0 };
+    };
+
+    const p1 = buildTeam();
+    const p2 = buildTeam();
+    setPvpP1(p1);
+    setPvpP2(p2);
+    setPvpRoundNum(1);
+    setPvpWinner(null);
+    setPvpShowdownEvents([]);
+    setPvpShowdownStep(0);
+    setPvpPlan({ player: 1, slots: [], currentPokemonIdx: p1.activeIndex, movesUsedByPokemon: { 0: [], 1: [], 2: [] }, subState: null });
+    setGameState('pvp-planning-p1');
+  };
+
+  const pvpAddSlot = (slot) => {
+    setPvpPlan(prev => {
+      if (!prev || prev.slots.length >= 4) return prev;
+      const newSlots = [...prev.slots, slot];
+      let newCurIdx = prev.currentPokemonIdx;
+      let newMovesUsed = { ...prev.movesUsedByPokemon };
+      if (slot.type === 'switch') newCurIdx = slot.toIdx;
+      if (slot.type === 'move') {
+        newMovesUsed = { ...newMovesUsed, [prev.currentPokemonIdx]: [...(newMovesUsed[prev.currentPokemonIdx] || []), slot.moveIndex] };
+      }
+      return { ...prev, slots: newSlots, currentPokemonIdx: newCurIdx, movesUsedByPokemon: newMovesUsed, subState: null };
+    });
+  };
+
+  const pvpConfirmPlan = () => {
+    const plan = pvpPlan;
+    if (!plan) return;
+    if (plan.player === 1) {
+      const p1WithPlan = { ...pvpP1, plan: plan.slots };
+      setPvpP1(p1WithPlan);
+      setPvpPlan({ player: 2, slots: [], currentPokemonIdx: pvpP2.activeIndex, movesUsedByPokemon: { 0: [], 1: [], 2: [] }, subState: null });
+      setPvpCoverTarget('p2-plan');
+      setGameState('pvp-cover');
+    } else {
+      const p2WithPlan = { ...pvpP2, plan: plan.slots };
+      setPvpP2(p2WithPlan);
+      const { events, finalP1, finalP2 } = pvpResolveShowdown(pvpP1, p2WithPlan, pvpP1.plan, plan.slots);
+      setPvpShowdownEvents(events);
+      setPvpShowdownStep(0);
+      setPvpP1(finalP1);
+      setPvpP2(finalP2);
+      const lastEv = events[events.length - 1];
+      if (lastEv?.roundWinner) setPvpWinner(lastEv.roundWinner);
+      setGameState('pvp-showdown');
+    }
+  };
+
+  const pvpResolveShowdown = (p1State, p2State, p1Plan, p2Plan) => {
+    const p1 = { ...p1State, team: p1State.team.map(p => ({ ...p })), pp: p1State.pp.map(a => [...a]) };
+    const p2 = { ...p2State, team: p2State.team.map(p => ({ ...p })), pp: p2State.pp.map(a => [...a]) };
+    let p1Active = p1.activeIndex;
+    let p2Active = p2.activeIndex;
+    const events = [];
+
+    const snap = (extra = {}) => ({
+      p1Hp: p1.team.map(p => p.hp), p2Hp: p2.team.map(p => p.hp),
+      p1Active, p2Active, ...extra,
+    });
+    const addEv = (text, highlight = 'normal') => events.push({ text, highlight, ...snap() });
+
+    const calcPvpDmg = (attacker, defender, mi, boost) => {
+      const moveName = attacker.moves[mi];
+      const moveType = attacker.moveTypes[mi];
+      if (isStatusMove(moveName)) return { damage: 0, text: `${attacker.name} used ${moveName}!`, isStatus: true };
+      const acc = MOVE_ACCURACY[moveName];
+      if (acc !== null && acc !== undefined && Math.random() * 100 > acc) return { damage: 0, text: `${attacker.name} used ${moveName}!`, missed: true };
+      const specials = ['Fire','Water','Electric','Grass','Ice','Psychic','Dragon','Dark'];
+      const isSp = specials.includes(moveType);
+      const atkStat = Math.floor((isSp ? (attacker.spAtk||0) : (attacker.attack||0)) * (boost||1));
+      const defStat = isSp ? (defender.spDef||0) : (defender.def||0);
+      const bp = (MOVE_POWER[moveName] > 0) ? MOVE_POWER[moveName] : 50;
+      let dmg = Math.floor(bp * atkStat / 200 - defStat * 0.1 + Math.random() * 10);
+      dmg = Math.max(1, dmg);
+      if (moveType === attacker.type || moveType === attacker.type2) dmg = Math.floor(dmg * 1.5);
+      const eff = getTypeEffectiveness(moveType, defender.type, defender.type2);
+      dmg = eff === 0 ? 0 : Math.max(1, Math.floor(dmg * eff));
+      let effTxt = eff === 0 ? " No effect!" : eff > 1 ? " Super effective!" : eff < 1 ? " Not very effective..." : "";
+      return { damage: dmg, text: `${attacker.name} used ${moveName}!${effTxt}`, isStatus: false, missed: false };
+    };
+
+    for (let slot = 0; slot < 4; slot++) {
+      const a1 = (p1Plan || [])[slot];
+      const a2 = (p2Plan || [])[slot];
+      if (!a1 && !a2) continue;
+
+      const spd1 = (PVP_SPEED[p1.team[p1Active]?.name] || 50) * p1.statBoost;
+      const spd2 = (PVP_SPEED[p2.team[p2Active]?.name] || 50) * p2.statBoost;
+      const p1First = spd1 >= spd2;
+
+      const doAction = (who, action) => {
+        const isP1 = who === 1;
+        const myTeam = isP1 ? p1.team : p2.team;
+        const myPp   = isP1 ? p1.pp   : p2.pp;
+        const myBoost = isP1 ? p1.statBoost : p2.statBoost;
+        const myActive = isP1 ? p1Active : p2Active;
+        const myPlayer = isP1 ? p1 : p2;
+        const oppTeam = isP1 ? p2.team : p1.team;
+        const oppActive = isP1 ? p2Active : p1Active;
+        const oppDodge = (() => {
+          const oppPlan = isP1 ? p2Plan : p1Plan;
+          return oppPlan?.[slot]?.type === 'dodge';
+        })();
+
+        if (!action) return;
+        const me = myTeam[myActive];
+        if (!me || me.hp <= 0) return;
+
+        if (action.type === 'switch') {
+          const toIdx = action.toIdx;
+          if (myTeam[toIdx]?.hp > 0) {
+            addEv(`${me.name} switches out! ${myTeam[toIdx].name} enters the field!`, 'switch');
+            if (isP1) p1Active = toIdx; else p2Active = toIdx;
+          } else {
+            addEv(`${me.name} tried to switch but ${myTeam[toIdx]?.name} has fainted!`, 'normal');
+          }
+          return;
+        }
+        if (action.type === 'dodge') { addEv(`${me.name} prepares to dodge! (50% chance)`, 'dodge'); return; }
+        if (action.type === 'item') {
+          if (myPlayer.itemUsed) { addEv(`${me.name} tried to use an item, but it's already used!`, 'normal'); return; }
+          myPlayer.itemUsed = true;
+          if (myPlayer.item === 'potion') {
+            const heal = Math.min(30, me.maxHp - me.hp);
+            me.hp = Math.min(me.maxHp, me.hp + heal);
+            addEv(`${me.name} used Potion! Restored ${heal} HP! (${me.hp}/${me.maxHp})`, 'item');
+          } else if (myPlayer.item === 'rarecandy') {
+            myPlayer.statBoost = Math.min(2.0, myPlayer.statBoost + 0.1);
+            addEv(`${me.name} used Rare Candy! All stats rose by 10%!`, 'item');
+          } else if (myPlayer.item === 'ether') {
+            const ppArr = myPp[myActive];
+            const mi = ppArr.findIndex((v, i) => v < getMovePP(me.moves[i]));
+            if (mi >= 0) { myPp[myActive][mi] = getMovePP(me.moves[mi]); addEv(`${me.name} used Ether! ${me.moves[mi]} PP restored!`, 'item'); }
+            else addEv(`${me.name} used Ether! But all PP is full.`, 'item');
+          } else if (myPlayer.item === 'repel') {
+            const opp = oppTeam[oppActive];
+            const aliveOpp = oppTeam.map((p, i) => i).filter(i => i !== oppActive && oppTeam[i].hp > 0);
+            if (aliveOpp.length > 0) {
+              const newIdx = aliveOpp[Math.floor(Math.random() * aliveOpp.length)];
+              addEv(`${me.name} used Repel! ${opp.name} was forced out! ${oppTeam[newIdx].name} entered!`, 'switch');
+              if (isP1) p2Active = newIdx; else p1Active = newIdx;
+            } else { addEv(`${me.name} used Repel! But ${opp.name} has no backup!`, 'normal'); }
+          }
+          return;
+        }
+        if (action.type === 'move') {
+          const mi = action.moveIndex;
+          const opp = oppTeam[oppActive];
+          if (!opp || opp.hp <= 0) return;
+          if (myPp[myActive][mi] <= 0) {
+            const dmg = 20;
+            opp.hp = Math.max(0, opp.hp - dmg);
+            addEv(`${me.name} has no PP! Used Struggle! (-${dmg} HP to ${opp.name})`, 'damage');
+            if (opp.hp <= 0) addEv(`${opp.name} fainted!`, 'ko');
+            return;
+          }
+          myPp[myActive][mi]--;
+          if (oppDodge && Math.random() < 0.5) { addEv(`${me.name} used ${me.moves[mi]}! ${opp.name} dodged successfully!`, 'dodge'); return; }
+          const res = calcPvpDmg(me, opp, mi, myBoost);
+          if (res.missed) { addEv(`${res.text} But it missed!`, 'miss'); return; }
+          if (res.isStatus) { addEv(res.text, 'normal'); return; }
+          opp.hp = Math.max(0, opp.hp - res.damage);
+          addEv(`${res.text} (-${res.damage} HP)`, res.damage > 0 ? 'damage' : 'normal');
+          if (opp.hp <= 0) addEv(`${opp.name} fainted!`, 'ko');
+        }
+      };
+
+      if (p1First) { doAction(1, a1); doAction(2, a2); }
+      else          { doAction(2, a2); doAction(1, a1); }
+    }
+
+    // Determine round winner
+    const p1AllKO = p1.team.every(p => p.hp <= 0);
+    const p2AllKO = p2.team.every(p => p.hp <= 0);
+    let roundWinner = null;
+    if (p1AllKO && p2AllKO) {
+      roundWinner = 'draw';
+      addEv("Both teams are down! It's a draw!", 'ko');
+    } else if (p2AllKO) {
+      roundWinner = 'p1';
+      addEv("Player 2's team has been knocked out! PLAYER 1 WINS!", 'ko');
+    } else if (p1AllKO) {
+      roundWinner = 'p2';
+      addEv("Player 1's team has been knocked out! PLAYER 2 WINS!", 'ko');
+    } else {
+      // Both alive: calculate remaining HP totals
+      const p1TotalHp = p1.team.reduce((s, p) => s + p.hp, 0);
+      const p2TotalHp = p2.team.reduce((s, p) => s + p.hp, 0);
+      if (p1TotalHp > p2TotalHp) { roundWinner = 'p1'; addEv(`Round over! Player 1 leads on HP (${p1TotalHp} vs ${p2TotalHp})!`, 'normal'); }
+      else if (p2TotalHp > p1TotalHp) { roundWinner = 'p2'; addEv(`Round over! Player 2 leads on HP (${p2TotalHp} vs ${p1TotalHp})!`, 'normal'); }
+      else { roundWinner = 'draw'; addEv("Round over! Both players have equal HP remaining — it's a draw!", 'normal'); }
+    }
+
+    // Find next alive active index for each player
+    const nextAlive = (team, curIdx) => {
+      if (team[curIdx]?.hp > 0) return curIdx;
+      const next = team.findIndex((p, i) => i !== curIdx && p.hp > 0);
+      return next >= 0 ? next : curIdx;
+    };
+    const finalP1 = { ...p1, activeIndex: nextAlive(p1.team, p1Active), plan: undefined };
+    const finalP2 = { ...p2, activeIndex: nextAlive(p2.team, p2Active), plan: undefined };
+    if (events.length > 0) events[events.length - 1] = { ...events[events.length - 1], roundWinner, finalP1, finalP2 };
+    return { events, finalP1, finalP2 };
+  };
+
+  const pvpStartNextRound = () => {
+    const p1 = pvpP1;
+    const p2 = pvpP2;
+    setPvpRoundNum(r => r + 1);
+    setPvpWinner(null);
+    setPvpShowdownEvents([]);
+    setPvpShowdownStep(0);
+    setPvpPlan({ player: 1, slots: [], currentPokemonIdx: p1.activeIndex, movesUsedByPokemon: { 0: [], 1: [], 2: [] }, subState: null });
+    setGameState('pvp-planning-p1');
+  };
+
   const startNewBattle = () => {
     setShowPokemart(false);
     setShowBag(false);
@@ -4312,6 +4580,345 @@ const PokemonGame = () => {
   };
 
   // Pokemon Red/Blue Intro Screen
+  // ──────────────────────────────────────────────────────────────────────────
+  // PvP SCREENS
+  // ──────────────────────────────────────────────────────────────────────────
+  if (gameState === 'pvp-planning-p1' || gameState === 'pvp-planning-p2') {
+    const isP1Turn = gameState === 'pvp-planning-p1';
+    const curPlayer = isP1Turn ? pvpP1 : pvpP2;
+    const plan = pvpPlan;
+    if (!curPlayer || !plan) return null;
+
+    const team = curPlayer.team;
+    const curPokemon = team[plan.currentPokemonIdx];
+    const slotsNeeded = 4;
+    const slotsLeft = slotsNeeded - plan.slots.length;
+    const allFilled = plan.slots.length >= slotsNeeded;
+    const usedMoves = plan.movesUsedByPokemon[plan.currentPokemonIdx] || [];
+    const aliveTeammates = team.map((p, i) => i).filter(i => i !== plan.currentPokemonIdx && p.hp > 0);
+    // Check if item already planned
+    const itemAlreadyPlanned = plan.slots.some(s => s.type === 'item');
+
+    const slotTypeEmoji = (s) => {
+      if (!s) return '—';
+      if (s.type === 'move') return `⚔️ ${team[s.pokemonIndex || plan.currentPokemonIdx]?.moves?.[s.moveIndex] || '?'}`;
+      if (s.type === 'dodge') return '🛡️ Dodge';
+      if (s.type === 'item') return `🎒 Item`;
+      if (s.type === 'switch') return `🔄 → ${team[s.toIdx]?.name || '?'}`;
+      return '—';
+    };
+
+    return (
+      <div className="min-h-screen flex items-center justify-center p-2" style={{fontFamily:'monospace',background:'#1a1a2e'}}>
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="border-4 border-black p-3 mb-3 text-center" style={{background: isP1Turn ? '#dc2626' : '#2563eb'}}>
+            <div className="text-xl font-bold retro-text" style={{color:'#fff',textShadow:'2px 2px 0 #000'}}>
+              {isP1Turn ? '⚔️ PLAYER 1' : '⚔️ PLAYER 2'} — ROUND {pvpRoundNum}
+            </div>
+            <div className="text-xs retro-text mt-1" style={{color:'#fef08a'}}>
+              PLANNING PHASE — Plan {slotsNeeded} actions in secret
+            </div>
+          </div>
+
+          {/* Team status */}
+          <div className="border-4 border-black p-2 mb-3" style={{background:'#f0fdf4'}}>
+            <div className="text-xs font-bold retro-text mb-2" style={{color:'#000'}}>YOUR TEAM:</div>
+            <div className="flex gap-2">
+              {team.map((p, i) => (
+                <div key={i} className={`flex-1 border-2 p-1 text-center ${i === plan.currentPokemonIdx ? 'border-yellow-500' : 'border-gray-400'}`}
+                  style={{background: p.hp <= 0 ? '#fecaca' : i === plan.currentPokemonIdx ? '#fef9c3' : '#fff', opacity: p.hp <= 0 ? 0.6 : 1}}>
+                  <div className="text-xs font-bold retro-text" style={{color:'#000',fontSize:'9px'}}>{p.name}</div>
+                  <div className="text-xs retro-text" style={{color: p.hp <= 0 ? '#dc2626' : '#16a34a',fontSize:'8px'}}>
+                    {p.hp <= 0 ? 'FAINTED' : `${p.hp}/${p.maxHp}`}
+                  </div>
+                  {i === plan.currentPokemonIdx && <div style={{fontSize:'7px',color:'#854d0e',fontWeight:'bold'}}>▲ ACTING</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Item info */}
+          <div className="border-4 border-black p-2 mb-3 flex items-center justify-between" style={{background:'#fef3c7'}}>
+            <div className="text-xs retro-text" style={{color:'#000'}}><span style={{fontWeight:'bold'}}>ITEM:</span> {PVP_ITEM_LABEL[curPlayer.item] || curPlayer.item}</div>
+            {curPlayer.itemUsed && <span className="text-xs retro-text" style={{color:'#dc2626',fontWeight:'bold'}}>USED</span>}
+          </div>
+
+          {/* Slot plan display */}
+          <div className="border-4 border-black p-2 mb-3" style={{background:'#f8fafc'}}>
+            <div className="text-xs font-bold retro-text mb-1" style={{color:'#000'}}>ACTION PLAN:</div>
+            <div className="flex gap-1">
+              {[0,1,2,3].map(i => (
+                <div key={i} className="flex-1 border-2 p-1 text-center" style={{
+                  borderColor: i < plan.slots.length ? '#16a34a' : i === plan.slots.length ? '#eab308' : '#9ca3af',
+                  background: i < plan.slots.length ? '#f0fdf4' : i === plan.slots.length ? '#fefce8' : '#f9fafb',
+                  minHeight:'36px',fontSize:'8px',color:'#000',
+                }}>
+                  <div style={{fontWeight:'bold',fontSize:'7px',color:'#6b7280'}}>T{i+1}</div>
+                  <div style={{fontSize:'8px',wordBreak:'break-all'}}>{i < plan.slots.length ? slotTypeEmoji(plan.slots[i]) : i === plan.slots.length ? '▼ pick' : ''}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Action picker (only if not all filled and not in sub-state) */}
+          {!allFilled && plan.subState === null && (
+            <div className="border-4 border-black p-2 mb-3" style={{background:'#fff'}}>
+              <div className="text-xs font-bold retro-text mb-2" style={{color:'#000'}}>
+                TURN {plan.slots.length + 1} — Choose action for {curPokemon?.name}:
+              </div>
+              {/* Moves */}
+              <div className="grid grid-cols-2 gap-1 mb-2">
+                {curPokemon?.moves?.map((moveName, mi) => {
+                  const used = usedMoves.includes(mi);
+                  const ppLeft = curPlayer.pp[plan.currentPokemonIdx]?.[mi] ?? 0;
+                  return (
+                    <button key={mi} onClick={() => !used && ppLeft > 0 && pvpAddSlot({ type:'move', moveIndex:mi, pokemonIndex:plan.currentPokemonIdx })}
+                      disabled={used || ppLeft <= 0}
+                      className="border-2 border-black p-1 text-left retro-text transition-all hover:scale-105"
+                      style={{fontSize:'9px',background: used||ppLeft<=0 ? '#e5e7eb' : '#fff',opacity: used||ppLeft<=0 ? 0.5 : 1,cursor: used||ppLeft<=0?'not-allowed':'pointer'}}>
+                      ⚔️ {moveName}<br/>
+                      <span style={{color:'#6b7280',fontSize:'8px'}}>{curPokemon.moveTypes?.[mi]} | PP:{ppLeft}{used?' ✗USED':''}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {/* Other actions */}
+              <div className="flex gap-1 flex-wrap">
+                <button onClick={() => pvpAddSlot({ type:'dodge', pokemonIndex:plan.currentPokemonIdx })}
+                  className="border-2 border-black px-2 py-1 retro-text hover:scale-105 transition-all"
+                  style={{fontSize:'9px',background:'#dbeafe'}}>
+                  🛡️ Dodge <span style={{color:'#6b7280'}}>(50%)</span>
+                </button>
+                {!itemAlreadyPlanned && !curPlayer.itemUsed && (
+                  <button onClick={() => pvpAddSlot({ type:'item', pokemonIndex:plan.currentPokemonIdx })}
+                    className="border-2 border-black px-2 py-1 retro-text hover:scale-105 transition-all"
+                    style={{fontSize:'9px',background:'#fef9c3'}}>
+                    🎒 Use Item
+                  </button>
+                )}
+                {aliveTeammates.length > 0 && (
+                  <button onClick={() => setPvpPlan(p => ({ ...p, subState: 'pick-switch-target' }))}
+                    className="border-2 border-black px-2 py-1 retro-text hover:scale-105 transition-all"
+                    style={{fontSize:'9px',background:'#f0fdf4'}}>
+                    🔄 Switch
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Switch target picker */}
+          {plan.subState === 'pick-switch-target' && (
+            <div className="border-4 border-black p-2 mb-3" style={{background:'#f0fdf4'}}>
+              <div className="text-xs font-bold retro-text mb-2" style={{color:'#000'}}>Switch {curPokemon?.name} out for:</div>
+              <div className="flex flex-col gap-1">
+                {aliveTeammates.map(i => (
+                  <button key={i} onClick={() => pvpAddSlot({ type:'switch', fromIdx:plan.currentPokemonIdx, toIdx:i })}
+                    className="border-2 border-black p-2 retro-text text-left hover:scale-105 transition-all"
+                    style={{fontSize:'9px',background:'#fff'}}>
+                    🔄 {team[i].name} — HP: {team[i].hp}/{team[i].maxHp}
+                    <br/><span style={{color:'#6b7280',fontSize:'8px'}}>{team[i].type}{team[i].type2 ? '/'+team[i].type2:''} | SPD:{PVP_SPEED[team[i].name]||'?'}</span>
+                  </button>
+                ))}
+                <button onClick={() => setPvpPlan(p => ({ ...p, subState: null }))}
+                  className="border-2 border-black p-1 retro-text text-center" style={{fontSize:'9px',background:'#fecaca'}}>
+                  ✕ Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Confirm button */}
+          {allFilled && (
+            <button onClick={pvpConfirmPlan}
+              className="w-full border-4 border-black p-3 retro-text font-bold text-center hover:scale-105 transition-all"
+              style={{fontSize:'14px',background:'#16a34a',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
+              ✅ CONFIRM PLAN
+            </button>
+          )}
+
+          {/* Cancel all / undo last */}
+          {plan.slots.length > 0 && !allFilled && (
+            <button onClick={() => setPvpPlan(p => {
+              const newSlots = p.slots.slice(0,-1);
+              // Recalculate currentPokemonIdx from the remaining slots
+              let curIdx = isP1Turn ? pvpP1.activeIndex : pvpP2.activeIndex;
+              const newUsed = { 0:[], 1:[], 2:[] };
+              newSlots.forEach(s => {
+                if (s.type === 'switch') curIdx = s.toIdx;
+                if (s.type === 'move') newUsed[s.pokemonIndex] = [...(newUsed[s.pokemonIndex]||[]), s.moveIndex];
+              });
+              return { ...p, slots: newSlots, currentPokemonIdx: curIdx, movesUsedByPokemon: newUsed, subState: null };
+            })}
+              className="w-full border-2 border-black p-2 retro-text text-center mt-2"
+              style={{fontSize:'10px',background:'#fef3c7',color:'#000'}}>
+              ← Undo Last Action
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'pvp-cover') {
+    const nextLabel = pvpCoverTarget === 'p2-plan' ? 'Player 2' : 'Showdown';
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{fontFamily:'monospace',background:'#1a1a2e'}}>
+        <div className="w-full max-w-md text-center">
+          <div className="border-4 border-black p-8" style={{background:'#1e293b',borderRadius:'4px'}}>
+            <div style={{fontSize:'64px',marginBottom:'16px'}}>🙈</div>
+            <h2 className="text-2xl font-bold retro-text mb-4" style={{color:'#fbbf24',textShadow:'2px 2px 0 #000'}}>
+              COVER YOUR EYES!
+            </h2>
+            <p className="retro-text mb-6" style={{color:'#94a3b8',fontSize:'12px'}}>
+              {pvpCoverTarget === 'p2-plan'
+                ? 'Player 1 has finished planning.\nPass the device to Player 2 — no peeking!'
+                : 'Both players have planned.\nReady to see the results?'}
+            </p>
+            <button onClick={() => setGameState(pvpCoverTarget === 'p2-plan' ? 'pvp-planning-p2' : 'pvp-showdown')}
+              className="border-4 border-black px-8 py-4 font-bold retro-text hover:scale-105 transition-all"
+              style={{fontSize:'14px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
+              {pvpCoverTarget === 'p2-plan' ? '➡️ PLAYER 2 START PLANNING' : '⚔️ BEGIN SHOWDOWN'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'pvp-showdown') {
+    if (!pvpP1 || !pvpP2) return null;
+    const ev = pvpShowdownEvents[pvpShowdownStep] || pvpShowdownEvents[pvpShowdownEvents.length - 1];
+    const totalSteps = pvpShowdownEvents.length;
+    const isLast = pvpShowdownStep >= totalSteps - 1;
+    const highlightColor = { damage:'#dc2626', dodge:'#2563eb', switch:'#16a34a', ko:'#7c3aed', item:'#d97706', miss:'#6b7280', normal:'#1e293b' };
+
+    const renderTeamBars = (playerLabel, team, hpArr, activeIdx, bgColor) => (
+      <div className="border-4 border-black p-2 mb-2" style={{background:bgColor}}>
+        <div className="text-xs font-bold retro-text mb-1" style={{color:'#000'}}>{playerLabel}</div>
+        {team.map((p, i) => {
+          const hp = hpArr?.[i] ?? p.hp;
+          const pct = Math.max(0, (hp / p.maxHp) * 100);
+          const barColor = pct > 50 ? '#16a34a' : pct > 20 ? '#eab308' : '#dc2626';
+          return (
+            <div key={i} className="flex items-center gap-1 mb-1" style={{opacity: hp <= 0 ? 0.4 : 1}}>
+              <div className="retro-text" style={{fontSize:'8px',width:'70px',fontWeight: i===activeIdx ? 'bold' : 'normal',color: i===activeIdx?'#000':'#374151'}}>
+                {i===activeIdx ? '▶ ':''}{p.name}{hp<=0?' ✝':''}
+              </div>
+              <div className="flex-1 border border-black" style={{height:'8px',background:'#e5e7eb'}}>
+                <div style={{width:`${pct}%`,height:'100%',background:barColor,transition:'width 0.4s'}} />
+              </div>
+              <div className="retro-text" style={{fontSize:'7px',width:'40px',textAlign:'right',color:'#000'}}>{hp}/{p.maxHp}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
+
+    return (
+      <div className="min-h-screen flex items-center justify-center p-2" style={{fontFamily:'monospace',background:'#1a1a2e'}}>
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="border-4 border-black p-2 mb-2 text-center" style={{background:'#7c3aed'}}>
+            <div className="text-lg font-bold retro-text" style={{color:'#fbbf24',textShadow:'2px 2px 0 #000'}}>
+              ⚔️ SHOWDOWN — ROUND {pvpRoundNum}
+            </div>
+            <div className="text-xs retro-text" style={{color:'#e9d5ff'}}>Turn {pvpShowdownStep + 1} of {totalSteps}</div>
+          </div>
+
+          {/* HP bars */}
+          {ev && renderTeamBars('PLAYER 1', pvpP1.team, ev.p1Hp, ev.p1Active, '#fee2e2')}
+          {ev && renderTeamBars('PLAYER 2', pvpP2.team, ev.p2Hp, ev.p2Active, '#dbeafe')}
+
+          {/* Event log */}
+          <div className="border-4 border-black p-3 mb-3 text-center" style={{background: highlightColor[ev?.highlight] || '#1e293b',minHeight:'64px'}}>
+            <div className="retro-text font-bold" style={{color:'#fff',fontSize:'13px',textShadow:'1px 1px 0 #000',lineHeight:'1.6'}}>
+              {ev?.text || '...'}
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <div className="flex gap-2">
+            {pvpShowdownStep > 0 && (
+              <button onClick={() => setPvpShowdownStep(s => s - 1)}
+                className="flex-1 border-2 border-black p-2 retro-text hover:scale-105 transition-all"
+                style={{fontSize:'10px',background:'#f1f5f9',color:'#000'}}>
+                ◀ Prev
+              </button>
+            )}
+            {!isLast ? (
+              <button onClick={() => setPvpShowdownStep(s => s + 1)}
+                className="flex-1 border-4 border-black p-3 retro-text font-bold hover:scale-105 transition-all"
+                style={{fontSize:'13px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
+                NEXT ▶
+              </button>
+            ) : (
+              <button onClick={() => {
+                const lastEv = pvpShowdownEvents[pvpShowdownEvents.length - 1];
+                const winner = lastEv?.roundWinner || pvpWinner;
+                if (winner && winner !== 'draw') {
+                  setPvpWinner(winner);
+                  setGameState('pvp-result');
+                } else if (pvpP1?.team.every(p => p.hp <= 0) || pvpP2?.team.every(p => p.hp <= 0) || winner === 'draw') {
+                  setPvpWinner(winner || 'draw');
+                  setGameState('pvp-result');
+                } else {
+                  pvpStartNextRound();
+                }
+              }}
+                className="flex-1 border-4 border-black p-3 retro-text font-bold hover:scale-105 transition-all"
+                style={{fontSize:'13px',background:'#16a34a',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
+                {pvpP1?.team.every(p => p.hp <= 0) || pvpP2?.team.every(p => p.hp <= 0) || pvpWinner ? '🏆 RESULTS' : '⚔️ NEXT ROUND'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (gameState === 'pvp-result') {
+    const winnerLabel = pvpWinner === 'p1' ? '🏆 PLAYER 1 WINS!' : pvpWinner === 'p2' ? '🏆 PLAYER 2 WINS!' : "🤝 IT'S A DRAW!";
+    const winnerBg   = pvpWinner === 'p1' ? '#dc2626' : pvpWinner === 'p2' ? '#2563eb' : '#6b7280';
+    const p1Total = pvpP1?.team.reduce((s,p) => s+p.hp, 0) || 0;
+    const p2Total = pvpP2?.team.reduce((s,p) => s+p.hp, 0) || 0;
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4" style={{fontFamily:'monospace',background:'#1a1a2e'}}>
+        <div className="w-full max-w-md text-center">
+          <div className="border-4 border-black p-4 mb-4" style={{background:winnerBg}}>
+            <div className="text-2xl font-bold retro-text" style={{color:'#fff',textShadow:'3px 3px 0 #000'}}>{winnerLabel}</div>
+          </div>
+          <div className="border-4 border-black p-3 mb-4" style={{background:'#f8fafc'}}>
+            <div className="text-sm font-bold retro-text mb-2" style={{color:'#000'}}>FINAL HP TOTALS</div>
+            <div className="flex justify-around">
+              <div>
+                <div className="text-xs retro-text" style={{color:'#dc2626',fontWeight:'bold'}}>P1 Total HP</div>
+                <div className="text-lg retro-text" style={{color:'#000'}}>{p1Total}</div>
+              </div>
+              <div>
+                <div className="text-xs retro-text" style={{color:'#2563eb',fontWeight:'bold'}}>P2 Total HP</div>
+                <div className="text-lg retro-text" style={{color:'#000'}}>{p2Total}</div>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <button onClick={pvpInitBattle}
+              className="border-4 border-black px-6 py-3 font-bold retro-text hover:scale-105 transition-all"
+              style={{fontSize:'13px',background:'#dc2626',color:'#fff',boxShadow:'4px 4px 0 #000'}}>
+              🔄 REMATCH
+            </button>
+            <button onClick={() => setGameState('intro')}
+              className="border-2 border-black px-4 py-2 retro-text"
+              style={{fontSize:'11px',background:'#f1f5f9',color:'#000'}}>
+              ← Back to Title
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (gameState === 'intro') {
     return (
       <div className="min-h-screen p-4 flex items-center justify-center" style={{fontFamily: 'monospace'}}>
@@ -4378,7 +4985,7 @@ const PokemonGame = () => {
               onClick={() => {
                 setGameState('difficulty');
               }}
-              className="border-3 border-black px-6 py-3 font-bold text-sm transition-all hover:scale-105 retro-text"
+              className="border-3 border-black px-6 py-3 font-bold text-sm transition-all hover:scale-105 retro-text mb-3"
               style={{
                 backgroundColor: '#dc2626',
                 color: '#fff',
@@ -4386,6 +4993,19 @@ const PokemonGame = () => {
               }}
             >
               START GAME
+            </button>
+
+            {/* 2 PLAYER Button */}
+            <button
+              onClick={pvpInitBattle}
+              className="border-3 border-black px-6 py-3 font-bold text-sm transition-all hover:scale-105 retro-text"
+              style={{
+                backgroundColor: '#2563eb',
+                color: '#fff',
+                boxShadow: '4px 4px 0px #000'
+              }}
+            >
+              ⚔️ 2 PLAYER
             </button>
           </div>
 
