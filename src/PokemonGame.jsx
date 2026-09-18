@@ -4120,6 +4120,16 @@ const PokemonGame = () => {
       const a2 = (p2Plan || [])[slot];
       if (!a1 && !a2) continue;
 
+      // Announce dodges upfront, before speed-ordered actions
+      if (a1?.type === 'dodge') {
+        const dodger = p1.team[p1Active];
+        if (dodger && dodger.hp > 0) addEv(`${dodger.name} prepares to dodge! (50% chance)`, 'dodge');
+      }
+      if (a2?.type === 'dodge') {
+        const dodger = p2.team[p2Active];
+        if (dodger && dodger.hp > 0) addEv(`${dodger.name} prepares to dodge! (50% chance)`, 'dodge');
+      }
+
       const spd1 = (PVP_SPEED[p1.team[p1Active]?.name] || 50) * p1.statBoost;
       const spd2 = (PVP_SPEED[p2.team[p2Active]?.name] || 50) * p2.statBoost;
       const p1First = spd1 >= spd2;
@@ -4152,7 +4162,7 @@ const PokemonGame = () => {
           }
           return;
         }
-        if (action.type === 'dodge') { addEv(`${me.name} prepares to dodge! (50% chance)`, 'dodge'); return; }
+        if (action.type === 'dodge') { return; }
         if (action.type === 'item') {
           if (myPlayer.itemUsed) { addEv(`${me.name} tried to use an item, but it's already used!`, 'normal'); return; }
           myPlayer.itemUsed = true;
