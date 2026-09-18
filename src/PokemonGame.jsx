@@ -4621,7 +4621,7 @@ const PokemonGame = () => {
                   filter: fainted ? 'grayscale(1)' : 'none',
                   border: isActive ? '2px solid #000' : '2px solid transparent'}} />
             ) : (
-              <img src="/poke_ball.png" alt="???"
+              <img src="/great-ball.png" alt="???"
                 style={{width:'28px',height:'28px',imageRendering:'pixelated',opacity:0.7}} />
             )}
           </div>
