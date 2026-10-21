@@ -539,6 +539,10 @@ const PokemonGame = () => {
   const [pvpWinner, setPvpWinner] = useState(null);   // 'p1'|'p2'|'draw'
   const [pvpRoundNum, setPvpRoundNum] = useState(1);
   const [pvpCoverTarget, setPvpCoverTarget] = useState('p2-plan'); // 'p2-plan'|'showdown'
+  const [pvpFlash, setPvpFlash] = useState({ target: null, cls: '', key: 0 });
+  const pvpLastFxStepRef = useRef(-1);
+  const pvpPendingSendoutRef = useRef(false);
+  const pvpFxTimersRef = useRef([]);
 
   // League refs (prevent stale closures in setTimeout callbacks)
   const leagueActiveRef = useRef(false);
@@ -628,7 +632,9 @@ const PokemonGame = () => {
 
   // Play Pokemon Center theme only on difficulty + starter selection screens
   useEffect(() => {
-    const isGuideScreen = gameState === 'difficulty' || gameState === 'start';
+    const isPvpLobby = gameState === 'pvp-pick-starter-p1' || gameState === 'pvp-pick-starter-p2'
+      || (gameState === 'pvp-cover' && (pvpCoverTarget === 'p2-starter' || pvpCoverTarget === 'p1-plan'));
+    const isGuideScreen = gameState === 'difficulty' || gameState === 'start' || isPvpLobby;
 
     if (!isGuideScreen || audioVolume === 'none') {
       if (introMusicRef.current) {
@@ -658,7 +664,46 @@ const PokemonGame = () => {
       // User has already clicked START GAME to reach here, so play() won't be blocked
       music.play().then(fadeIn).catch(() => {});
     }
-  }, [gameState, audioVolume]);
+  }, [gameState, audioVolume, pvpCoverTarget]);
+
+  // PvP showdown sound + hit flash, fired once per newly revealed log step (not when stepping back)
+  useEffect(() => {
+    if (gameState !== 'pvp-showdown') {
+      pvpLastFxStepRef.current = -1;
+      pvpFxTimersRef.current.forEach(clearTimeout);
+      pvpFxTimersRef.current = [];
+      setPvpFlash(f => (f.target ? { target: null, cls: '', key: 0 } : f));
+      return;
+    }
+    const step = pvpShowdownStep;
+    if (step <= pvpLastFxStepRef.current) return;
+    pvpLastFxStepRef.current = step;
+    const ev = pvpShowdownEvents[step];
+    if (!ev) return;
+
+    let delay = 0;
+    if (step === 0 && pvpPendingSendoutRef.current) {
+      pvpPendingSendoutRef.current = false;
+      playSound('sendout');
+      delay = 900;
+    }
+    const schedule = (fn, ms) => { pvpFxTimersRef.current.push(setTimeout(fn, ms)); };
+
+    if (ev.sendout) {
+      schedule(() => playSound('sendout'), delay);
+    } else if (ev.hit) {
+      const superEff = ev.eff > 1;
+      const cls = superEff ? 'sprite-flash-triple' : 'sprite-flash-once';
+      const duration = superEff ? 650 : 400;
+      schedule(() => {
+        setPvpFlash({ target: ev.hit, cls, key: Date.now() });
+        playSound(superEff ? 'super-effective' : 'not-very-effective');
+        schedule(() => setPvpFlash(f => (f.cls === cls && f.target === ev.hit ? { ...f, target: null, cls: '' } : f)), duration);
+      }, delay);
+    }
+  }, [gameState, pvpShowdownStep, pvpShowdownEvents]);
+
+  useEffect(() => () => pvpFxTimersRef.current.forEach(clearTimeout), []);
 
   // Start Mewtwo battle — called by both button click and Enter key
   const startMewtwoBattle = () => {
@@ -4020,11 +4065,15 @@ const PokemonGame = () => {
     const allPvp = [...wildPokemons, ...CHAMPION_POKEMON_POOL];
     const findByName = (name) => { const p = allPvp.find(pk => pk.name === name); return p ? { ...p, hp: p.maxHp } : null; };
     const pickRand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const available = (tier) => tier.filter(name => allPvp.some(pk => pk.name === name && pk.moves?.length));
+    const rarePool = available(PVP_TIER_RARE);
+    const uncommonPool = available(PVP_TIER_UNCOMMON);
+    const commonPool = available(PVP_TIER_COMMON);
 
     const buildTeam = () => {
-      const rName = pickRand(PVP_TIER_RARE);
-      const uName = pickRand(PVP_TIER_UNCOMMON);
-      let cName; do { cName = pickRand(PVP_TIER_COMMON); } while (cName === uName);
+      const rName = pickRand(rarePool);
+      const uName = pickRand(uncommonPool);
+      const cName = pickRand(commonPool.filter(n => n !== uName && n !== rName));
       const team = [rName, uName, cName].map((name, i) => {
         const base = findByName(name);
         return base ? { ...base, uid: `pvp${i}_${Math.random().toString(36).substr(2,6)}` } : null;
@@ -4042,6 +4091,7 @@ const PokemonGame = () => {
     setPvpWinner(null);
     setPvpShowdownEvents([]);
     setPvpShowdownStep(0);
+    pvpPendingSendoutRef.current = true;
     setPvpCoverTarget('p2-starter');
     setGameState('pvp-pick-starter-p1');
   };
@@ -4094,7 +4144,7 @@ const PokemonGame = () => {
       p1Hp: p1.team.map(p => p.hp), p2Hp: p2.team.map(p => p.hp),
       p1Active, p2Active, ...extra,
     });
-    const addEv = (text, highlight = 'normal') => events.push({ text, highlight, ...snap() });
+    const addEv = (text, highlight = 'normal', extra = {}) => events.push({ text, highlight, ...snap(), ...extra });
 
     const calcPvpDmg = (attacker, defender, mi, boost) => {
       const moveName = attacker.moves[mi];
@@ -4113,7 +4163,7 @@ const PokemonGame = () => {
       const eff = getTypeEffectiveness(moveType, defender.type, defender.type2);
       dmg = eff === 0 ? 0 : Math.max(1, Math.floor(dmg * eff));
       let effTxt = eff === 0 ? " No effect!" : eff > 1 ? " Super effective!" : eff < 1 ? " Not very effective..." : "";
-      return { damage: dmg, text: `${attacker.name} used ${moveName}!${effTxt}`, isStatus: false, missed: false };
+      return { damage: dmg, eff, text: `${attacker.name} used ${moveName}!${effTxt}`, isStatus: false, missed: false };
     };
 
     for (let slot = 0; slot < 4; slot++) {
@@ -4156,8 +4206,8 @@ const PokemonGame = () => {
         if (action.type === 'switch') {
           const toIdx = action.toIdx;
           if (myTeam[toIdx]?.hp > 0) {
-            addEv(`${me.name} switches out! ${myTeam[toIdx].name} enters the field!`, 'switch');
             if (isP1) p1Active = toIdx; else p2Active = toIdx;
+            addEv(`${me.name} switches out! ${myTeam[toIdx].name} enters the field!`, 'switch', { sendout: true });
           } else {
             addEv(`${me.name} tried to switch but ${myTeam[toIdx]?.name} has fainted!`, 'normal');
           }
@@ -4184,8 +4234,8 @@ const PokemonGame = () => {
             const aliveOpp = oppTeam.map((p, i) => i).filter(i => i !== oppActive && oppTeam[i].hp > 0);
             if (aliveOpp.length > 0) {
               const newIdx = aliveOpp[Math.floor(Math.random() * aliveOpp.length)];
-              addEv(`${me.name} used Repel! ${opp.name} was forced out! ${oppTeam[newIdx].name} entered!`, 'switch');
               if (isP1) p2Active = newIdx; else p1Active = newIdx;
+              addEv(`${me.name} used Repel! ${opp.name} was forced out! ${oppTeam[newIdx].name} entered!`, 'switch', { sendout: true });
             } else { addEv(`${me.name} used Repel! But ${opp.name} has no backup!`, 'normal'); }
           }
           return;
@@ -4197,7 +4247,7 @@ const PokemonGame = () => {
           if (myPp[myActive][mi] <= 0) {
             const dmg = 20;
             opp.hp = Math.max(0, opp.hp - dmg);
-            addEv(`${me.name} has no PP! Used Struggle! (-${dmg} HP to ${opp.name})`, 'damage');
+            addEv(`${me.name} has no PP! Used Struggle! (-${dmg} HP to ${opp.name})`, 'damage', { hit: isP1 ? 'p2' : 'p1', eff: 1 });
             if (opp.hp <= 0) addEv(`${opp.name} fainted!`, 'ko');
             return;
           }
@@ -4207,7 +4257,8 @@ const PokemonGame = () => {
           if (res.missed) { addEv(`${res.text} But it missed!`, 'miss'); return; }
           if (res.isStatus) { addEv(res.text, 'normal'); return; }
           opp.hp = Math.max(0, opp.hp - res.damage);
-          addEv(`${res.text} (-${res.damage} HP)`, res.damage > 0 ? 'damage' : 'normal');
+          addEv(`${res.text} (-${res.damage} HP)`, res.damage > 0 ? 'damage' : 'normal',
+            res.damage > 0 ? { hit: isP1 ? 'p2' : 'p1', eff: res.eff } : {});
           if (opp.hp <= 0) addEv(`${opp.name} fainted!`, 'ko');
         }
       };
@@ -4653,6 +4704,7 @@ const PokemonGame = () => {
     const aliveOptions = team.map((p, i) => ({p, i})).filter(({p}) => p.hp > 0);
 
     const pickSwitch = (i) => {
+      pvpPendingSendoutRef.current = true;
       if (isP1) {
         setPvpP1(p => ({...p, activeIndex: i}));
         // Check if P2 also needs to switch
@@ -5069,11 +5121,15 @@ const PokemonGame = () => {
     const renderBattleCard = (label, team, hpArr, activeIdx, revealedSet, bg) => {
       const p = team[activeIdx];
       const hp = hpArr?.[activeIdx] ?? p?.hp ?? 0;
+      const side = label === 'PLAYER 1' ? 'p1' : 'p2';
+      const isFlashing = pvpFlash.target === side;
       return (
         <div className="border-4 border-black p-2" style={{background:bg}}>
           <div className="text-center font-bold retro-text mb-1" style={{color:'#000',fontSize:'9px'}}>{label}</div>
           <div className="flex justify-center mb-1">
-            <img src={getPokemonSprite(p?.name||'')} alt={p?.name}
+            <img key={isFlashing ? `flash-${pvpFlash.key}` : `idle-${activeIdx}`}
+              className={isFlashing ? pvpFlash.cls : ''}
+              src={getPokemonSprite(p?.name||'')} alt={p?.name}
               style={{width:'80px',height:'80px',imageRendering:'pixelated',filter:hp<=0?'grayscale(1)':'none'}} />
           </div>
           <div className="font-bold retro-text text-center mb-1" style={{color:'#000',fontSize:'10px',textTransform:'uppercase'}}>{p?.name}</div>
