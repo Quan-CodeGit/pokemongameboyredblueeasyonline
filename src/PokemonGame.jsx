@@ -541,7 +541,7 @@ const PokemonGame = () => {
   const [pvpCoverTarget, setPvpCoverTarget] = useState('p2-plan'); // 'p2-plan'|'showdown'
   const [pvpFlash, setPvpFlash] = useState({ target: null, cls: '', key: 0 });
   const pvpLastFxStepRef = useRef(-1);
-  const pvpPendingSendoutRef = useRef(false);
+  const pvpPendingSendoutRef = useRef({ p1: false, p2: false });
   const pvpFxTimersRef = useRef([]);
 
   // League refs (prevent stale closures in setTimeout callbacks)
@@ -4085,7 +4085,7 @@ const PokemonGame = () => {
     setPvpWinner(null);
     setPvpShowdownEvents([]);
     setPvpShowdownStep(0);
-    pvpPendingSendoutRef.current = true;
+    pvpPendingSendoutRef.current = { p1: true, p2: true };
     setPvpCoverTarget('p2-starter');
     setGameState('pvp-pick-starter-p1');
   };
@@ -4117,7 +4117,7 @@ const PokemonGame = () => {
       const p2WithPlan = { ...pvpP2, plan: plan.slots };
       setPvpP2(p2WithPlan);
       const withSendout = pvpPendingSendoutRef.current;
-      pvpPendingSendoutRef.current = false;
+      pvpPendingSendoutRef.current = { p1: false, p2: false };
       const { events, finalP1, finalP2 } = pvpResolveShowdown(pvpP1, p2WithPlan, pvpP1.plan, plan.slots, withSendout);
       setPvpShowdownEvents(events);
       setPvpShowdownStep(0);
@@ -4129,7 +4129,7 @@ const PokemonGame = () => {
     }
   };
 
-  const pvpResolveShowdown = (p1State, p2State, p1Plan, p2Plan, withSendout = false) => {
+  const pvpResolveShowdown = (p1State, p2State, p1Plan, p2Plan, withSendout = { p1: false, p2: false }) => {
     const p1 = { ...p1State, team: p1State.team.map(p => ({ ...p })), pp: p1State.pp.map(a => [...a]) };
     const p2 = { ...p2State, team: p2State.team.map(p => ({ ...p })), pp: p2State.pp.map(a => [...a]) };
     let p1Active = p1.activeIndex;
@@ -4163,8 +4163,10 @@ const PokemonGame = () => {
     };
 
     // After starters are picked or a fainted Pokémon is replaced, announce both sides before any attacks
-    if (withSendout) {
+    if (withSendout["p1"]) {
       addEv(`Player 1 sent ${p1.team[p1Active].name}! I choose you!`, 'switch', { sendout: true });
+    }
+    if (withSendout["p2"]) {
       addEv(`Player 2 sent ${p2.team[p2Active].name}! I choose you!`, 'switch', { sendout: true });
     }
 
@@ -4706,8 +4708,8 @@ const PokemonGame = () => {
     const aliveOptions = team.map((p, i) => ({p, i})).filter(({p}) => p.hp > 0);
 
     const pickSwitch = (i) => {
-      pvpPendingSendoutRef.current = true;
       if (isP1) {
+        pvpPendingSendoutRef.current.p1 = true;
         setPvpP1(p => ({...p, activeIndex: i}));
         // Check if P2 also needs to switch
         const p2NeedsSwitch = pvpP2.team[pvpP2.activeIndex]?.hp <= 0 && pvpP2.team.some(p => p.hp > 0);
@@ -4719,6 +4721,7 @@ const PokemonGame = () => {
           setGameState('pvp-cover');
         }
       } else {
+        pvpPendingSendoutRef.current.p2 = true;
         setPvpP2(p => ({...p, activeIndex: i}));
         setPvpCoverTarget('p1-next-round');
         setGameState('pvp-cover');
