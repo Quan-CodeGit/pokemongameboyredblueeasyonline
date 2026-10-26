@@ -364,6 +364,14 @@ const PVP_TIER_COMMON   = ['Pidgey','Clefairy','Jigglypuff','Seel','NidoranF','G
 const PVP_ITEMS_LIST    = ['potion','rarecandy','ether','repel'];
 const PVP_ITEM_LABEL    = { potion:'Potion (+30 HP)', rarecandy:'Rare Candy (+10% stats)', ether:'Ether (restore PP)', repel:'Repel (force switch)' };
 const PVP_ITEM_SPRITE   = { potion:'/potion.png', rarecandy:'/rare-candy.png', ether:'/ether.png', repel:'/repel.png' };
+const PVP_STATUS_COLOR  = { SLP:'#64748b', PSN:'#a855f7', RECHARGE:'#f97316', CHARGING:'#16a34a' };
+// Status labels for a PvP Pokémon, e.g. ['SLP','PSN']
+const pvpStatusOf = (p) => [
+  p?.sleep > 0 && 'SLP',
+  p?.poisoned && 'PSN',
+  p?.recharging && 'RECHARGE',
+  p?.solarCharge != null && 'CHARGING',
+].filter(Boolean);
 
 const PokemonGame = () => {
   const [gameState, setGameState] = useState('intro');
@@ -4138,6 +4146,7 @@ const PokemonGame = () => {
 
     const snap = (extra = {}) => ({
       p1Hp: p1.team.map(p => p.hp), p2Hp: p2.team.map(p => p.hp),
+      p1Status: p1.team.map(pvpStatusOf), p2Status: p2.team.map(pvpStatusOf),
       p1Active, p2Active, ...extra,
     });
     const addEv = (text, highlight = 'normal', extra = {}) => events.push({ text, highlight, ...snap(), ...extra });
@@ -4145,9 +4154,9 @@ const PokemonGame = () => {
     const calcPvpDmg = (attacker, defender, mi, boost) => {
       const moveName = attacker.moves[mi];
       const moveType = attacker.moveTypes[mi];
-      if (isStatusMove(moveName)) return { damage: 0, text: `${attacker.name} used ${moveName}!`, isStatus: true };
       const acc = MOVE_ACCURACY[moveName];
       if (acc !== null && acc !== undefined && Math.random() * 100 > acc) return { damage: 0, text: `${attacker.name} used ${moveName}!`, missed: true };
+      if (isStatusMove(moveName)) return { damage: 0, text: `${attacker.name} used ${moveName}!`, isStatus: true };
       const specials = ['Fire','Water','Electric','Grass','Ice','Psychic','Dragon','Dark'];
       const isSp = specials.includes(moveType);
       const atkStat = Math.floor((isSp ? (attacker.spAtk||0) : (attacker.attack||0)) * (boost||1));
@@ -4160,6 +4169,88 @@ const PokemonGame = () => {
       dmg = eff === 0 ? 0 : Math.max(1, Math.floor(dmg * eff));
       let effTxt = eff === 0 ? " No effect!" : eff > 1 ? " Super effective!" : eff < 1 ? " Not very effective..." : "";
       return { damage: dmg, eff, text: `${attacker.name} used ${moveName}!${effTxt}`, isStatus: false, missed: false };
+    };
+
+    // Asleep, recharging or holding a charged Solar Beam = can't choose its own move or dodge
+    const canAct = (p) => p && p.hp > 0 && !(p.sleep > 0) && !p.recharging && p.solarCharge == null;
+
+    // Status moves that only affect the user can't be dodged (Rest, Recover, Withdraw, Focus Energy...)
+    const SELF_EFFECTS = ['raise_defense', 'raise_attack', 'heal_full', 'heal_half', 'heal_small', 'rest', 'nothing', 'teleport', 'transform'];
+    const targetsOpponent = (moveName) => !isStatusMove(moveName) || !SELF_EFFECTS.includes(statusMoves[moveName].effect);
+
+    // Apply a status move's effect — PvP version of solo mode's applyStatusEffect
+    const useStatusMove = (isP1, me, opp, moveName, boost) => {
+      const { effect, message } = statusMoves[moveName];
+      const used = `${me.name} used ${moveName}!`;
+      switch (effect) {
+        case 'sleep':
+          if (opp.sleep > 0) { addEv(`${used} But ${opp.name} is already asleep!`, 'miss'); break; }
+          opp.sleep = Math.floor(Math.random() * 2) + 1; // skips its next 1-2 actions
+          addEv(`${used} ${opp.name}${message}`, 'status');
+          break;
+        case 'poison':
+          if (opp.poisoned) { addEv(`${used} But ${opp.name} is already poisoned!`, 'miss'); break; }
+          opp.poisoned = true;
+          addEv(`${used} ${opp.name}${message}`, 'status');
+          break;
+        case 'lower_attack':
+          opp.attack = Math.max(1, (opp.attack || 0) - 10);
+          opp.spAtk = Math.max(1, (opp.spAtk || 0) - 10);
+          addEv(`${used} ${opp.name}${message}`, 'status');
+          break;
+        case 'raise_attack':
+          me.attack = (me.attack || 0) + 10;
+          me.spAtk = (me.spAtk || 0) + 10;
+          addEv(`${used} ${me.name}${message}`, 'status');
+          break;
+        case 'raise_defense':
+          me.def = (me.def || 0) + 10;
+          me.spDef = (me.spDef || 0) + 10;
+          addEv(`${used} ${me.name}${message}`, 'status');
+          break;
+        case 'heal_full':
+        case 'heal_half':
+        case 'heal_small': {
+          const amount = effect === 'heal_full' ? me.maxHp : Math.floor(me.maxHp / (effect === 'heal_half' ? 2 : 4));
+          const heal = Math.min(amount, me.maxHp - me.hp);
+          me.hp += heal;
+          addEv(`${used} ${me.name}${message} (+${heal} HP)`, 'item');
+          break;
+        }
+        case 'rest': {
+          if (me.hp >= me.maxHp) { addEv(`${used} But it failed! (HP is already full)`, 'miss'); break; }
+          const heal = me.maxHp - me.hp;
+          me.hp = me.maxHp;
+          me.poisoned = false;
+          me.sleep = 2; // skips its next 2 actions
+          addEv(`${used} ${me.name}${message} (+${heal} HP)`, 'item');
+          break;
+        }
+        case 'self_destruct': {
+          const dmg = Math.min(opp.hp, Math.floor((me.attack || 0) * 1.5 * (boost || 1)));
+          opp.hp -= dmg;
+          me.hp = 0;
+          addEv(`${used} It exploded! (-${dmg} HP)`, 'damage', { hit: isP1 ? 'p2' : 'p1', eff: 1 });
+          addEv(`${me.name} fainted from the explosion!`, 'ko');
+          if (opp.hp <= 0) addEv(`${opp.name} fainted!`, 'ko');
+          break;
+        }
+        default: {
+          // Flavor-only moves (Focus Energy, Sand Attack): "'s ..." describes the opponent, " is ..." the user
+          const who = /^[A-Z]/.test(message) ? '' : message.startsWith("'") ? opp.name : me.name;
+          addEv(`${used} ${who}${message}`, 'normal');
+        }
+      }
+    };
+
+    // Poison hurts the active Pokémon by 10 HP at the end of every turn
+    const poisonTick = (team, idx) => {
+      const p = team[idx];
+      if (!p || p.hp <= 0 || !p.poisoned) return;
+      const dmg = Math.min(10, p.hp);
+      p.hp -= dmg;
+      addEv(`${p.name} is hurt by poison! (-${dmg} HP)`, 'poison');
+      if (p.hp <= 0) addEv(`${p.name} fainted!`, 'ko');
     };
 
     // After starters are picked or a fainted Pokémon is replaced, announce both sides before any attacks
@@ -4176,14 +4267,12 @@ const PokemonGame = () => {
       if (!a1 && !a2) continue;
 
       // Announce dodges upfront, before speed-ordered actions
-      if (a1?.type === 'dodge') {
-        const dodger = p1.team[p1Active];
-        if (dodger && dodger.hp > 0) addEv(`${dodger.name} prepares to dodge! (50% chance)`, 'dodge');
-      }
-      if (a2?.type === 'dodge') {
-        const dodger = p2.team[p2Active];
-        if (dodger && dodger.hp > 0) addEv(`${dodger.name} prepares to dodge! (50% chance)`, 'dodge');
-      }
+      const dodging = {
+        1: a1?.type === 'dodge' && canAct(p1.team[p1Active]),
+        2: a2?.type === 'dodge' && canAct(p2.team[p2Active]),
+      };
+      if (dodging[1]) addEv(`${p1.team[p1Active].name} prepares to dodge! (50% chance)`, 'dodge');
+      if (dodging[2]) addEv(`${p2.team[p2Active].name} prepares to dodge! (50% chance)`, 'dodge');
 
       const spd1 = (PVP_SPEED[p1.team[p1Active]?.name] || 50) * p1.statBoost;
       const spd2 = (PVP_SPEED[p2.team[p2Active]?.name] || 50) * p2.statBoost;
@@ -4198,10 +4287,7 @@ const PokemonGame = () => {
         const myPlayer = isP1 ? p1 : p2;
         const oppTeam = isP1 ? p2.team : p1.team;
         const oppActive = isP1 ? p2Active : p1Active;
-        const oppDodge = (() => {
-          const oppPlan = isP1 ? p2Plan : p1Plan;
-          return oppPlan?.[slot]?.type === 'dodge';
-        })();
+        const oppDodge = dodging[isP1 ? 2 : 1];
 
         if (!action) return;
         const me = myTeam[myActive];
@@ -4210,6 +4296,8 @@ const PokemonGame = () => {
         if (action.type === 'switch') {
           const toIdx = action.toIdx;
           if (myTeam[toIdx]?.hp > 0) {
+            me.recharging = false; // switching out cancels Hyper Beam recharge / Solar Beam charge
+            me.solarCharge = null;
             if (isP1) p1Active = toIdx; else p2Active = toIdx;
             addEv(`${me.name} switches out! ${myTeam[toIdx].name} enters the field!`, 'switch', { sendout: true });
           } else {
@@ -4217,7 +4305,6 @@ const PokemonGame = () => {
           }
           return;
         }
-        if (action.type === 'dodge') { return; }
         if (action.type === 'item') {
           if (myPlayer.itemUsed) { addEv(`${me.name} tried to use an item, but it's already used!`, 'normal'); return; }
           myPlayer.itemUsed = true;
@@ -4238,16 +4325,35 @@ const PokemonGame = () => {
             const aliveOpp = oppTeam.map((p, i) => i).filter(i => i !== oppActive && oppTeam[i].hp > 0);
             if (aliveOpp.length > 0) {
               const newIdx = aliveOpp[Math.floor(Math.random() * aliveOpp.length)];
+              opp.recharging = false;
+              opp.solarCharge = null;
               if (isP1) p2Active = newIdx; else p1Active = newIdx;
               addEv(`${me.name} used Repel! ${opp.name} was forced out! ${oppTeam[newIdx].name} entered!`, 'switch', { sendout: true });
             } else { addEv(`${me.name} used Repel! But ${opp.name} has no backup!`, 'normal'); }
           }
           return;
         }
-        if (action.type === 'move') {
-          const mi = action.moveIndex;
-          const opp = oppTeam[oppActive];
-          if (!opp || opp.hp <= 0) return;
+        // From here on the action is a move or a dodge — status can override both
+        if (me.recharging) {
+          addEv(`${me.name} must recharge!`, 'normal');
+          me.recharging = false;
+          return;
+        }
+        if (me.sleep > 0) {
+          addEv(`${me.name} is fast asleep!`, 'normal');
+          me.sleep--;
+          if (me.sleep === 0) addEv(`${me.name} woke up!`, 'status');
+          return;
+        }
+        let mi = action.moveIndex;
+        const solarFire = me.solarCharge != null; // turn 2 of Solar Beam fires by itself, no PP cost
+        if (solarFire) { mi = me.solarCharge; me.solarCharge = null; }
+        else if (action.type !== 'move') return; // a plain dodge does nothing on its own
+
+        const opp = oppTeam[oppActive];
+        if (!opp || opp.hp <= 0) return;
+        const moveName = me.moves[mi];
+        if (!solarFire) {
           if (myPp[myActive][mi] <= 0) {
             const dmg = 20;
             opp.hp = Math.max(0, opp.hp - dmg);
@@ -4256,19 +4362,34 @@ const PokemonGame = () => {
             return;
           }
           myPp[myActive][mi]--;
-          if (oppDodge && Math.random() < 0.5) { addEv(`${me.name} used ${me.moves[mi]}! ${opp.name} dodged successfully!`, 'dodge'); return; }
-          const res = calcPvpDmg(me, opp, mi, myBoost);
-          if (res.missed) { addEv(`${res.text} But it missed!`, 'miss'); return; }
-          if (res.isStatus) { addEv(res.text, 'normal'); return; }
-          opp.hp = Math.max(0, opp.hp - res.damage);
-          addEv(`${res.text} (-${res.damage} HP)`, res.damage > 0 ? 'damage' : 'normal',
-            res.damage > 0 ? { hit: isP1 ? 'p2' : 'p1', eff: res.eff } : {});
-          if (opp.hp <= 0) addEv(`${opp.name} fainted!`, 'ko');
+          if (moveName === 'Solar Beam') {
+            me.solarCharge = mi;
+            addEv(`${me.name} is charging its Solar Beam!`, 'status');
+            return;
+          }
         }
+        if (oppDodge && targetsOpponent(moveName) && Math.random() < 0.5) {
+          addEv(`${me.name} used ${moveName}! ${opp.name} dodged successfully!`, 'dodge');
+          if (statusMoves[moveName]?.effect === 'self_destruct') {
+            me.hp = 0;
+            addEv(`${me.name} fainted from the explosion!`, 'ko');
+          }
+          return;
+        }
+        const res = calcPvpDmg(me, opp, mi, myBoost);
+        if (res.missed) { addEv(`${res.text} But it missed!`, 'miss'); return; }
+        if (res.isStatus) { useStatusMove(isP1, me, opp, moveName, myBoost); return; }
+        opp.hp = Math.max(0, opp.hp - res.damage);
+        addEv(`${res.text} (-${res.damage} HP)`, res.damage > 0 ? 'damage' : 'normal',
+          res.damage > 0 ? { hit: isP1 ? 'p2' : 'p1', eff: res.eff } : {});
+        if (opp.hp <= 0) addEv(`${opp.name} fainted!`, 'ko');
+        else if (moveName === 'Hyper Beam' && res.damage > 0) me.recharging = true; // no recharge after a KO
       };
 
       if (p1First) { doAction(1, a1); doAction(2, a2); }
       else          { doAction(2, a2); doAction(1, a1); }
+      poisonTick(p1.team, p1Active);
+      poisonTick(p2.team, p2Active);
     }
 
     // Determine round winner
@@ -4673,6 +4794,10 @@ const PokemonGame = () => {
     );
   };
 
+  const PvpStatusBadges = ({ labels, size = '6px' }) => labels.map(l => (
+    <span key={l} className="border-2 border-black px-1 retro-text" style={{fontSize:size,background:PVP_STATUS_COLOR[l],color:'#fff'}}>{l}</span>
+  ));
+
   // Party icons: pokéball for unrevealed, sprite for revealed, greyed for fainted
   const PvpPartyIcons = ({ team, hpArr, activeIdx, revealedSet }) => (
     <div className="flex gap-1 justify-center mt-1">
@@ -4898,6 +5023,7 @@ const PokemonGame = () => {
                     <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#dc2626',color:'#fff'}}>{curPokemon?.type}</span>
                     {curPokemon?.type2 && <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#7c3aed',color:'#fff'}}>{curPokemon.type2}</span>}
                     <span className="border-2 border-black px-1 retro-text" style={{fontSize:'7px',background:'#e5e7eb',color:'#000'}}>SPD {PVP_SPEED[curPokemon?.name]||'?'}</span>
+                    <PvpStatusBadges labels={pvpStatusOf(curPokemon)} size="7px" />
                   </div>
                   {curPokemon && <PvpHpBar p={curPokemon} hp={curPokemon.hp} />}
                 </div>
@@ -5107,7 +5233,7 @@ const PokemonGame = () => {
     const step = Math.min(pvpShowdownStep, totalSteps - 1);
     const ev = pvpShowdownEvents[step];
     const isLast = step >= totalSteps - 1;
-    const logBg = { damage:'#7f1d1d', dodge:'#1e3a5f', switch:'#14532d', ko:'#3b0764', item:'#78350f', miss:'#374151', normal:'#1e293b' };
+    const logBg = { damage:'#7f1d1d', dodge:'#1e3a5f', switch:'#14532d', ko:'#3b0764', item:'#78350f', miss:'#374151', normal:'#1e293b', status:'#134e4a', poison:'#581c87' };
 
     // Track revealed Pokémon for each side up to current step
     const p1Revealed = new Set();
@@ -5123,7 +5249,7 @@ const PokemonGame = () => {
     const p2Active = ev?.p2Active ?? pvpP2.activeIndex;
     const logEvents = pvpShowdownEvents.slice(0, step + 1);
 
-    const renderBattleCard = (label, team, hpArr, activeIdx, revealedSet, bg) => {
+    const renderBattleCard = (label, team, hpArr, activeIdx, revealedSet, bg, statusArr) => {
       const p = team[activeIdx];
       const hp = hpArr?.[activeIdx] ?? p?.hp ?? 0;
       const side = label === 'PLAYER 1' ? 'p1' : 'p2';
@@ -5141,6 +5267,7 @@ const PokemonGame = () => {
           <div className="flex items-center justify-center gap-1 mb-1 flex-wrap">
             {p?.type && <span className="border-2 border-black px-1 retro-text" style={{fontSize:'6px',background:'#dc2626',color:'#fff'}}>{p.type}</span>}
             {p?.type2 && <span className="border-2 border-black px-1 retro-text" style={{fontSize:'6px',background:'#7c3aed',color:'#fff'}}>{p.type2}</span>}
+            <PvpStatusBadges labels={statusArr?.[activeIdx] ?? pvpStatusOf(p)} />
           </div>
           {p && <PvpHpBar p={p} hp={hp} />}
           <PvpPartyIcons team={team} hpArr={hpArr} activeIdx={activeIdx} revealedSet={revealedSet} />
@@ -5162,8 +5289,8 @@ const PokemonGame = () => {
 
             {/* Two-column battle area — P1 always LEFT, P2 always RIGHT */}
             <div className="grid grid-cols-2 gap-2 mb-2">
-              {renderBattleCard('PLAYER 1', pvpP1.team, p1Hp, p1Active, p1Revealed, '#fef3c7')}
-              {renderBattleCard('PLAYER 2', pvpP2.team, p2Hp, p2Active, p2Revealed, '#dbeafe')}
+              {renderBattleCard('PLAYER 1', pvpP1.team, p1Hp, p1Active, p1Revealed, '#fef3c7', ev?.p1Status)}
+              {renderBattleCard('PLAYER 2', pvpP2.team, p2Hp, p2Active, p2Revealed, '#dbeafe', ev?.p2Status)}
             </div>
 
             {/* Battle log */}
