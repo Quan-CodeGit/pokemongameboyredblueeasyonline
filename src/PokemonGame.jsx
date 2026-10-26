@@ -681,16 +681,10 @@ const PokemonGame = () => {
     const ev = pvpShowdownEvents[step];
     if (!ev) return;
 
-    let delay = 0;
-    if (step === 0 && pvpPendingSendoutRef.current) {
-      pvpPendingSendoutRef.current = false;
-      playSound('sendout');
-      delay = 900;
-    }
     const schedule = (fn, ms) => { pvpFxTimersRef.current.push(setTimeout(fn, ms)); };
 
     if (ev.sendout) {
-      schedule(() => playSound('sendout'), delay);
+      schedule(() => playSound('sendout'), 0);
     } else if (ev.hit) {
       const superEff = ev.eff > 1;
       const cls = superEff ? 'sprite-flash-triple' : 'sprite-flash-once';
@@ -699,7 +693,7 @@ const PokemonGame = () => {
         setPvpFlash({ target: ev.hit, cls, key: Date.now() });
         playSound(superEff ? 'super-effective' : 'not-very-effective');
         schedule(() => setPvpFlash(f => (f.cls === cls && f.target === ev.hit ? { ...f, target: null, cls: '' } : f)), duration);
-      }, delay);
+      }, 0);
     }
   }, [gameState, pvpShowdownStep, pvpShowdownEvents]);
 
@@ -4122,7 +4116,9 @@ const PokemonGame = () => {
     } else {
       const p2WithPlan = { ...pvpP2, plan: plan.slots };
       setPvpP2(p2WithPlan);
-      const { events, finalP1, finalP2 } = pvpResolveShowdown(pvpP1, p2WithPlan, pvpP1.plan, plan.slots);
+      const withSendout = pvpPendingSendoutRef.current;
+      pvpPendingSendoutRef.current = false;
+      const { events, finalP1, finalP2 } = pvpResolveShowdown(pvpP1, p2WithPlan, pvpP1.plan, plan.slots, withSendout);
       setPvpShowdownEvents(events);
       setPvpShowdownStep(0);
       setPvpP1(finalP1);
@@ -4133,7 +4129,7 @@ const PokemonGame = () => {
     }
   };
 
-  const pvpResolveShowdown = (p1State, p2State, p1Plan, p2Plan) => {
+  const pvpResolveShowdown = (p1State, p2State, p1Plan, p2Plan, withSendout = false) => {
     const p1 = { ...p1State, team: p1State.team.map(p => ({ ...p })), pp: p1State.pp.map(a => [...a]) };
     const p2 = { ...p2State, team: p2State.team.map(p => ({ ...p })), pp: p2State.pp.map(a => [...a]) };
     let p1Active = p1.activeIndex;
@@ -4165,6 +4161,12 @@ const PokemonGame = () => {
       let effTxt = eff === 0 ? " No effect!" : eff > 1 ? " Super effective!" : eff < 1 ? " Not very effective..." : "";
       return { damage: dmg, eff, text: `${attacker.name} used ${moveName}!${effTxt}`, isStatus: false, missed: false };
     };
+
+    // After starters are picked or a fainted Pokémon is replaced, announce both sides before any attacks
+    if (withSendout) {
+      addEv(`Player 1 sent ${p1.team[p1Active].name}! I choose you!`, 'switch', { sendout: true });
+      addEv(`Player 2 sent ${p2.team[p2Active].name}! I choose you!`, 'switch', { sendout: true });
+    }
 
     for (let slot = 0; slot < 4; slot++) {
       const a1 = (p1Plan || [])[slot];
